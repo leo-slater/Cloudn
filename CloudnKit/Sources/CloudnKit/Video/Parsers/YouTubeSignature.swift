@@ -50,7 +50,7 @@ enum YouTubeSignature {
         }
 
         let (request, types) = requestJSON(sig: sigs, n: ns)
-        let output = try await evaluate(player: player, preprocessed: preprocessed, request: request)
+        let output = try await evaluate(playerID: playerID, player: player, preprocessed: preprocessed, request: request)
         let parsed = try parseOutput(output, types: types)
         if !preprocessed, !parsed.preprocessed.isEmpty {
             cache.storePreprocessed(parsed.preprocessed, for: playerID)
@@ -113,28 +113,70 @@ enum YouTubeSignature {
     """#
 
     private static let queue = DispatchQueue(label: "cloudn.youtube.jsc", qos: .userInitiated)
+    #if canImport(JavaScriptCore)
+    nonisolated(unsafe) private static var sharedContext: JSContext?
+    #endif
 
-    /// JS 执行是同步且耗 CPU 的（首次解析 base.js 约 1～3 秒），放到专用串行队列上，不占协作线程池
-    static func evaluate(player: String, preprocessed: Bool, request: String) async throws -> String {
-        try await withCheckedThrowingContinuation { (cont: CheckedContinuation<String, Error>) in
-            queue.async {
-                do {
-                    let text = try YouTubeSignature.evaluateSync(player: player, preprocessed: preprocessed, request: request)
-                    cont.resume(returning: text)
-                } catch {
-                    cont.resume(throwing: error)
+    private final class CancellationFlag: @unchecked Sendable {
+        private let lock = NSLock()
+        private var cancelled = false
+        var isCancelled: Bool { lock.lock(); defer { lock.unlock() }; return cancelled }
+        func cancel() { lock.lock(); cancelled = true; lock.unlock() }
+    }
+
+    /// JS 执行是同步且耗 CPU 的（首次解析 base.js 约 1～3 秒），放到专用串行队列上，不占协作线程池；
+    /// 复用已加载求解库（meriyah / astring）的 JSContext，排队期间若同版本已完成预处理则直接复用预处理结果
+    static func evaluate(playerID: String, player: String, preprocessed: Bool, request: String) async throws -> String {
+        try Task.checkCancellation()
+        let flag = CancellationFlag()
+        return try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (cont: CheckedContinuation<String, Error>) in
+                queue.async {
+                    if flag.isCancelled {
+                        cont.resume(throwing: CancellationError())
+                        return
+                    }
+                    do {
+                        var activePlayer = player
+                        var isPreprocessed = preprocessed
+                        if !isPreprocessed, let cached = cache.preprocessed(for: playerID) {
+                            activePlayer = cached
+                            isPreprocessed = true
+                        }
+                        let text = try YouTubeSignature.evaluateSync(player: activePlayer, preprocessed: isPreprocessed, request: request)
+                        cont.resume(returning: text)
+                    } catch {
+                        cont.resume(throwing: error)
+                    }
                 }
             }
+        } onCancel: {
+            flag.cancel()
         }
     }
 
     #if canImport(JavaScriptCore)
-    static func evaluateSync(player: String, preprocessed: Bool, request: String) throws -> String {
+    private static func preparedContext() throws -> JSContext {
+        if let cached = sharedContext {
+            cached.exception = nil
+            return cached
+        }
         guard let context = JSContext() else { throw VideoParseError(.unknown, "无法创建 JavaScript 运行环境") }
         let setup = YouTubeSolverScripts.lib + "\nObject.assign(globalThis, lib);\n" + YouTubeSolverScripts.core
         _ = context.evaluateScript(setup)
         if let e = context.exception {
             throw VideoParseError(.unknown, "YouTube 签名求解脚本加载失败：\(e.toString() ?? "")")
+        }
+        sharedContext = context
+        return context
+    }
+
+    static func evaluateSync(player: String, preprocessed: Bool, request: String) throws -> String {
+        let context = try preparedContext()
+        defer {
+            context.setObject(nil, forKeyedSubscript: "__cloudnPlayer" as NSString)
+            context.setObject(nil, forKeyedSubscript: "__cloudnRequest" as NSString)
+            context.setObject(nil, forKeyedSubscript: "__cloudnInput" as NSString)
         }
         context.setObject(player, forKeyedSubscript: "__cloudnPlayer" as NSString)
         context.setObject(preprocessed ? "1" : "0", forKeyedSubscript: "__cloudnPreprocessed" as NSString)
@@ -142,9 +184,11 @@ enum YouTubeSignature {
         let value = context.evaluateScript(glueScript)
         if let e = context.exception {
             let message = String((e.toString() ?? "").prefix(200))
+            sharedContext = nil
             throw VideoParseError(.unknown, "YouTube 签名求解失败（播放器结构可能已变化）：\(message)")
         }
         guard let value, value.isString, let text = value.toString() else {
+            sharedContext = nil
             throw VideoParseError(.unknown, "YouTube 签名求解脚本没有输出")
         }
         return text

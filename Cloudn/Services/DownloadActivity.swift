@@ -17,6 +17,9 @@ final class DownloadActivity {
     private var lastStartFailure = Date.distantPast
     /// 这一轮的实时活动被用户划掉（或被系统结束）：不再重建，等任务全部结束后的下一轮再显示
     private var suppressed = false
+    /// 缓存主题色（避免每次刷新活动都做两次 trait color 解析）
+    private var cachedAccentHex: String?
+    private var cachedAccentPair: String?
 
     /// 设置页开关（默认开启）
     private var enabled: Bool { UserDefaults.standard.object(forKey: "liveActivity") as? Bool ?? true }
@@ -54,22 +57,32 @@ final class DownloadActivity {
             end(final: state(items, active: active))
             return
         }
-        let next = state(items, active: active)
-        // 实时活动更新有频率预算：任务数变了立即更新，其余（进度、速度）至少间隔 5 秒
-        let countsChanged = next.active != lastState?.active || next.finished != lastState?.finished
-        guard next != lastState, countsChanged || Date().timeIntervalSince(lastUpdate) >= 5 else { return }
+        let finished = finishedCount(items)
+        // 实时活动更新有频率预算：先做廉价的节流判断，跳过多余的汇总和颜色解析
+        let countsChanged = active.count != lastState?.active || finished != lastState?.finished
+        guard countsChanged || Date().timeIntervalSince(lastUpdate) >= 5 else { return }
+        let next = state(items, active: active, finished: finished)
+        guard next != lastState else { return }
         lastUpdate = Date()
         lastState = next
         let content = ActivityContent(state: next, staleDate: Date().addingTimeInterval(120))
         Task { await activity?.update(content) }
     }
 
-    private func state(_ items: [DownloadItem], active: [DownloadItem]) -> DownloadActivityAttributes.ContentState {
+    private func finishedCount(_ items: [DownloadItem]) -> Int {
+        var count = 0
+        for item in items where item.status == .completed && !baselineCompleted.contains(item.id) {
+            count += 1
+        }
+        return count
+    }
+
+    private func state(_ items: [DownloadItem], active: [DownloadItem], finished: Int? = nil) -> DownloadActivityAttributes.ContentState {
         // 按 Double 累加：服务端报的大小不可信，几个离谱的大数相加会让 Int64 溢出崩溃
         let total = active.reduce(0.0) { $0 + Double(max(0, $1.totalBytes)) }
         let received = active.reduce(0.0) { $0 + Double(max(0, $1.receivedBytes)) }
         let unknown = active.contains { $0.totalBytes <= 0 }
-        let finished = items.filter { $0.status == .completed && !baselineCompleted.contains($0.id) }.count
+        let finished = finished ?? finishedCount(items)
         let main = active.first { $0.status == .running } ?? active.first
         var note = ""
         var failedCount: Int? = nil
@@ -91,19 +104,28 @@ final class DownloadActivity {
                      speed: Int64(saturating: active.reduce(0.0) { $0 + max(0, $1.speed) }), title: main?.displayName ?? "", note: note,
                      failed: failedCount,
                      remaining: unknown || total <= 0 ? nil : Int64(saturating: max(0, total - received)),
-                     accent: Self.accentPair())
+                     accent: accentPair())
+    }
+
+    private func accentPair() -> String? {
+        let hex = UserDefaults.standard.string(forKey: "accentHex") ?? ""
+        if hex != cachedAccentHex {
+            cachedAccentHex = hex
+            cachedAccentPair = Self.computeAccentPair(hex: hex)
+        }
+        return cachedAccentPair
     }
 
     /// 当前主题色的浅色 / 深色两份（与应用里实际生效的一致）；用默认陶土色时为 nil
-    private static func accentPair() -> String? {
-        guard let color = AppSettings.accentUIColor(hex: UserDefaults.standard.string(forKey: "accentHex") ?? "") else { return nil }
-        func hex(_ style: UIUserInterfaceStyle) -> String {
+    private static func computeAccentPair(hex: String) -> String? {
+        guard let color = AppSettings.accentUIColor(hex: hex) else { return nil }
+        func hexString(_ style: UIUserInterfaceStyle) -> String {
             var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
             color.resolvedColor(with: UITraitCollection(userInterfaceStyle: style)).getRed(&r, green: &g, blue: &b, alpha: &a)
             func byte(_ c: CGFloat) -> Int { Int((min(1, max(0, c)) * 255).rounded()) }
             return String(format: "%02X%02X%02X", byte(r), byte(g), byte(b))
         }
-        return hex(.light) + "," + hex(.dark)
+        return hexString(.light) + "," + hexString(.dark)
     }
 
     /// 切到后台：之后应用多半拿不到运行时间、进度不会再刷新，先把说明写上，免得锁屏上停着一个过时的进度。

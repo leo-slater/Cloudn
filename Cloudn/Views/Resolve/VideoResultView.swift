@@ -27,6 +27,9 @@ struct VideoResultView: View {
     @State private var audioProbes = AudioProbeCache()
     /// 就地弹出的登录页（登录已失效时）
     @State private var loginKind: AccountKind?
+    /// 标题块滚出屏幕后，导航栏才显示标题
+    @State private var headerHidden = false
+    private static let space = "video.scroll"
     /// 实况照片：图片 id → 配对的视频。配上对的视频挂在图片上，不单独列为视频
     private let livePairs: [UUID: VideoMedia]
     private let liveClipIDs: Set<UUID>
@@ -98,8 +101,13 @@ struct VideoResultView: View {
             .padding(.bottom, 96)
             .readableWidth()
         }
+        .coordinateSpace(name: Self.space)
         .background(Color.paper)
-        .navigationTitle("")
+        .onPreferenceChange(HeaderOffsetKey.self) { y in
+            let hidden = y < 0
+            if hidden != headerHidden { headerHidden = hidden }
+        }
+        .navigationTitle(headerHidden ? (result.title.isEmpty ? result.platform.displayName : result.title) : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -121,7 +129,14 @@ struct VideoResultView: View {
                 .accessibilityLabel("更多")
             }
         }
-        .safeAreaInset(edge: .bottom) { bottomBar.padding(.horizontal, 16).padding(.bottom, 8).readableWidth() }
+        .safeAreaInset(edge: .bottom) {
+            bottomBar
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 8)
+                .readableWidth()
+                .bottomBarBackdrop()
+        }
         .liftsToast()
         .sensoryFeedback(.selection, trigger: selected)
         .animation(.snappy(duration: 0.25), value: selecting)
@@ -203,6 +218,11 @@ struct VideoResultView: View {
                     }
                 }
                 .padding(.horizontal, 4)
+            }
+        }
+        .background {
+            GeometryReader { geo in
+                Color.clear.preference(key: HeaderOffsetKey.self, value: geo.frame(in: .named(Self.space)).maxY)
             }
         }
     }
@@ -658,7 +678,7 @@ struct VideoResultView: View {
     }
 
     private func state(of media: VideoMedia) -> DownloadItem? {
-        app.downloads.items.last { $0.request.url == media.url }
+        app.downloads.itemsByURL[media.url]
     }
 
     private func play(_ media: VideoMedia) {

@@ -20,6 +20,9 @@ struct TorrentView: View {
     let target: TorrentTarget
     @State private var selected = Set<Int>()
     @State private var offlining = false
+    /// 标题块滚出屏幕后，导航栏才显示标题
+    @State private var headerHidden = false
+    private static let space = "torrent.scroll"
 
     /// 查找在应用层进行：离开本页不中断，回来接着看
     private var status: TorrentFetchStore.Status { app.torrents.status(target.magnet) }
@@ -55,8 +58,13 @@ struct TorrentView: View {
             .padding(.bottom, 96)
             .readableWidth()
         }
+        .coordinateSpace(name: Self.space)
         .background(Color.paper)
-        .navigationTitle("")
+        .onPreferenceChange(HeaderOffsetKey.self) { y in
+            let hidden = y < 0
+            if hidden != headerHidden { headerHidden = hidden }
+        }
+        .navigationTitle(headerHidden ? title : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -73,7 +81,14 @@ struct TorrentView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if info != nil { bottomBar.padding(.horizontal, 16).padding(.bottom, 8).readableWidth() }
+            if info != nil {
+                bottomBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 8)
+                    .readableWidth()
+                    .bottomBarBackdrop()
+            }
         }
         .liftsToast()
         .sheet(isPresented: $offlining) { AddOfflineTaskView(links: target.magnet.uri) }
@@ -120,6 +135,11 @@ struct TorrentView: View {
                 .textSelection(.enabled)
         }
         .padding(.horizontal, 4)
+        .background {
+            GeometryReader { geo in
+                Color.clear.preference(key: HeaderOffsetKey.self, value: geo.frame(in: .named(Self.space)).maxY)
+            }
+        }
     }
 
     /// 已登录支持离线下载的网盘时：交给网盘服务器下载，不用等节点、不占手机流量

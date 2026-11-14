@@ -23,6 +23,7 @@ struct HeadlessWebExtractor: WebPageExtractor {
     private static func perform(url: String, userAgent: String, cookie: String, scripts: [String], readyScript: String,
                                 progressScript: String?, extractScript: String, timeout: TimeInterval) async -> String? {
         guard let session = HeadlessSession(url: url, userAgent: userAgent, scripts: scripts) else { return nil }
+        defer { session.teardown() }
         await session.start(cookie: cookie)
         return await session.run(readyScript: readyScript, progressScript: progressScript, extractScript: extractScript, timeout: timeout)
     }
@@ -64,6 +65,7 @@ final class HeadlessSession: NSObject, WKNavigationDelegate {
     private var failed = false
     /// 主框架至少提交过一次导航（页面已有内容）
     private var committed = false
+    private var tornDown = false
 
     init?(url: String, userAgent: String, scripts: [String]) {
         guard let target = URL(string: url),
@@ -200,7 +202,9 @@ final class HeadlessSession: NSObject, WKNavigationDelegate {
         }
     }
 
-    private func teardown() {
+    func teardown() {
+        guard !tornDown else { return }
+        tornDown = true
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.superview?.removeFromSuperview()

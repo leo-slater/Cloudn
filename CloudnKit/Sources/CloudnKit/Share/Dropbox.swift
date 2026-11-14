@@ -98,6 +98,7 @@ public final class DropboxResolver: ShareResolver, @unchecked Sendable {
         guard var cred = parseCredential(cookie) else { return nil }
         if !cred.isFresh, !cred.refreshToken.isEmpty, let provider = OAuthProvider.dropbox,
            let renewed = try? await provider.refresh(cred) {
+            await CredentialRenewal.shared.recordValidated(.dropbox, consumedRefreshToken: cred.refreshToken, renewed: renewed.serialized)
             cred = renewed
         }
         return await accountName(token: cred.accessToken, client: .shared)

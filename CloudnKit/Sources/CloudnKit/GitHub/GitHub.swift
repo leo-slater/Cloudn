@@ -117,7 +117,7 @@ public struct GitHubClient: Sendable {
     public func contents(_ owner: String, _ repo: String, path: String, ref: String) async throws -> [GitHubEntry] {
         let encoded = path.split(separator: "/").map { String($0).addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? String($0) }
             .joined(separator: "/")
-        let json = try await get("/repos/\(owner)/\(repo)/contents/\(encoded)?ref=\(ref.formEncoded)")
+        let json = try await get("/repos/\(owner)/\(repo)/contents/\(encoded)?ref=\(ref.urlQueryEncoded)")
         // 指向文件时返回单个对象
         let items = json.isArray ? json.array : [json]
         return items.map(Self.parseEntry).sorted { a, b in

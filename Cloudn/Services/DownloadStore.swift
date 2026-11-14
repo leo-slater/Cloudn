@@ -22,6 +22,10 @@ final class DownloadStore {
     private(set) var shareProgress: [String: ShareDownloadProgress] = [:]
     /// 分享链接 → 文件 ID → 该文件最近一次的下载任务（分享页行尾状态）
     private(set) var shareFiles: [String: [String: DownloadItem]] = [:]
+    /// 按 URL 索引的任务（视频解析结果 / 网页嗅探按行 O(1) 查下载状态）
+    private(set) var itemsByURL: [String: DownloadItem] = [:]
+    /// 按分组 ID 索引的任务（下载页分组标题卡片 O(1) 取成员）
+    private(set) var itemsByGroup: [UUID: [DownloadItem]] = [:]
     /// 分享链接 → 分享 ID 的解析缓存（链接解析是一串正则，不能每次进度刷新都跑）
     @ObservationIgnored private var shareIdCache: [String: String] = [:]
     /// 已收到过引擎的列表
@@ -62,7 +66,12 @@ final class DownloadStore {
 
         var progress: [String: ShareDownloadProgress] = [:]
         var files: [String: [String: DownloadItem]] = [:]
+        var byURL: [String: DownloadItem] = [:]
+        var byGroup: [UUID: [DownloadItem]] = [:]
+        byURL.reserveCapacity(list.count)
         for item in list {
+            byURL[item.request.url] = item
+            if let gid = item.request.group?.id { byGroup[gid, default: []].append(item) }
             guard let origin = item.request.origin else { continue }
             if let key = shareKey(platform: origin.platform, shareURL: origin.shareURL) {
                 var p = progress[key] ?? ShareDownloadProgress(done: 0, total: 0)
@@ -74,6 +83,8 @@ final class DownloadStore {
             if let old = files[origin.shareURL]?[origin.fileId], old.status == .completed, item.status == .failed { continue }
             files[origin.shareURL, default: [:]][origin.fileId] = item
         }
+        if byURL != itemsByURL { itemsByURL = byURL }
+        if byGroup != itemsByGroup { itemsByGroup = byGroup }
         if progress != shareProgress { shareProgress = progress }
         // 每 0.5 秒刷新一次：没变化就不赋值，免得读它的分享页跟着整页重绘
         if files != shareFiles { shareFiles = files }

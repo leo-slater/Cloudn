@@ -172,9 +172,16 @@ final class AccountStore {
     func list(_ kind: AccountKind) -> [Account] { (accounts[kind].map { [$0] } ?? []) + (extras[kind] ?? []) }
 
     /// 校验 Cookie 后保存；返回昵称，无效返回 nil。adding 为 true 时作为附加账号加入（不替换主账号）
-    func login(_ kind: AccountKind, cookie: String, adding: Bool = false) async -> String? {
+    func login(_ kind: AccountKind, cookie: String, adding: Bool = false, webLogin: Bool = false) async -> String? {
         let normalized = AccountValidator.normalize(kind, cookie)
-        guard !normalized.isEmpty, let nickname = await AccountValidator.validate(kind, cookie: normalized) else { return nil }
+        guard !normalized.isEmpty else { return nil }
+        var nickname = await AccountValidator.validate(kind, cookie: normalized)
+        if nickname == nil, webLogin, OverseasAccount.kinds.contains(kind),
+           OverseasAccount.looksLoggedIn(kind, cookie: normalized) {
+            // 刚在内嵌网页登录完成但校验接口遇到风控/checkpoint/跳页时，保留当前网页会话 Cookie 避免卡死
+            nickname = OverseasAccount.fallbackName(kind, cookie: normalized)
+        }
+        guard let nickname else { return nil }
         let account = Account(cookie: normalized, nickname: nickname, updatedAt: Date())
         let adding = adding || pendingAdd == kind
         pendingAdd = nil
@@ -229,7 +236,7 @@ extension AccountStore {
     }
 
     static let healthInterval: TimeInterval = 6 * 3600
-    private static let healthKey = "accountHealth"
+    nonisolated private static let healthKey = "accountHealth"
 
     /// 主账号登录已失效。失效后账号又被更新过（重新登录、服务端续期回写）就不再算失效
     func isExpired(_ kind: AccountKind) -> Bool {

@@ -58,9 +58,12 @@ enum LivePhoto {
     private static func existing(_ dir: URL, _ stem: String, _ exts: [String]) -> URL? {
         let fm = FileManager.default
         for ext in exts {
-            for e in [ext, ext.uppercased()] {
-                let url = dir.appendingPathComponent("\(stem).\(e)")
-                if fm.fileExists(atPath: url.path) { return url }
+            let lower = dir.appendingPathComponent("\(stem).\(ext)")
+            if fm.fileExists(atPath: lower.path) { return lower }
+            let upper = ext.uppercased()
+            if upper != ext {
+                let upperURL = dir.appendingPathComponent("\(stem).\(upper)")
+                if fm.fileExists(atPath: upperURL.path) { return upperURL }
             }
         }
         return nil
@@ -77,8 +80,10 @@ enum LivePhoto {
         defer { try? FileManager.default.removeItem(at: work) }
         let still = work.appendingPathComponent("IMG.JPG")
         let motion = work.appendingPathComponent("IMG.MOV")
-        try writeImage(image, to: still, identifier: identifier)
-        try await writeVideo(video, to: motion, identifier: identifier)
+        try await Task.detached(priority: .userInitiated) {
+            try Self.writeImage(image, to: still, identifier: identifier)
+            try await Self.writeVideo(video, to: motion, identifier: identifier)
+        }.value
         try await PHPhotoLibrary.shared().performChanges {
             let request = PHAssetCreationRequest.forAsset()
             request.addResource(with: .photo, fileURL: still, options: nil)
@@ -172,13 +177,13 @@ enum LivePhoto {
             for (index, (out, input)) in pairs.enumerated() {
                 group.enter()
                 let queue = DispatchQueue(label: "com.mengangs.Cloudn.live.\(index)")
-                let state = FeedState()
+                let state = FeedState(out: out, input: input, writer: writer)
                 input.requestMediaDataWhenReady(on: queue) {
                     guard !state.done else { return }
-                    while input.isReadyForMoreMediaData {
-                        if let buffer = out.copyNextSampleBuffer(), writer.status == .writing, input.append(buffer) { continue }
+                    while state.input.isReadyForMoreMediaData {
+                        if let buffer = state.out.copyNextSampleBuffer(), state.writer.status == .writing, state.input.append(buffer) { continue }
                         state.done = true
-                        if writer.status == .writing { input.markAsFinished() }
+                        if state.writer.status == .writing { state.input.markAsFinished() }
                         group.leave()
                         return
                     }
@@ -198,9 +203,18 @@ enum LivePhoto {
         }
     }
 
-    /// 每一轨喂数据的状态（只在该轨自己的串行队列上读写）
+    /// 每一轨喂数据的状态与轨道句柄（只在该轨自己的串行队列上访问）
     private final class FeedState: @unchecked Sendable {
+        let out: AVAssetReaderTrackOutput
+        let input: AVAssetWriterInput
+        let writer: AVAssetWriter
         var done = false
+
+        init(out: AVAssetReaderTrackOutput, input: AVAssetWriterInput, writer: AVAssetWriter) {
+            self.out = out
+            self.input = input
+            self.writer = writer
+        }
     }
 
     struct LiveError: LocalizedError {

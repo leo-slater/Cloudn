@@ -52,15 +52,65 @@ jobs:
           cp -R build/Build/Products/Release-iphoneos/Cloudn.app Payload/
           zip -qry "Cloudn-${{ steps.tag.outputs.tag }}.ipa" Payload
           shasum -a 256 "Cloudn-${{ steps.tag.outputs.tag }}.ipa" | tee SHA256SUMS.txt
+      - name: Update altstore.json
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          VERSION="${TAG#v}"
+          BUILD=$(grep -m1 'CURRENT_PROJECT_VERSION' Cloudn.xcodeproj/project.pbxproj | sed -E 's/.*= *([^;]+);/\1/')
+          IPA="Cloudn-$TAG.ipa"
+          SHA=$(awk '{print $1}' SHA256SUMS.txt)
+          DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          python3 - "$VERSION" "$BUILD" "$DATE" "$TAG" "$IPA" "$SHA" "docs/release-notes/$TAG.md" <<'PY'
+          import json, os, sys
+
+          version, build, date, tag, ipa, sha, notes_path = sys.argv[1:8]
+          size = os.path.getsize(ipa)
+          notes = open(notes_path, encoding="utf-8").read().strip()
+          entry = {
+              "version": version,
+              "buildVersion": build,
+              "date": date,
+              "localizedDescription": notes,
+              "downloadURL": f"https://github.com/mengangs/Cloudn/releases/download/{tag}/{ipa}",
+              "size": size,
+              "sha256": sha,
+              "minOSVersion": "17.0",
+          }
+
+          def patch(path):
+              with open(path, encoding="utf-8") as f:
+                  data = json.load(f)
+              versions = [v for v in data["apps"][0].get("versions", []) if v.get("version") != version]
+              data["apps"][0]["versions"] = [entry] + versions
+              with open(path, "w", encoding="utf-8") as f:
+                  json.dump(data, f, ensure_ascii=False, indent=2)
+                  f.write("\n")
+
+          patch("altstore.json")
+          PY
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${{ steps.tag.outputs.tag }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "Cloudn-$TAG.ipa" SHA256SUMS.txt --clobber
+            gh release upload "$TAG" "Cloudn-$TAG.ipa" SHA256SUMS.txt altstore.json --clobber
             gh release edit "$TAG" --notes-file "docs/release-notes/$TAG.md"
           else
-            gh release create "$TAG" "Cloudn-$TAG.ipa" SHA256SUMS.txt --target "$TARGET_SHA" \
+            gh release create "$TAG" "Cloudn-$TAG.ipa" SHA256SUMS.txt altstore.json --target "$TARGET_SHA" \
               --title "Cloudn ${TAG#v}" --notes-file "docs/release-notes/$TAG.md"
+          fi
+      - name: Sync altstore.json to main
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          cp altstore.json /tmp/altstore.json
+          git fetch origin main
+          git checkout -B main origin/main
+          cp /tmp/altstore.json altstore.json
+          if [ -n "$(git status --porcelain altstore.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add altstore.json
+            git commit -m "更新侧载软件源 altstore.json ($TAG)"
+            git push origin main || true
           fi

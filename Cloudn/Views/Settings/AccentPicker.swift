@@ -6,36 +6,34 @@ struct AccentPicker: View {
     @Environment(AppModel.self) private var app
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("主题色")
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(AppSettings.accentPresets, id: \.hex) { preset in
-                        let selected = app.settings.accentHex == preset.hex
-                        Button { app.settings.accentHex = preset.hex } label: {
-                            // 色块画实际生效的颜色（浅色下对比度不够的已自动压暗）
-                            Circle()
-                                .fill(Color(uiColor: AppSettings.accentUIColor(hex: preset.hex) ?? UIColor(named: "AccentColor") ?? .systemOrange))
-                                .frame(width: 30, height: 30)
-                                .overlay {
-                                    Circle().strokeBorder(Color.ink, lineWidth: selected ? 2 : 0).padding(-4)
-                                }
-                                .frame(width: 44, height: 44)
-                                .contentShape(Circle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(preset.name)
-                        .accessibilityAddTraits(selected ? .isSelected : [])
+            HStack(spacing: 0) {
+                ForEach(AppSettings.accentPresets, id: \.hex) { preset in
+                    let selected = app.settings.accentHex == preset.hex
+                    Button { app.settings.accentHex = preset.hex } label: {
+                        // 色块画实际生效的颜色（浅色下对比度不够的已自动压暗）
+                        Circle()
+                            .fill(Color(uiColor: AppSettings.accentUIColor(hex: preset.hex) ?? UIColor(named: "AccentColor") ?? .systemOrange))
+                            .frame(width: 28, height: 28)
+                            .overlay {
+                                Circle().strokeBorder(Color.ink, lineWidth: selected ? 2 : 0).padding(-4)
+                            }
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
-                    ColorPicker("自定义", selection: Binding(
-                        get: { app.settings.accentColor },
-                        set: { app.settings.accentHex = $0.hexString }
-                    ), supportsOpacity: false)
-                    .labelsHidden()
-                    .frame(width: 30, height: 30)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(preset.name)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
                 }
-                .padding(.vertical, 2)
+                ColorPicker("自定义", selection: Binding(
+                    get: { app.settings.accentColor },
+                    set: { app.settings.accentHex = $0.hexString }
+                ), supportsOpacity: false)
+                .labelsHidden()
+                .frame(maxWidth: .infinity, minHeight: 44)
             }
+            .padding(.vertical, 2)
             .sensoryFeedback(.selection, trigger: app.settings.accentHex)
         }
     }

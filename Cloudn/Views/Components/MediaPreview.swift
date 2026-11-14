@@ -32,6 +32,7 @@ struct MediaPreviewView: View {
     /// 图集当前页
     @State private var page = ""
     @State private var chromeVisible = true
+    @State private var statusTask: Task<Void, Never>?
 
     private var pages: [MediaPreviewItem.GalleryImage] {
         item.gallery.isEmpty ? [.init(url: item.url, headers: item.headers, title: item.title)] : item.gallery
@@ -78,7 +79,12 @@ struct MediaPreviewView: View {
             if player == nil && failure == nil { startPlayer() }
         }
         .sensoryFeedback(.selection, trigger: page)
-        .onDisappear { player?.pause() }
+        .onDisappear {
+            statusTask?.cancel()
+            statusTask = nil
+            player?.pause()
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
     }
 
     private var topBar: some View {
@@ -162,11 +168,12 @@ struct MediaPreviewView: View {
         let p = PlayerController.makePlayer(url, headers: item.headers)
         guard let playerItem = p.currentItem else { return }
         player = p
+        statusTask?.cancel()
         // 盯一会儿播放状态：失败时换成说明 + 重试
-        Task { @MainActor in
+        statusTask = Task { @MainActor in
             for _ in 0..<60 {
                 try? await Task.sleep(for: .milliseconds(500))
-                guard player === p else { return }
+                guard !Task.isCancelled, player === p else { return }
                 switch playerItem.status {
                 case .readyToPlay: return
                 case .failed:

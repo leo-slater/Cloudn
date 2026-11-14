@@ -78,18 +78,29 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
         }
         let info = try await shareInfo(session, cookie: cookie)
         let bdstoken = try await self.bdstoken(cookie)
-        let dir = await ensureTempDir(cookie: cookie, bdstoken: bdstoken)
-        guard let saved = try await transfer(info: info, sekey: session.stoken, fsIds: [file.fid], toDir: dir, cookie: cookie, bdstoken: bdstoken).first else {
-            throw CloudnError("转存失败：未返回新文件")
+        let dir = await createTempDir(cookie: cookie, bdstoken: bdstoken)
+        let saved: String
+        do {
+            guard let first = try await transfer(info: info, sekey: session.stoken, fsIds: [file.fid], toDir: dir, cookie: cookie, bdstoken: bdstoken).first else {
+                throw CloudnError("转存失败：未返回新文件")
+            }
+            saved = first
+        } catch {
+            if dir != "/" {
+                await Task.detached { [self] in await delete(dir, cookie: cookie, bdstoken: bdstoken) }.value
+            }
+            throw error
         }
+        let cleanupTarget = dir != "/" ? dir : saved
         let link: String
         do {
             link = try await locateDownload(saved, cookie: cookie)
         } catch {
-            await delete(saved, cookie: cookie, bdstoken: bdstoken)
+            // 取消下载时仍需删掉云端临时文件，脱离当前任务取消态
+            await Task.detached { [self] in await delete(cleanupTarget, cookie: cookie, bdstoken: bdstoken) }.value
             throw error
         }
-        await delete(saved, cookie: cookie, bdstoken: bdstoken)
+        await Task.detached { [self] in await delete(cleanupTarget, cookie: cookie, bdstoken: bdstoken) }.value
         return DownloadLink(fileName: file.name, url: link, size: file.size,
                             headers: ["User-Agent": Self.netdiskUA, "Cookie": cookie])
     }
@@ -177,14 +188,9 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
         return token
     }
 
-    /// 临时目录已存在就复用，否则创建；创建失败退回根目录
-    private func ensureTempDir(cookie: String, bdstoken: String) async -> String {
-        let dir = "/" + Self.tempDirName
-        let listURL = "https://pan.baidu.com/api/list?clienttype=0&app_id=\(Self.appId)&web=1&order=time&desc=1&dir=%2F&num=1000&page=1"
-        if let r = try? await client.send(.get(listURL, headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA)])),
-           let json = r.json, json["list"].array.contains(where: { $0["path"].string == dir }) {
-            return dir
-        }
+    /// 为每次转存创建独立的临时子目录（并发安全且无需先列根目录）；创建失败退回根目录
+    private func createTempDir(cookie: String, bdstoken: String) async -> String {
+        let dir = "/\(Self.tempDirName)/tr_\(Int64(Date().timeIntervalSince1970 * 1000))_\(Int.random(in: 1000...9999))"
         let create = "https://pan.baidu.com/api/create?a=commit&channel=chunlei&web=1&app_id=\(Self.appId)&clienttype=0&bdstoken=\(bdstoken)"
         let r = try? await client.send(.postForm(create, [("path", dir), ("isdir", "1"), ("block_list", "[]"), ("method", "post"), ("dataType", "json")],
                                                  headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA), ("Referer", "https://yun.baidu.com/disk/main")]))
@@ -257,7 +263,7 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
     private func delete(_ path: String, cookie: String, bdstoken: String) async {
         let url = "https://pan.baidu.com/api/filemanager?async=2&onnest=fail&opera=delete&bdstoken=\(bdstoken)" +
             "&newVerify=1&clienttype=0&app_id=\(Self.appId)&web=1"
-        _ = try? await client.send(.postForm(url, [("filelist", "[\"\(path)\"]")],
+        _ = try? await client.send(.postForm(url, [("filelist", Self.pathList([path]))],
                                              headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA)]))
     }
 

@@ -69,7 +69,11 @@ struct RemoteFilePreview: View {
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             let target = dir.appendingPathComponent(FileNames.sanitize(item.name))
-            let (bytes, response) = try await URLSession.shared.bytes(for: request)
+            let config = URLSessionConfiguration.ephemeral
+            NetworkProxy.apply(to: config)
+            let session = URLSession(configuration: config)
+            defer { session.finishTasksAndInvalidate() }
+            let (bytes, response) = try await session.bytes(for: request)
             if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
                 failure = "载入失败（HTTP \(http.statusCode)），链接可能已过期"
                 return

@@ -169,12 +169,17 @@ struct InstagramParser: VideoParser {
         if let csrf = CookieUtil.value(of: "csrftoken", in: cookie), !csrf.isEmpty { headers.append(("X-CSRFToken", csrf)) }
         let request = HTTPRequest.get(currentUserURL, headers: headers, followRedirects: false)
         return await OverseasAccount.probe(.instagram, cookie: cookie, request) { r in
-            Self.probeResult(status: r.status, json: r.json)
+            Self.probeResult(status: r.status, location: r.header("Location") ?? "", json: r.json)
         }
     }
 
-    static func probeResult(status: Int, json: JSON?) -> OverseasAccount.Probe {
-        if (300..<400).contains(status) || status == 401 { return .invalid }
+    static func probeResult(status: Int, location: String = "", json: JSON?) -> OverseasAccount.Probe {
+        if (300..<400).contains(status) {
+            // 仅跳转回登录页时明确判失效；跳到 onetap / challenge 等非登录页时归为 unknown 交由 Cookie 兜底
+            if !location.isEmpty && !location.lowercased().contains("login") { return .unknown }
+            return .invalid
+        }
+        if status == 401 { return .invalid }
         let message = json?["message"].string ?? ""
         // checkpoint_required：账号需要在官方应用里完成验证，登录态暂不可用
         if message == "login_required" || message == "checkpoint_required" { return .invalid }

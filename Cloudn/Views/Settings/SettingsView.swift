@@ -100,10 +100,24 @@ struct SettingsView: View {
                         .disabled(checking)
                         Toggle("自动检查更新", isOn: $settings.autoCheckUpdates)
                         Toggle("接受预发布版更新", isOn: $settings.acceptPrerelease)
+                        Menu {
+                            Button("添加到 SideStore") { addSideloadSource(scheme: "sidestore://source?url=", name: "SideStore") }
+                            Button("添加到 AltStore") { addSideloadSource(scheme: "altstore://source?url=", name: "AltStore") }
+                            Button("复制软件源地址") {
+                                Clipboard.copy(sourceURLString())
+                                app.show("已复制软件源地址")
+                            }
+                        } label: {
+                            HStack {
+                                Text("添加侧载软件源").foregroundStyle(Color.ink)
+                                Spacer()
+                                IconView(.chevronRight, size: 13).foregroundStyle(Color.ink3)
+                            }
+                        }
                     } header: {
                         Text("更新")
                     } footer: {
-                        Text("从 GitHub Releases（\(UpdateChecker.repository)）检查，每天最多自动检查一次。")
+                        Text("从 GitHub Releases（\(UpdateChecker.repository)）检查，每天最多自动检查一次；也可将软件源添加到 SideStore / AltStore 自动接收更新。")
                     }
 
                     Section {
@@ -176,6 +190,20 @@ struct SettingsView: View {
 }
 
 extension SettingsView {
+    private static let rawSourceURL = "https://raw.githubusercontent.com/\(UpdateChecker.repository)/main/altstore.json"
+
+    private func sourceURLString() -> String {
+        GitHubMirror.apply(Self.rawSourceURL, prefix: app.settings.githubMirror)
+    }
+
+    private func addSideloadSource(scheme: String, name: String) {
+        guard let encoded = sourceURLString().addingPercentEncoding(withAllowedCharacters: .alphanumerics),
+              let url = URL(string: scheme + encoded) else { return }
+        UIApplication.shared.open(url) { opened in
+            if !opened { app.show("没有找到 \(name)，请先安装它或复制软件源地址手动添加", error: true) }
+        }
+    }
+
     private func checkUpdate() {
         checking = true
         Task {
@@ -295,7 +323,9 @@ struct UpdateSheet: View {
                     .buttonStyle(PillButtonStyle(kind: .primary, height: 50))
                     .floatingShadow()
                     .padding(.horizontal, 16)
+                    .padding(.top, 6)
                     .padding(.bottom, 8)
+                    .bottomBarBackdrop()
                 }
             }
             .navigationTitle("发现新版本")

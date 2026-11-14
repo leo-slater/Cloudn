@@ -66,7 +66,14 @@ struct ShareBrowserView: View {
             .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "在当前文件夹中搜索")
             .onChange(of: model.currentDir) { query = "" }
             .toolbar { toolbar }
-            .safeAreaInset(edge: .bottom) { actionBar.padding(.horizontal, 16).padding(.bottom, 8).readableWidth() }
+            .safeAreaInset(edge: .bottom) {
+                actionBar
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 8)
+                    .readableWidth()
+                    .bottomBarBackdrop()
+            }
             .liftsToast(72)
             .refreshable { await model.reloadCurrent(force: true) }
             .task { await model.open() }
@@ -224,10 +231,9 @@ struct ShareBrowserView: View {
             VStack(spacing: 0) {
                 if model.loading { ProgressLine(value: nil).padding(.horizontal, 14).padding(.top, 2) }
                 LazyVStack(spacing: 0) {
-                    let states = app.downloads.shareFiles[model.share.url] ?? [:]
                     let files = visibleFiles
                     ForEach(Array(files.enumerated()), id: \.element.fid) { index, file in
-                        row(file, state: states[file.fid], proxy: proxy)
+                        row(file, proxy: proxy)
                         if index < files.count - 1 { RowDivider(leading: model.selecting ? 96 : 64) }
                     }
                 }
@@ -239,7 +245,7 @@ struct ShareBrowserView: View {
         }
     }
 
-    private func row(_ file: ShareFile, state: DownloadItem?, proxy: ScrollViewProxy) -> some View {
+    private func row(_ file: ShareFile, proxy: ScrollViewProxy) -> some View {
         let selected = model.selection.contains(file.fid)
         return HStack(spacing: 12) {
             if model.selecting {
@@ -261,7 +267,11 @@ struct ShareBrowserView: View {
                 .foregroundStyle(Color.ink3)
             }
             Spacer(minLength: 0)
-            if !model.selecting { trailing(file, state: state) }
+            if !model.selecting {
+                ShareRowTrailing(shareURL: model.share.url, file: file, busy: model.busyFileIds.contains(file.fid)) {
+                    download(file)
+                }
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
@@ -277,16 +287,6 @@ struct ShareBrowserView: View {
                     Color.clear.preference(key: RowFrameKey.self, value: [file.fid: geo.frame(in: .named(Self.space))])
                 }
             }
-        }
-    }
-
-    /// 行尾：文件夹是箭头，文件是下载状态
-    @ViewBuilder
-    private func trailing(_ file: ShareFile, state: DownloadItem?) -> some View {
-        if file.isDirectory && !model.busyFileIds.contains(file.fid) {
-            IconView(.chevronRight, size: 14).foregroundStyle(Color.ink3)
-        } else {
-            DownloadStateControl(item: state, busy: model.busyFileIds.contains(file.fid)) { download(file) }
         }
     }
 
@@ -694,7 +694,7 @@ private final class FrameBox {
     var frames: [String: CGRect] = [:]
 }
 
-private struct HeaderOffsetKey: PreferenceKey {
+struct HeaderOffsetKey: PreferenceKey {
     static let defaultValue: CGFloat = .infinity
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
@@ -712,6 +712,23 @@ enum FileRow {
         guard let n = Double(raw) else { return raw }
         let date = Date(timeIntervalSince1970: n > 1e12 ? n / 1000 : n)
         return date.formatted(date: .numeric, time: .shortened)
+    }
+}
+
+/// 行尾：文件夹是箭头，文件是下载状态（独立观察单行下载状态，避免进度刷新重绘整表）
+private struct ShareRowTrailing: View {
+    @Environment(AppModel.self) private var app
+    let shareURL: String
+    let file: ShareFile
+    let busy: Bool
+    let start: () -> Void
+
+    var body: some View {
+        if file.isDirectory && !busy {
+            IconView(.chevronRight, size: 14).foregroundStyle(Color.ink3)
+        } else {
+            DownloadStateControl(item: app.downloads.shareFiles[shareURL]?[file.fid], busy: busy, start: start)
+        }
     }
 }
 

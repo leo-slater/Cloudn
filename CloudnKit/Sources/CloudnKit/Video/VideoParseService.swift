@@ -86,7 +86,12 @@ public final class VideoParseService: Sendable {
         if let error = Self.unexpandedError(original: link, resolved: resolved) { throw error }
         var cookie = ""
         if let kind = resolved.platform.accountKind { cookie = await credentials.cookie(for: kind) ?? "" }
-        let result = try await steps.measure("解析") { try await parser.parse(resolved, cookie: cookie) }
+        let result: VideoParseResult
+        do {
+            result = try await steps.measure("解析") { try await parser.parse(resolved, cookie: cookie) }
+        } catch let error as VideoParseError {
+            throw Self.attachExpandedSniffURL(error, original: link, resolved: resolved)
+        }
         // 只给了一个多清晰度 m3u8 的，拆成可挑选的清晰度
         let medias = await steps.measure("拆分清晰度") { await HLSVariants.expand(result.medias.map { $0.withSecureURLs() }) }
         return VideoParseResult(platform: result.platform, title: result.title, author: result.author, avatar: result.avatar,
@@ -105,6 +110,12 @@ public final class VideoParseService: Sendable {
                                    sniffURL: resolved.url)
         }
         return VideoParseError(.unsupported, "短链展开失败，请复制完整链接后重试")
+    }
+
+    /// 短链展开出终址后，若具体解析器抛出的错误未携带 sniffURL，补上展开后的地址以免网页嗅探重新跳回短链落地页
+    static func attachExpandedSniffURL(_ error: VideoParseError, original: DetectedVideoLink, resolved: DetectedVideoLink) -> VideoParseError {
+        guard error.sniffURL == nil, resolved.url != original.url else { return error }
+        return VideoParseError(error.kind, error.detail, sniffURL: resolved.url)
     }
 
     /// 展开短链（最多 5 跳），终址能重新识别就用新的识别结果
@@ -168,6 +179,12 @@ public enum AccountValidator {
         case .cloud189: return Cloud189Resolver.normalizeCredential(trimmed)
         case .dropbox: return DropboxResolver.normalizeCredential(trimmed)
         case .webdav: return WebDAVResolver.normalizeCredential(trimmed)
+        case .instagram, .threads:
+            if (CookieUtil.value(of: "ds_user_id", in: trimmed) ?? "").isEmpty,
+               let uid = OverseasAccount.igUserID(cookie: trimmed) {
+                return CookieUtil.setting("ds_user_id", uid, in: trimmed)
+            }
+            return trimmed
         default: return trimmed
         }
     }

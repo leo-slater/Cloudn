@@ -167,7 +167,7 @@ public final class Pan115Resolver: ShareResolver, @unchecked Sendable {
             return DownloadLink(fileName: file.name, url: link.url, size: link.size > 0 ? link.size : file.size,
                                 headers: link.headers, cleanupToken: cleanupToken)
         } catch {
-            await cleanup(token: cleanupToken)
+            await Task.detached { [self] in await cleanup(token: cleanupToken) }.value
             throw error
         }
     }

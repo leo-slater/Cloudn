@@ -88,9 +88,11 @@ public enum SubtitleConverter {
         return milliseconds(total)
     }
 
+    private static let vttTagRx = Rx(#"<[^>]*>"#)
+
     /// 去掉 cue 文本里的标签（`<c>`、`<00:00:01.000>`、`<v 名字>`、`<b>` 等）并还原实体
     static func cleanVTTText(_ line: String) -> String {
-        var s = Rx(#"<[^>]*>"#).replacing(in: line, with: "")
+        var s = vttTagRx.replacing(in: line, with: "")
         let entities: [(String, String)] = [("&nbsp;", " "), ("&lrm;", ""), ("&rlm;", ""), ("&lt;", "<"), ("&gt;", ">"),
                                             ("&quot;", "\""), ("&#39;", "'"), ("&apos;", "'"), ("&amp;", "&")]
         for (k, v) in entities { s = s.replacingOccurrences(of: k, with: v) }

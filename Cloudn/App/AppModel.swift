@@ -86,7 +86,7 @@ final class AppModel {
                                     launchedInBackground: launchedInBackground) { snapshot.get() }
         background = BackgroundTransfers(engine: engine, staging: support.appendingPathComponent("background", isDirectory: true))
         let transfers = background
-        Task { await engine.setBackgroundSubmitter { [weak transfers] jobs in transfers?.submit(jobs) } }
+        Task { [transfers] in await engine.setBackgroundSubmitter { [weak transfers] jobs in transfers?.submit(jobs) } }
         // 兜底：被系统在后台拉起、之后用户才打开应用时，场景的 .active 不一定会走到 scenePhaseChanged，
         // 应用一变成活跃就把引擎切回前台（重复调用无副作用）
         NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
@@ -218,10 +218,9 @@ final class AppModel {
     }
 
     /// 设置了「完成后移动到」时，把文件（保留子目录）移到所选文件夹
+    /// 安全作用域权限由 `AppSettings.resolveExportFolder()` 持有，不在此重复 `start/stop`，避免提前撤销整应用权限
     private func exportIfNeeded(_ item: DownloadItem, file: URL) async {
         guard let folder = settings.exportFolder else { return }
-        let accessing = folder.startAccessingSecurityScopedResource()
-        defer { if accessing { folder.stopAccessingSecurityScopedResource() } }
         let sub = (item.outputPath as NSString?)?.deletingLastPathComponent ?? ""
         let dir = sub.isEmpty ? folder : folder.appendingPathComponent(sub, isDirectory: true)
         do {

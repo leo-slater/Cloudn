@@ -56,7 +56,7 @@ public enum UploadBody: Sendable {
 extension HTTPClient {
     private static let uploader = UploadSession()
 
-    /// 上传：带发送进度回调（已发送字节数），超时放宽到 10 分钟。文件中间的一段超过 32MB 时先切到临时文件再传
+    /// 上传：带发送进度回调（已发送字节数），超时放宽到 10 分钟。文件中间的一段超过 8MB 时先切到临时文件再传
     public func upload(_ request: HTTPRequest, body: UploadBody, progress: (@Sendable (Int64) -> Void)? = nil) async throws -> HTTPResponse {
         guard let url = URL(string: request.url) else { throw HTTPError.invalidURL(request.url) }
         var urlRequest = URLRequest(url: url, timeoutInterval: max(request.timeout, 600))
@@ -71,7 +71,7 @@ extension HTTPClient {
         case .file(let file, let offset, let length):
             let whole = offset == 0 && length == FileChunks.size(of: file)
             if whole { return try await Self.uploader.run(urlRequest, source: .file(file), progress: progress) }
-            if length <= 32 << 20 {
+            if length <= 8 << 20 {
                 return try await Self.uploader.run(urlRequest, source: .data(try FileChunks.read(file, offset: offset, length: Int(length))), progress: progress)
             }
             let temp = FileManager.default.temporaryDirectory.appendingPathComponent("cloudn-part-\(UUID().uuidString)")
@@ -85,7 +85,7 @@ extension HTTPClient {
 extension FileChunks {
     /// 把文件里的一段复制成新文件（1MB 一块）
     static func copy(_ source: URL, offset: Int64, length: Int64, to dest: URL) throws {
-        FileManager.default.createFile(atPath: dest.path, contents: nil)
+        _ = FileManager.default.createFile(atPath: dest.path, contents: nil)
         let input = try FileHandle(forReadingFrom: source)
         defer { try? input.close() }
         let output = try FileHandle(forWritingTo: dest)
@@ -211,7 +211,7 @@ public struct MultipartForm: Sendable {
     /// 写成临时文件（整文件上传）；调用方用完删除
     public func write(fileField: String, fileName: String, mime: String = "application/octet-stream", file: URL) throws -> URL {
         let out = FileManager.default.temporaryDirectory.appendingPathComponent("cloudn-form-\(UUID().uuidString)")
-        FileManager.default.createFile(atPath: out.path, contents: nil)
+        _ = FileManager.default.createFile(atPath: out.path, contents: nil)
         let handle = try FileHandle(forWritingTo: out)
         defer { try? handle.close() }
         try handle.write(contentsOf: head(fileField: fileField, fileName: fileName, mime: mime))

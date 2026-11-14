@@ -1,4 +1,5 @@
 // Cloudn · SPDX-License-Identifier: AGPL-3.0-or-later
+import CloudnKit
 import ImageIO
 import SwiftUI
 import UIKit
@@ -8,38 +9,64 @@ import UIKit
 final class ImageLoader {
     static let shared = ImageLoader()
     private let cache = NSCache<NSString, UIImage>()
-    private let session: URLSession = {
-        let config = URLSessionConfiguration.default
-        config.httpShouldSetCookies = false
-        config.urlCache = URLCache(memoryCapacity: 20 << 20, diskCapacity: 200 << 20)
-        return URLSession(configuration: config)
-    }()
+    private let urlCache = URLCache(memoryCapacity: 20 << 20, diskCapacity: 200 << 20)
+    private var sessionProxy: NetworkProxy?
+    private var session: URLSession
+    private var inFlight: [String: Task<UIImage?, Never>] = [:]
 
     init() {
+        let proxy = NetworkProxy.current
+        sessionProxy = proxy
+        session = Self.makeSession(proxy: proxy, urlCache: urlCache)
         cache.countLimit = 300
         // 按解码后的字节数计费，图集翻多了也不会把内存吃满
         cache.totalCostLimit = 120 << 20
     }
 
+    private static func makeSession(proxy: NetworkProxy?, urlCache: URLCache) -> URLSession {
+        let config = URLSessionConfiguration.default
+        config.httpShouldSetCookies = false
+        config.urlCache = urlCache
+        proxy?.apply(to: config)
+        return URLSession(configuration: config)
+    }
+
+    private func currentSession() -> URLSession {
+        let proxy = NetworkProxy.current
+        if proxy != sessionProxy {
+            session.finishTasksAndInvalidate()
+            sessionProxy = proxy
+            session = Self.makeSession(proxy: proxy, urlCache: urlCache)
+        }
+        return session
+    }
+
     func clear() {
         cache.removeAllObjects()
-        session.configuration.urlCache?.removeAllCachedResponses()
+        urlCache.removeAllCachedResponses()
     }
 
     func cached(_ url: String) -> UIImage? { cache.object(forKey: url as NSString) }
 
     func load(_ url: String, headers: [String: String]) async -> UIImage? {
         if let hit = cache.object(forKey: url as NSString) { return hit }
-        guard let u = URL(string: url) else { return nil }
-        var request = URLRequest(url: u)
-        for (k, v) in headers { request.setValue(v, forHTTPHeaderField: k) }
-        guard let (data, _) = try? await session.data(for: request) else { return nil }
-        // 原图常有三四千像素（解码后四五十 MB），按最长边 1600 像素降采样解码，放在后台线程
-        guard let image = await Task.detached(priority: .userInitiated, operation: { Self.downsample(data, maxPixel: 1600) }).value else {
-            return nil
+        if headers.isEmpty, let ongoing = inFlight[url] { return await ongoing.value }
+        let activeSession = currentSession()
+        let task = Task<UIImage?, Never> {
+            guard let u = URL(string: url) else { return nil }
+            var request = URLRequest(url: u)
+            for (k, v) in headers { request.setValue(v, forHTTPHeaderField: k) }
+            guard let (data, _) = try? await activeSession.data(for: request) else { return nil }
+            // 原图常有三四千像素（解码后四五十 MB），按最长边 1600 像素降采样解码，放在后台线程
+            return await Task.detached(priority: .userInitiated, operation: { Self.downsample(data, maxPixel: 1600) }).value
         }
-        let cost = image.cgImage.map { $0.bytesPerRow * $0.height } ?? data.count
-        cache.setObject(image, forKey: url as NSString, cost: cost)
+        if headers.isEmpty { inFlight[url] = task }
+        let image = await task.value
+        if headers.isEmpty { inFlight[url] = nil }
+        if let image {
+            let cost = image.cgImage.map { $0.bytesPerRow * $0.height } ?? 0
+            cache.setObject(image, forKey: url as NSString, cost: cost)
+        }
         return image
     }
 

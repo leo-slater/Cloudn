@@ -91,7 +91,7 @@ public final class GuangYaResolver: ShareResolver, @unchecked Sendable {
             let data = try await call("get_res_download_url", .object([("fileId", .string(target.fid))]), fallback: "获取下载地址失败", cred: cred)
             return try Self.personalLink(data, file: file, cleanupToken: folder)
         } catch {
-            await cleanup(token: folder)
+            await Task.detached { [self] in await cleanup(token: folder) }.value
             throw error
         }
     }

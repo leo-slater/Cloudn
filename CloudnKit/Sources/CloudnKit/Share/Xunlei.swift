@@ -202,7 +202,7 @@ public final class XunleiResolver: ShareResolver, @unchecked Sendable {
         let savedId = trace?[file.fid].string.nilIfBlank ?? restored["file_id"].string
         guard !savedId.isEmpty else { throw CloudnError("迅雷转存失败，请稍后重试") }
         defer {
-            Task { [self] in
+            Task.detached { [self] in
                 let del = OrderedJSON.object([("ids", .array([.string(savedId)])), ("space", .string(""))])
                 _ = try? await pan("POST:/drive/v1/files:batchDelete", url: panBase + "/drive/v1/files:batchDelete", body: del, identity: id)
             }

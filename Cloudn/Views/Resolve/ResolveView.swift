@@ -89,11 +89,6 @@ struct ResolveView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    Text("解析")
-                        .font(.pageTitle)
-                        .foregroundStyle(Color.ink)
-                        .padding(.horizontal, 4)
-                        .padding(.top, 12)
                     if isFirstRun { firstRunCard }
                     if !app.batchJobs.isEmpty { batchSection }
                     if !app.bookmarks.bookmarks.isEmpty { bookmarkSection }
@@ -101,6 +96,7 @@ struct ResolveView: View {
                     supportFooter
                 }
                 .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 24)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .readableWidth()
@@ -119,13 +115,14 @@ struct ResolveView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 8)
                 .readableWidth()
+                .bottomBarBackdrop()
                 .animation(.spring(response: 0.35, dampingFraction: 0.86), value: clipboardOffer)
                 .animation(.spring(response: 0.35, dampingFraction: 0.86), value: detectionKey)
             }
             .background(Color.paper)
             // 输入框浮在底部：提示出现在它上方
             .liftsToast()
-            .toolbar(.hidden, for: .navigationBar)
+            .navigationTitle("解析")
             .navigationDestination(item: $shareModel) { ShareBrowserView(model: $0) }
             // 离开分享页（返回或换了一个分享）：清掉预览 / 复制直链留下的临时转存
             .onChange(of: shareModel) { old, new in
@@ -159,18 +156,16 @@ struct ResolveView: View {
                 Text("夸克 / UC 口令需发给第三方「\(QuarkKouling.serviceName)」服务换取分享 ID，只发送口令文字，不含账号信息。可在「设置 › 解析」中更改。")
             }
             .alert(sniffOffer?.message ?? "", isPresented: Binding(get: { sniffOffer != nil }, set: { if !$0 { sniffOffer = nil } })) {
-                // 需要登录时「去登录」排第一并设为首选，嗅探是备选；其他失败首选嗅探，另给「重试」
+                // 需要登录时「去登录」排第一，嗅探是备选；其他失败首选嗅探，另给「重试」
                 if let kind = sniffOffer?.loginKind {
                     Button("去登录") {
                         loginRetry = LoginRetry(text: sniffOffer?.text ?? "", kind: kind,
                                                 stamp: app.accounts.list(kind).first?.updatedAt)
                         loginKind = kind
                     }
-                    .keyboardShortcut(.defaultAction)
                     Button("网页嗅探") { if let offer = sniffOffer { sniffTarget = SniffTarget(url: offer.url) } }
                 } else {
                     Button("网页嗅探") { if let offer = sniffOffer { sniffTarget = SniffTarget(url: offer.url) } }
-                        .keyboardShortcut(.defaultAction)
                     Button("重试") { if let text = sniffOffer?.text, !text.isEmpty { open(text: text) } }
                 }
                 Button("取消", role: .cancel) {}
@@ -547,12 +542,8 @@ struct ResolveView: View {
             clipboardOffer = false
             return
         }
-        let pattern = UIPasteboard.DetectionPattern.probableWebURL
-        clipboardOffer = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
-            board.detectPatterns(for: [pattern]) { result in
-                cont.resume(returning: (try? result.get())?.contains(pattern) ?? false)
-            }
-        }
+        let pattern: PartialKeyPath<UIPasteboard.DetectedValues> = \.probableWebURL
+        clipboardOffer = (try? await board.detectedPatterns(for: [pattern]))?.contains(pattern) ?? false
     }
 
     // MARK: 批量任务

@@ -259,23 +259,47 @@ public struct AliyunCredential: Equatable, Sendable {
     }
 }
 
-extension ISO8601DateFormatter {
-    /// 列表里显示的修改时间：ISO 8601 转成本地「yyyy-MM-dd HH:mm」，认不出原样返回
-    static func listText(_ iso: String) -> String {
-        guard let date = flexible(iso) else { return iso }
+private final class AliyunDateFormatters: @unchecked Sendable {
+    static let shared = AliyunDateFormatters()
+    private let lock = NSLock()
+    private let list: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "en_US_POSIX")
         f.dateFormat = "yyyy-MM-dd HH:mm"
-        return f.string(from: date)
+        return f
+    }()
+    private let isoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+    private let isoPlain: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime]
+        return f
+    }()
+
+    func listText(_ iso: String) -> String {
+        guard let date = flexible(iso) else { return iso }
+        lock.lock(); defer { lock.unlock() }
+        return list.string(from: date)
+    }
+
+    func flexible(_ s: String) -> Date? {
+        guard !s.isEmpty else { return nil }
+        lock.lock(); defer { lock.unlock() }
+        return isoFractional.date(from: s) ?? isoPlain.date(from: s)
+    }
+}
+
+extension ISO8601DateFormatter {
+    /// 列表里显示的修改时间：ISO 8601 转成本地「yyyy-MM-dd HH:mm」，认不出原样返回
+    static func listText(_ iso: String) -> String {
+        AliyunDateFormatters.shared.listText(iso)
     }
 
     /// 带或不带毫秒的 ISO 8601 时间
     static func flexible(_ s: String) -> Date? {
-        guard !s.isEmpty else { return nil }
-        let f = ISO8601DateFormatter()
-        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let d = f.date(from: s) { return d }
-        f.formatOptions = [.withInternetDateTime]
-        return f.date(from: s)
+        AliyunDateFormatters.shared.flexible(s)
     }
 }

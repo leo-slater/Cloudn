@@ -59,8 +59,11 @@ struct BatchView: View {
                         Label { Text("查看下载") } icon: { Image(icon: .download) }.frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PillButtonStyle(kind: .primary))
+                    .floatingShadow()
                     .padding(.horizontal, 16)
+                    .padding(.top, 6)
                     .padding(.bottom, 8)
+                    .bottomBarBackdrop()
                 }
             }
             .fullScreenCover(item: $sniffing) { SnifferView(url: $0.url) }

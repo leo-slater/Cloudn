@@ -39,8 +39,9 @@ struct BilibiliParser: VideoParser {
                 cookie = CookieUtil.setting("buvid4", ids.b4, in: cookie)
             }
         }
+        let requestCookie = cookie
         let query = link.id.lowercased().hasPrefix("bv") ? "bvid=\(link.id)" : "aid=\(link.id.dropFirst(2))"
-        let view = try await VideoHTTP.getJSON("\(Self.viewURL)?\(query)", headers: Self.headers(cookie), what: "B站视频信息")
+        let view = try await VideoHTTP.getJSON("\(Self.viewURL)?\(query)", headers: Self.headers(requestCookie), what: "B站视频信息")
         guard view["code"].int == 0 else {
             throw VideoParseError(.notFound, "B站视频信息接口返回 code=\(view["code"].int) \(view["message"].string)")
         }
@@ -59,15 +60,15 @@ struct BilibiliParser: VideoParser {
         let base = FileNames.base(title, fallback: "bilibili_\(bvid)")
 
         // 字幕列表（登录后才有）与视频流互不依赖：同时请求，不再取完视频流再排队取字幕
-        async let subtitleList = subtitleTracks(bvid: bvid, cid: cid, cookie: cookie)
+        async let subtitleList = subtitleTracks(bvid: bvid, cid: cid, cookie: requestCookie)
 
         // DASH 分轨：列出每档清晰度（最高档在前，作为默认），下载后合并；未登录时最高通常只有 480P / 720P
         var medias: [VideoMedia] = []
-        if let choices = try? await dashChoices(bvid: bvid, cid: cid, cookie: cookie) {
+        if let choices = try? await dashChoices(bvid: bvid, cid: cid, cookie: requestCookie) {
             for (i, c) in choices.enumerated() {
                 let label = Self.qualityLabel(c.quality) + (c.hevc ? " · HEVC" : "")
                 let name = i == 0 ? "\(base).mp4" : "\(base)_\(FileNames.base(label, fallback: "\(c.quality)")).mp4"
-                medias.append(VideoMedia(url: c.video, kind: .video, fileName: name, headers: Self.headers(cookie),
+                medias.append(VideoMedia(url: c.video, kind: .video, fileName: name, headers: Self.headers(requestCookie),
                                          quality: label, audioURL: c.audio, variantGroup: "video"))
             }
         }
@@ -75,14 +76,14 @@ struct BilibiliParser: VideoParser {
         if medias.isEmpty {
             let play = try await VideoHTTP.getJSON(
                 "\(Self.playURL)?bvid=\(bvid)&cid=\(cid)&qn=80&fnval=1&fnver=0&fourk=1&platform=html5&high_quality=1",
-                headers: Self.headers(cookie), what: "B站取直链")
+                headers: Self.headers(requestCookie), what: "B站取直链")
             let first = play["data"]["durl"][0]
             let url = first["url"].string
             guard !url.isEmpty else {
                 throw VideoParseError(.unsupported, "B站未返回可下载的视频流（可能是番剧/付费内容）")
             }
             media = VideoMedia(url: url, kind: .video, fileName: "\(base).mp4", size: first["size"].int64 > 0 ? first["size"].int64 : -1,
-                               headers: Self.headers(cookie), quality: Self.qualityLabel(play["data"]["quality"].int))
+                               headers: Self.headers(requestCookie), quality: Self.qualityLabel(play["data"]["quality"].int))
         }
         let owner = data["owner"]
         let collection = Self.collection(data, explicitPage: explicitPage != nil)

@@ -159,7 +159,7 @@ final class LiveDriveTests: XCTestCase {
             h.write(Data(line.utf8))
             h.closeFile()
         } else {
-            FileManager.default.createFile(atPath: path, contents: Data(line.utf8))
+            _ = FileManager.default.createFile(atPath: path, contents: Data(line.utf8))
         }
     }
 }

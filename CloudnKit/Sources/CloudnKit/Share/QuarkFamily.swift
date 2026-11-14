@@ -90,8 +90,20 @@ public final class QuarkFamilyResolver: ShareResolver, @unchecked Sendable {
     private actor State {
         var guestPugs = ""
         var lastRefresh: Date = .distantPast
+        var refreshTask: Task<Void, Never>?
         func setPugs(_ v: String) { guestPugs = v }
-        func markRefreshed() { lastRefresh = Date() }
+        func refreshIfNeeded(interval: TimeInterval, work: @Sendable @escaping () async -> Void) async {
+            if let existing = refreshTask {
+                await existing.value
+                return
+            }
+            guard Date().timeIntervalSince(lastRefresh) > interval else { return }
+            lastRefresh = Date()
+            let task = Task { await work() }
+            refreshTask = task
+            await task.value
+            refreshTask = nil
+        }
     }
 
     public var platform: SharePlatform { config.platform }
@@ -358,16 +370,17 @@ public final class QuarkFamilyResolver: ShareResolver, @unchecked Sendable {
         return name.isEmpty ? "\(config.platform.displayName)用户" : name
     }
 
-    /// 返回 __puus 未过期的 Cookie：超过刷新间隔就剥掉 __puus 请求 /config，让服务端重新下发
+    /// 返回 __puus 未过期的 Cookie：超过刷新间隔就剥掉 __puus 请求 /config，让服务端重新下发；并发请求合并为一次
     func freshCookie() async -> String? {
         guard let cookie = await loginCookie() else { return nil }
-        guard Date().timeIntervalSince(await state.lastRefresh) > Self.refreshInterval else { return cookie }
-        let req = HTTPRequest.get(url("/1/clouddrive/config"), headers: [
-            ("Cookie", CookieUtil.removing("__puus", from: cookie)), ("User-Agent", config.apiUA), ("Referer", config.referer)
-        ])
-        if let r = try? await client.send(req) {
-            await absorbCookies(r, cookie: cookie)
-            await state.markRefreshed()
+        await state.refreshIfNeeded(interval: Self.refreshInterval) { [self] in
+            guard let latest = await loginCookie() else { return }
+            let req = HTTPRequest.get(url("/1/clouddrive/config"), headers: [
+                ("Cookie", CookieUtil.removing("__puus", from: latest)), ("User-Agent", config.apiUA), ("Referer", config.referer)
+            ])
+            if let r = try? await client.send(req) {
+                await absorbCookies(r, cookie: latest)
+            }
         }
         return await loginCookie() ?? cookie
     }

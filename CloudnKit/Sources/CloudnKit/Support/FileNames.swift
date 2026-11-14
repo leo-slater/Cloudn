@@ -2,9 +2,11 @@
 import Foundation
 
 public enum FileNames {
+    private static let sanitizeRx = Rx(#"[\\/:*?"<>|\x00-\x1f]"#)
+
     /// 清洗文件名：替换路径/保留字符与控制字符，过长时保留扩展名截断
     public static func sanitize(_ name: String) -> String {
-        var cleaned = Rx(#"[\\/:*?"<>|\x00-\x1f]"#).replacing(in: name, with: "_").trimmed
+        var cleaned = sanitizeRx.replacing(in: name, with: "_").trimmed
         // 以点开头会变成隐藏文件
         while cleaned.hasPrefix(".") { cleaned.removeFirst() }
         if cleaned.count > 120 {
@@ -70,9 +72,11 @@ public enum ByteFormat {
         string(Int64(bytesPerSecond)) + "/s"
     }
 
+    private static let displaySizeRx = Rx(#"([\d.]+)\s*([KMGT]?)"#, ignoreCase: true)
+
     /// 「1.5 M」「320 K」「2.1G」这类展示大小 → 字节（蓝奏云列表用）
     public static func parseDisplay(_ text: String) -> Int64 {
-        guard let m = Rx(#"([\d.]+)\s*([KMGT]?)"#, ignoreCase: true).firstMatch(in: text.trimmed),
+        guard let m = displaySizeRx.firstMatch(in: text.trimmed),
               let value = Double(m[1]) else { return 0 }
         let factor: Double
         switch m[2].uppercased() {

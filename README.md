@@ -19,7 +19,7 @@
 
 开源免费 · 无广告 · 无服务器 · 所有解析在手机本地完成
 
-[**下载 v1.0.0**](https://github.com/mengangs/Cloudn/releases/latest) · [支持的平台](#支持的平台) · [功能一览](#功能一览) · [常见问题](#常见问题)
+[**下载最新版**](https://github.com/mengangs/Cloudn/releases/latest) · [支持的平台](#支持的平台) · [功能一览](#功能一览) · [常见问题](#常见问题)
 
 <br>
 
@@ -139,7 +139,11 @@ Cloudn 没有上架 App Store，可以通过以下方式安装：
 
 1. 在 [Releases](https://github.com/mengangs/Cloudn/releases/latest) 下载最新版 `Cloudn-vX.Y.Z.ipa`（附带 `SHA256SUMS.txt` 可校验）；想尝鲜可以在 [Actions](https://github.com/mengangs/Cloudn/actions) 最近一次成功运行的 Artifacts 里取 `Cloudn-unsigned-ipa`。
 2. IPA 未签名，用 AltStore、SideStore、Sideloadly、TrollStore 等工具签名安装，需要 iOS 17 及以上。
-3. 以后 App 内「设置 › 检查更新」会提示新版本，可直接下载。
+3. **SideStore / AltStore 订阅源**：可直接添加软件源地址接收更新推送，或安装后在 App 内「设置 › 更新 › 添加侧载软件源」一键导入：
+   ```text
+   https://raw.githubusercontent.com/mengangs/Cloudn/main/altstore.json
+   ```
+4. 以后 App 内「设置 › 检查更新」也会提示新版本，可直接下载。
 
 > 部分企业证书 / 重签安装下，系统不允许 App 直接访问外部文件夹：「完成后保存到」选文件夹没反应时，在下载页点「选择」，勾选文件后用「存储到「文件」」导出即可。
 

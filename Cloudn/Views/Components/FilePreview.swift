@@ -398,6 +398,8 @@ struct PlayerController: UIViewControllerRepresentable {
 
     static func dismantleUIViewController(_ controller: AVPlayerViewController, coordinator: DismissPanCoordinator) {
         controller.player?.pause()
+        controller.player = nil
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 }
 

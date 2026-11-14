@@ -6,6 +6,13 @@ import Foundation
 public enum Log {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var url: URL?
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        return f
+    }()
+    private static let redactRx = Rx(#"(https?://[^\s?]+)\?[^\s]*"#)
     static let maxSize = 2 * 1024 * 1024
 
     /// 设置日志文件位置（应用启动时调用；未设置时不写）
@@ -30,10 +37,15 @@ public enum Log {
     }
 
     private static func write(_ level: String, _ message: String) {
-        let line = "\(timestamp()) [\(level)] \(redact(message))\n"
+        lock.lock()
+        let hasTarget = url != nil
+        lock.unlock()
+        guard hasTarget else { return }
+        let redacted = redact(message)
         lock.lock()
         defer { lock.unlock() }
         guard let url else { return }
+        let line = "\(dateFormatter.string(from: Date())) [\(level)] \(redacted)\n"
         let fm = FileManager.default
         if !fm.fileExists(atPath: url.path) {
             try? fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -48,19 +60,12 @@ public enum Log {
             try? handle.truncate(atOffset: 0)
             try? handle.write(contentsOf: tail)
         }
-        try? handle.seekToEnd()
+        _ = try? handle.seekToEnd()
         try? handle.write(contentsOf: Data(line.utf8))
-    }
-
-    private static func timestamp() -> String {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
-        return f.string(from: Date())
     }
 
     /// 去掉 URL 查询串里的签名 / 令牌，避免日志泄露直链凭据
     static func redact(_ message: String) -> String {
-        Rx(#"(https?://[^\s?]+)\?[^\s]*"#).replacing(in: message, with: "$1?…")
+        redactRx.replacing(in: message, with: "$1?…")
     }
 }

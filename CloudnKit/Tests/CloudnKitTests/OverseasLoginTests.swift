@@ -28,6 +28,8 @@ final class OverseasLoginTests: XCTestCase {
         XCTAssertFalse(OverseasAccount.looksLoggedIn(.twitter, cookie: "auth_token=; ct0=def"))
 
         XCTAssertTrue(OverseasAccount.looksLoggedIn(.instagram, cookie: "csrftoken=c; sessionid=1%3Aabc; ds_user_id=123"))
+        XCTAssertTrue(OverseasAccount.looksLoggedIn(.instagram, cookie: "csrftoken=c; sessionid=55501234%3Aabc"))
+        XCTAssertFalse(OverseasAccount.looksLoggedIn(.instagram, cookie: "csrftoken=c; sessionid=invalid_no_uid"))
         XCTAssertFalse(OverseasAccount.looksLoggedIn(.instagram, cookie: "csrftoken=c; mid=m"))
 
         XCTAssertTrue(OverseasAccount.looksLoggedIn(.tiktok, cookie: "ttwid=t; sessionid=s1"))
@@ -56,6 +58,8 @@ final class OverseasLoginTests: XCTestCase {
         XCTAssertNil(OverseasAccount.xUserID(cookie: "ct0=a"))
         XCTAssertEqual(OverseasAccount.fallbackName(.twitter, cookie: "twid=u%3D1234567890"), "X 用户 · 7890")
         XCTAssertEqual(OverseasAccount.fallbackName(.instagram, cookie: "ds_user_id=55501234"), "Instagram 用户 · 1234")
+        XCTAssertEqual(OverseasAccount.fallbackName(.instagram, cookie: "sessionid=55501234%3Aabc"), "Instagram 用户 · 1234")
+        XCTAssertTrue(AccountValidator.normalize(.instagram, "sessionid=55501234%3Aabc").contains("ds_user_id=55501234"))
         XCTAssertEqual(OverseasAccount.fallbackName(.facebook, cookie: "c_user=100099998888; xs=1"), "Facebook 用户 · 8888")
         XCTAssertEqual(OverseasAccount.fallbackName(.reddit, cookie: "reddit_session=x"), "Reddit 用户")
         XCTAssertEqual(OverseasAccount.conclude(.valid("@jack"), kind: .twitter, cookie: ""), "@jack")
@@ -109,6 +113,8 @@ final class OverseasLoginTests: XCTestCase {
     func testInstagramProbe() {
         let ok = JSON(text: #"{"user":{"pk":"1","username":"insta_user","full_name":"I"},"status":"ok"}"#)
         XCTAssertEqual(InstagramParser.probeResult(status: 200, json: ok), .valid("insta_user"))
+        XCTAssertEqual(InstagramParser.probeResult(status: 302, location: "https://www.instagram.com/accounts/login/?next=%2F", json: nil), .invalid)
+        XCTAssertEqual(InstagramParser.probeResult(status: 302, location: "https://www.instagram.com/accounts/onetap/?next=%2F", json: nil), .unknown)
         XCTAssertEqual(InstagramParser.probeResult(status: 302, json: nil), .invalid)
         let required = JSON(text: #"{"message":"login_required","status":"fail"}"#)
         XCTAssertEqual(InstagramParser.probeResult(status: 400, json: required), .invalid)

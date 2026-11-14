@@ -130,7 +130,9 @@ struct SaveToDriveView: View {
                 .disabled(saving || errorMessage != nil)
                 .floatingShadow()
                 .padding(.horizontal, 16)
+                .padding(.top, 6)
                 .padding(.bottom, 8)
+                .bottomBarBackdrop()
             }
             .alert("新建文件夹", isPresented: $naming) {
                 TextField("文件夹名称", text: $newName)

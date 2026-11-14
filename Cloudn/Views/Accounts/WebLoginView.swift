@@ -127,15 +127,23 @@ struct WebLoginView: View {
         defer { verifying = false }
         let credential = await store.credential(for: kind)
         guard kind.looksLoggedIn(credential) else {
-            if manual { hint = "还没有检测到登录状态，请先在页面中完成登录" }
+            if manual {
+                let msg = "还没有检测到登录状态，请先在页面中完成登录"
+                hint = msg
+                app.show(msg, error: true)
+            }
             return false
         }
-        if let name = await app.accounts.login(kind, cookie: credential) {
+        if let name = await app.accounts.login(kind, cookie: credential, webLogin: true) {
             app.show("已登录：\(name)")
             dismiss()
             return true
         }
-        if manual { hint = "登录状态校验失败，请确认已在页面中完成登录后再点「完成」" }
+        if manual {
+            let msg = "登录状态校验失败，请确认已在页面中完成登录后再点「完成」"
+            hint = msg
+            app.show(msg, error: true)
+        }
         return false
     }
 }
@@ -160,7 +168,7 @@ final class WebLoginStore {
     @ObservationIgnored var lastHost = ""
     /// 海外平台：连不上时提示开 VPN / 代理；国内网站只提示检查网络
     @ObservationIgnored var overseas = false
-    @ObservationIgnored private var blankCheck: Task<Void, Never>?
+    @ObservationIgnored var blankCheck: Task<Void, Never>?
     @ObservationIgnored let dataStore: WKWebsiteDataStore = {
         let store = WKWebsiteDataStore.nonPersistent()
         store.useAppProxy()
@@ -272,6 +280,19 @@ final class WebLoginStore {
                 pairs.append("\(c.name)=\(c.value)")
             }
         }
+        if let webView, let host = webView.url?.host?.lowercased(),
+           domains.contains(where: { host == $0 || host.hasSuffix("." + $0) }),
+           let raw = try? await webView.evaluateJavaScript("document.cookie") as? String, !raw.isEmpty {
+            // 刚通过 JS / XHR 登录完成时 WKHTTPCookieStore 可能尚未同步，补充当前页面 document.cookie
+            for item in raw.split(separator: ";") {
+                let parts = item.split(separator: "=", maxSplits: 1)
+                guard parts.count == 2 else { continue }
+                let name = String(parts[0]).trimmingCharacters(in: .whitespaces)
+                let value = String(parts[1]).trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty, seen.insert(name).inserted else { continue }
+                pairs.append("\(name)=\(value)")
+            }
+        }
         return pairs.joined(separator: "; ")
     }
 }
@@ -312,6 +333,15 @@ struct LoginWebView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+    static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
+        coordinator.observation?.invalidate()
+        coordinator.observation = nil
+        coordinator.store?.blankCheck?.cancel()
+        coordinator.store?.blankCheck = nil
+        uiView.stopLoading()
+        uiView.navigationDelegate = nil
+    }
 
     static let resourceErrorScript = """
     (function(){try{window.__cloudnErrors=[];var push=function(m){if(window.__cloudnErrors.length<30)window.__cloudnErrors.push(m);};

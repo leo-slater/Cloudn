@@ -22,7 +22,7 @@ public actor DownloadEngine {
     private var onFinished: (@Sendable (DownloadItem) async -> Void)?
     private var onFailed: (@Sendable (DownloadItem) async -> Void)?
 
-    private var items: [DownloadItem] = []
+    private var items: [DownloadItem]
     private var runners: [UUID: Task<Void, Never>] = [:]
     private var progress: [UUID: TransferProgress] = [:]
     private var lastBytes: [UUID: (Int64, Date)] = [:]
@@ -59,12 +59,15 @@ public actor DownloadEngine {
     public init(baseDirectory: URL, downloadsDirectory: URL, client: HTTPClient = .shared,
                 torrentNetwork: TorrentNetwork = TorrentNetworks.system, launchedInBackground: Bool = false,
                 settings: @escaping @Sendable () -> DownloadSettings) {
+        let workDir = baseDirectory.appendingPathComponent("work", isDirectory: true)
+        let state = baseDirectory.appendingPathComponent("downloads.json")
+        let backup = baseDirectory.appendingPathComponent("downloads.json.bak")
         self.downloadsDirectory = downloadsDirectory
         torrentCacheDirectory = baseDirectory.appendingPathComponent("torrents", isDirectory: true)
         self.torrentNetwork = torrentNetwork
-        workDirectory = baseDirectory.appendingPathComponent("work", isDirectory: true)
-        stateFile = baseDirectory.appendingPathComponent("downloads.json")
-        backupFile = baseDirectory.appendingPathComponent("downloads.json.bak")
+        workDirectory = workDir
+        stateFile = state
+        backupFile = backup
         self.settings = settings
         self.client = client
         backgroundMode = launchedInBackground
@@ -72,10 +75,10 @@ public actor DownloadEngine {
         self.limiter = limiter
         streamer = StreamingSession(limiter: limiter)
         let fm = FileManager.default
-        try? fm.createDirectory(at: workDirectory, withIntermediateDirectories: true)
+        try? fm.createDirectory(at: workDir, withIntermediateDirectories: true)
         try? fm.createDirectory(at: downloadsDirectory, withIntermediateDirectories: true)
-        let hadState = fm.fileExists(atPath: stateFile.path) || fm.fileExists(atPath: backupFile.path)
-        if let saved = Self.loadItems(state: stateFile, backup: backupFile) {
+        let hadState = fm.fileExists(atPath: state.path) || fm.fileExists(atPath: backup.path)
+        if let saved = Self.loadItems(state: state, backup: backup) {
             // 上次进程被杀时仍在运行的任务恢复成暂停，由用户决定是否继续（直链可能已过期）；
             // 已交给系统后台会话的任务保持运行，等会话把结果送回来（或由 reconcileBackground 退回前台）
             let restored = saved.map { item in
@@ -85,9 +88,12 @@ public actor DownloadEngine {
                 return copy
             }
             items = restored
-            Self.removeOrphanWork(in: workDirectory, keeping: Set(restored.filter { $0.status != .completed }.map(\.id)))
-        } else if !hadState {
-            Self.removeOrphanWork(in: workDirectory, keeping: [])
+            Self.removeOrphanWork(in: workDir, keeping: Set(restored.filter { $0.status != .completed }.map(\.id)))
+        } else {
+            items = []
+            if !hadState {
+                Self.removeOrphanWork(in: workDir, keeping: [])
+            }
         }
         // 任务表在却完全读不出来时不清理工作目录：里面可能还有能找回的数据
     }
@@ -729,6 +735,7 @@ public actor DownloadEngine {
     /// 返回收回的任务，调用方据此撤掉它们在后台会话里的任务
     @discardableResult
     public func enterForeground() -> [UUID] {
+        guard backgroundMode else { return [] }
         backgroundMode = false
         handOffBlocked = []
         var reclaimed: [UUID] = []

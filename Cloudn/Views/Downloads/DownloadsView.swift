@@ -146,7 +146,7 @@ struct DownloadsView: View {
         return HStack(spacing: 12) {
             if selecting { SelectMark(on: allOn) }
             // 完成数、合计按整组算：筛选（如「进行中」）只决定展开后列出哪些，不该让标题变成「0/2 已完成」
-            GroupHeader(title: group.title, items: app.downloads.items.filter { $0.request.group?.id == group.id })
+            GroupHeader(title: group.title, items: app.downloads.itemsByGroup[group.id] ?? [])
             Spacer(minLength: 0)
             IconView(.chevronRight, size: 14)
                 .foregroundStyle(Color.ink3)
@@ -268,7 +268,13 @@ struct DownloadsView: View {
                 withAnimation(.snappy(duration: 0.25)) { selecting = false; selection = [] }
             }
             .safeAreaInset(edge: .bottom) {
-                if selecting { selectionBar.padding(.horizontal, 16).padding(.bottom, 8) }
+                if selecting {
+                    selectionBar
+                        .padding(.horizontal, 16)
+                        .padding(.top, 6)
+                        .padding(.bottom, 8)
+                        .bottomBarBackdrop()
+                }
             }
             .sensoryFeedback(.selection, trigger: selection)
             .task { await speed.run(app.downloads) }
@@ -353,15 +359,20 @@ struct DownloadsView: View {
 
     private var filterChips: some View {
         let all = app.downloads.items
-        let active = all.filter { $0.status != .completed }.count
+        var completed = 0
+        var failed = 0
+        for item in all {
+            if item.status == .completed { completed += 1 }
+            else if item.status == .failed { failed += 1 }
+        }
+        let active = all.count - completed
         // 大字号下三个胶囊放不下一行：可以横向滑动，文字不截断
         return ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 FilterChip(title: "全部 \(all.count)", selected: filter == .all) { filter = .all }
                 FilterChip(title: "进行中 \(active)", selected: filter == .active) { filter = .active }
-                FilterChip(title: "已完成 \(all.count - active)", selected: filter == .done) { filter = .done }
+                FilterChip(title: "已完成 \(completed)", selected: filter == .done) { filter = .done }
                 // 有失败的才出现：失败多了不用在「进行中」里翻
-                let failed = all.filter { $0.status == .failed }.count
                 if failed > 0 || filter == .failed {
                     FilterChip(title: "失败 \(failed)", selected: filter == .failed) { filter = .failed }
                 }

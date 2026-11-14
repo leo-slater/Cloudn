@@ -114,8 +114,8 @@ struct SnifferView: View {
         }
         // 第一次发现媒体时轻提示一下（底部按钮由灰变亮）
         .sensoryFeedback(.success, trigger: browser.medias.isEmpty) { wasEmpty, isEmpty in wasEmpty && !isEmpty }
-        // 关掉嗅探页时还在录制：丢弃（正在保存的不受影响）
-        .onDisappear { browser.cancelRecording() }
+        // 关掉嗅探页时还在录制：丢弃（正在保存的不受影响），并彻底停掉网页与后台探测
+        .onDisappear { browser.shutdown() }
     }
 
     /// 网页没打开（断网、地址错误、证书问题）：说明原因并给重试，免得只看到一片空白
@@ -344,7 +344,7 @@ struct SnifferView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            DownloadStateControl(item: app.downloads.items.last { $0.request.url == media.url },
+            DownloadStateControl(item: app.downloads.itemsByURL[media.url],
                                  busy: enqueuing.contains(media.url)) { download(media) }
         }
         .contextMenu {
@@ -401,6 +401,9 @@ final class SnifferBrowser: NSObject, WKNavigationDelegate, WKScriptMessageHandl
     /// 等待探测的媒体与正在探测的数量：页面一下子请求几十个地址时，同时最多探测 maxProbes 个
     @ObservationIgnored private var probeQueue: [SniffedMedia] = []
     @ObservationIgnored private var activeProbes = 0
+    @ObservationIgnored private var probeTasks: [UUID: Task<Void, Never>] = [:]
+    @ObservationIgnored private var sourceScanTask: Task<Void, Never>?
+    @ObservationIgnored private var isShutDown = false
     private static let maxProbes = 4
 
     /// 页面里出现过的 MSE 轨道：SourceBuffer 编号 → MIME
@@ -438,6 +441,7 @@ final class SnifferBrowser: NSObject, WKNavigationDelegate, WKScriptMessageHandl
         config.websiteDataStore = .default()
         config.websiteDataStore.useAppProxy()
         config.allowsInlineMediaPlayback = true
+        config.applicationNameForUserAgent = "Version/\(LoginWebView.safariVersion) Mobile/15E148 Safari/604.1"
         let controller = WKUserContentController()
         controller.addUserScript(WKUserScript(source: Self.sniffScript, injectionTime: .atDocumentStart, forMainFrameOnly: false))
         controller.addUserScript(WKUserScript(source: Self.mseScript, injectionTime: .atDocumentStart, forMainFrameOnly: false))
@@ -449,7 +453,7 @@ final class SnifferBrowser: NSObject, WKNavigationDelegate, WKScriptMessageHandl
         controller.add(WeakMessageHandler(self), name: "cloudnMSE")
         webView.navigationDelegate = self
         if let target = URL(string: url) { webView.load(URLRequest(url: target)) }
-        Task { [weak self] in await self?.scanSource(url) }
+        sourceScanTask = Task { [weak self] in await self?.scanSource(url) }
     }
 
     /// 页面源码里直接写着的音视频地址（og:video、<video> 标签、脚本里的 .m3u8 / .mp4）：和页面加载同时进行，
@@ -499,13 +503,16 @@ final class SnifferBrowser: NSObject, WKNavigationDelegate, WKScriptMessageHandl
 
     /// 从队列里取出等待的媒体开始探测，保持同时进行的不超过 maxProbes 个
     private func pumpProbes() {
-        while activeProbes < Self.maxProbes, !probeQueue.isEmpty {
+        while !isShutDown, activeProbes < Self.maxProbes, !probeQueue.isEmpty {
             let media = probeQueue.removeFirst()
             activeProbes += 1
-            Task {
-                await probe(media)
-                activeProbes -= 1
-                pumpProbes()
+            let taskID = UUID()
+            probeTasks[taskID] = Task { [weak self] in
+                guard let self else { return }
+                await self.probe(media)
+                self.probeTasks[taskID] = nil
+                self.activeProbes = max(0, self.activeProbes - 1)
+                self.pumpProbes()
             }
         }
     }
@@ -595,6 +602,26 @@ final class SnifferBrowser: NSObject, WKNavigationDelegate, WKScriptMessageHandl
         recordedBytes = 0
         recordedTracks = 0
         recordCapped = false
+    }
+
+    /// 退出嗅探页时彻底释放 WKWebView、脚本处理器与后台探测任务
+    func shutdown() {
+        guard !isShutDown else { return }
+        isShutDown = true
+        cancelRecording()
+        sourceScanTask?.cancel()
+        sourceScanTask = nil
+        for (_, task) in probeTasks { task.cancel() }
+        probeTasks.removeAll()
+        probeQueue.removeAll()
+        activeProbes = 0
+        webView.stopLoading()
+        webView.navigationDelegate = nil
+        let ucc = webView.configuration.userContentController
+        ucc.removeScriptMessageHandler(forName: "cloudnSniff")
+        ucc.removeScriptMessageHandler(forName: "cloudnMSE")
+        ucc.removeAllUserScripts()
+        webView.loadHTMLString("", baseURL: nil)
     }
 
     /// 停止录制并存入下载列表，返回给用户看的结果说明

@@ -77,7 +77,7 @@ final class LiveParseTests: XCTestCase {
             handle.write(Data(line.utf8))
             handle.closeFile()
         } else {
-            FileManager.default.createFile(atPath: path, contents: Data(line.utf8))
+            _ = FileManager.default.createFile(atPath: path, contents: Data(line.utf8))
         }
     }
 }

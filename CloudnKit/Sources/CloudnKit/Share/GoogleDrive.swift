@@ -296,8 +296,11 @@ public final class GoogleDriveResolver: ShareResolver, @unchecked Sendable {
         return FolderPage(title: title, entries: entries)
     }
 
+    private static let tagRx = Rx(#"<[^>]+>"#)
+    private static let numericEntityRx = Rx(#"&#(x?)([0-9A-Fa-f]+);"#)
+
     static func stripTags(_ s: String) -> String {
-        s.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        tagRx.replacing(in: s, with: "")
     }
 
     static func decodeEntities(_ s: String) -> String {
@@ -307,9 +310,11 @@ public final class GoogleDriveResolver: ShareResolver, @unchecked Sendable {
             out = out.replacingOccurrences(of: k, with: v)
         }
         // 数字实体
-        let rx = Rx(#"&#(x?)([0-9A-Fa-f]+);"#)
-        while let m = rx.firstMatch(in: out), let code = UInt32(m[2], radix: m[1].isEmpty ? 10 : 16), let scalar = Unicode.Scalar(code) {
-            out = out.replacingOccurrences(of: m[0], with: String(Character(scalar)))
+        for m in Set(numericEntityRx.allMatches(in: out).filter { $0.count >= 3 }.map { $0[0] }) {
+            guard let parsed = numericEntityRx.firstMatch(in: m),
+                  let code = UInt32(parsed[2], radix: parsed[1].isEmpty ? 10 : 16),
+                  let scalar = Unicode.Scalar(code) else { continue }
+            out = out.replacingOccurrences(of: m, with: String(Character(scalar)))
         }
         return out
     }

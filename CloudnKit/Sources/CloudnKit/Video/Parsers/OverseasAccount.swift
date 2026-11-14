@@ -46,8 +46,13 @@ public enum OverseasAccount {
         }
     }
 
-    /// 网页登录完成的判据：关键 Cookie 都有非空值
+    /// 网页登录完成的判据：关键 Cookie 都有非空值；Instagram / Threads 只要 sessionid 含数字用户 ID 即可
     public static func looksLoggedIn(_ kind: AccountKind, cookie: String) -> Bool {
+        if kind == .instagram || kind == .threads {
+            let sid = CookieUtil.value(of: "sessionid", in: cookie) ?? ""
+            guard !sid.isEmpty, sid != "\"\"" else { return false }
+            return igUserID(cookie: cookie) != nil
+        }
         let keys = keyCookies(kind)
         guard !keys.isEmpty else { return false }
         for key in keys {
@@ -81,11 +86,24 @@ public enum OverseasAccount {
         return v
     }
 
+    /// Instagram / Threads 的用户 ID：优先读 ds_user_id，缺失时从 sessionid（`<数字ID>%3A<令牌>`）前缀提取
+    static func igUserID(cookie: String) -> String? {
+        if let raw = CookieUtil.value(of: "ds_user_id", in: cookie) {
+            let trimmed = raw.trimmingCharacters(in: CharacterSet(charactersIn: "\" "))
+            if !trimmed.isEmpty, trimmed.allSatisfy(\.isNumber) { return trimmed }
+        }
+        guard let sid = CookieUtil.value(of: "sessionid", in: cookie) else { return nil }
+        let decoded = (sid.removingPercentEncoding ?? sid).trimmingCharacters(in: CharacterSet(charactersIn: "\" "))
+        guard let prefix = decoded.split(separator: ":", maxSplits: 1).first,
+              !prefix.isEmpty, prefix.allSatisfy(\.isNumber) else { return nil }
+        return String(prefix)
+    }
+
     static func userID(_ kind: AccountKind, cookie: String) -> String? {
         let raw: String?
         switch kind {
         case .twitter: return xUserID(cookie: cookie)
-        case .instagram, .threads: raw = CookieUtil.value(of: "ds_user_id", in: cookie)
+        case .instagram, .threads: return igUserID(cookie: cookie)
         case .facebook: raw = CookieUtil.value(of: "c_user", in: cookie)
         default: raw = nil
         }
@@ -94,7 +112,7 @@ public enum OverseasAccount {
     }
 
     /// 接口暂时不可用（网络、风控、限流）但关键 Cookie 齐全时的显示名
-    static func fallbackName(_ kind: AccountKind, cookie: String) -> String {
+    public static func fallbackName(_ kind: AccountKind, cookie: String) -> String {
         let base = "\(kind.displayName) 用户"
         guard let id = userID(kind, cookie: cookie), id.count >= 4 else { return base }
         return "\(base) · \(id.suffix(4))"

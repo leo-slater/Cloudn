@@ -46,6 +46,7 @@ extension OneDriveResolver {
         var token = cred.accessToken
         if !cred.isFresh {
             guard let renewed = try? await OAuthProvider.microsoft.refresh(cred, client: client) else { return nil }
+            await CredentialRenewal.shared.recordValidated(.onedrive, consumedRefreshToken: cred.refreshToken, renewed: renewed.serialized)
             token = renewed.accessToken
         }
         guard let r = try? await client.send(.get(graph + "/me?$select=displayName,userPrincipalName,mail",

@@ -35,6 +35,21 @@ final class ResolveFlowTests: XCTestCase {
         XCTAssertNil(VideoParseService.unexpandedError(original: short, resolved: video))
         let ks = DetectedVideoLink(platform: .kuaishou, kind: "short", id: "", url: "https://v.kuaishou.com/abc")
         XCTAssertNil(VideoParseService.unexpandedError(original: ks, resolved: ks))
+
+        // 短链展开成功但下游解析失败（如 DRM 加密剧集）：补上展开后的终址作为 sniffURL
+        let biliShort = DetectedVideoLink(platform: .bilibili, kind: "short", id: "", url: "https://b23.tv/eCg6ovZ")
+        let biliEp = DetectedVideoLink(platform: .bilibili, kind: "ep", id: "2696933", url: "https://www.bilibili.com/bangumi/play/ep2696933")
+        let drmErr = VideoParseError(.unsupported, "哔哩哔哩剧集受数字版权保护（DRM），无法提取视频流")
+        let attached = VideoParseService.attachExpandedSniffURL(drmErr, original: biliShort, resolved: biliEp)
+        XCTAssertEqual(attached.kind, .unsupported)
+        XCTAssertEqual(attached.detail, drmErr.detail)
+        XCTAssertEqual(attached.sniffURL, "https://www.bilibili.com/bangumi/play/ep2696933")
+        // 非短链或已有 sniffURL 时保持原样
+        let unexpanded = VideoParseService.attachExpandedSniffURL(drmErr, original: biliEp, resolved: biliEp)
+        XCTAssertNil(unexpanded.sniffURL)
+        let customSniff = VideoParseError(.unsupported, drmErr.detail, sniffURL: "https://m.bilibili.com/bangumi/play/ep2696933")
+        let preserved = VideoParseService.attachExpandedSniffURL(customSniff, original: biliShort, resolved: biliEp)
+        XCTAssertEqual(preserved.sniffURL, "https://m.bilibili.com/bangumi/play/ep2696933")
     }
 
     func testVideoHTTPPropagatesCancellation() async {

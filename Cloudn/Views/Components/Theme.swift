@@ -220,6 +220,20 @@ extension View {
     func floatingShadow() -> some View {
         self.shadow(color: Color.floatingShadow, radius: 12, y: 6)
     }
+
+    /// 底部悬浮栏纸色衬底：向上柔化过渡、向下铺满底部安全区，避免滚动列表与平台图标穿透到悬浮标签栏后面
+    func bottomBarBackdrop() -> some View {
+        self.background(alignment: .top) {
+            VStack(spacing: 0) {
+                LinearGradient(colors: [Color.paper.opacity(0), Color.paper], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 16)
+                Color.paper
+            }
+            .padding(.top, -12)
+            .ignoresSafeArea(edges: .bottom)
+            .allowsHitTesting(false)
+        }
+    }
 }
 
 private extension Color {

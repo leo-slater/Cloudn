@@ -446,7 +446,9 @@ struct DriveFolderPicker: View {
                 .buttonStyle(PillButtonStyle(kind: .primary))
                 .floatingShadow()
                 .padding(.horizontal, 16)
+                .padding(.top, 6)
                 .padding(.bottom, 8)
+                .bottomBarBackdrop()
             }
             .task {
                 // 从下一级返回时不重新请求
