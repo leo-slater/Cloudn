@@ -62,7 +62,7 @@
 "%1$@拒绝访问（HTTP %2$@），可能是私密曲目或地区限制" = "%1$@ refuses access (HTTP %2$@), may be a private song or area restriction";
 "%1$@暂不支持上传" = "%1$@ does not support upload";
 "%1$@暂不支持文件管理" = "%1$@ does not support document management";
-"%1$@暂不支持重新取链，请到「我的网盘」重新下载" = "%1$@ does not support re-linking, please redownload my disk";
+"%1$@暂不支持重新取链，请到「我的网盘」重新下载" = "Cloudn cannot refresh this %1$@ download URL. Download the file again from My Drive.";
 "%1$@用户" = "%1$@ User";
 "%1$@登录已失效" = "%1$@ sign in invalid";
 "%1$@登录已失效，下载、转存可能失败" = "Your %1$@ session expired. Downloads and copies to your drive may fail.";
@@ -94,7 +94,7 @@
 "115 网盘分享" = "115 Web Sharing";
 "115 网盘用户" = "115 Web users";
 "115 需要安全验证，请在官方 App 中完成验证后重试" = "115. Require security clearance. Please try again after validation in the official App";
-"123 云盘" = "123 Cloud Disk";
+"123 云盘" = "123 Cloud Drive";
 "123 云盘分享" = "123 Cloud Disk Sharing";
 "123 云盘分片上传失败（HTTP %1$@）" = "123 Cloud Partition Upload Failed (HTTP %1$@)";
 "123 云盘未返回下载链接" = "123 Clouds did not return download links";
@@ -532,7 +532,7 @@
 "作品 %1$@" = "%1$@";
 "作品较多，只列出了前 %1$@ 个" = "Only the first %1$@ posts are shown.";
 "作品里已找不到这个文件，可能已被删除" = "This file has not been found in the work. It may have been deleted.";
-"作品链接无法识别，请回到解析页重新解析" = "The link to the work cannot be identified. Please return to the parsing page for reclassification.";
+"作品链接无法识别，请回到解析页重新解析" = "Could not recognize the post link. Go back to Resolve and try again.";
 "作者屏蔽了该帖子的查看" = "The author blocked the view of the post.";
 "使用%1$@账号登录" = "Sign in with %1$@ account";
 "使用了 %1$@ 压缩" = "Use %1$@ compression";
@@ -716,7 +716,7 @@
 "口令过长" = "It's too long.";
 "口令错误，或备份文件已损坏" = "Password error, or backup file corrupted";
 "另有 %1$@ 条视频轨已跳过（MP4 只保留一条）" = "Another %1$@ video track has been skipped (MP4 only one is retained)";
-"只下载不上传；切到后台约半分钟后暂停，回到前台自动继续。" = "Only downloads are not available; they are suspended after approximately half a minute in the back and continue automatically when they return to the front desk.";
+"只下载不上传；切到后台约半分钟后暂停，回到前台自动继续。" = "BitTorrent downloads only. It pauses about 30 seconds after Cloudn goes into the background and resumes when you return.";
 "只加载到前 %1$@ 个作品（快手要求验证或加载超时），可稍后重试" = "Only loads of former %1$@ works (Kuaishou requires authentication or loading time overtime), but try again later";
 "只加载到前 %1$@ 个作品（抖音要求验证或加载超时），可稍后重试" = "Only loads to previous %1$@ works (Douyin requires authentication or load timeout), but try again later";
 "只录网页实际加载的内容，拖动跳过的部分录不到。" = "Only the contents actually loaded on the web page are recorded, and the parts that you drag over cannot be recorded.";
@@ -724,7 +724,7 @@
 "只清除列表里的记录，已下载的文件保留" = "Only the list entries will be cleared. Downloaded files will be kept.";
 "可以用其他应用打开，或在「文件」App 中查看" = "You can open it with other applications, or see in the File App";
 "可以直接%1$@当前文件夹" = "Directly to %1$@ Current Folder";
-"可以重试，或用网页嗅探：在网页里播放后抓取视频。" = "You can try again, or use Web Media Detector: capture the video after playing it on the web page.";
+"可以重试，或用网页嗅探：在网页里播放后抓取视频。" = "Try again, or play the video in Web Media Detector to capture it.";
 "可用手机号验证码登录；若只显示二维码，可在页面中切换登录方式" = "Sign in using cell phone number authentication code; if only 2D code is shown, you can switch sign in to page";
 "可用播放器倍速加快录制，中途尽量别切清晰度。" = "The player can be used to speed up the recording and try not to be as clear as possible in the middle.";
 "可编辑" = "Can Edit";
@@ -1031,8 +1031,8 @@
 "已转换为 MP4" = "Converted to MP4";
 "已达到 2 GB 上限，后面的内容不再录制，请停止并保存。" = "The upper limit of 2 GB is reached, the contents of which are no longer recorded, and please stop and save.";
 "已连接 %1$@ · 已知 %2$@" = "Connected %1$@. Known %2$@";
-"已连接 %1$@ 个节点" = "Connected %1$@ Nodes";
-"已连接 %1$@ 个节点 · 已发现 %2$@ 个" = "Connected %1$@ nodes. %2$@ found";
+"已连接 %1$@ 个节点" = "Connected peers: %1$@";
+"已连接 %1$@ 个节点 · 已发现 %2$@ 个" = "Connected peers: %1$@ · Found: %2$@";
 "已连接：%1$@" = "Connected: %1$@";
 "已选 %1$@ 项" = "Selected %1$@ Item";
 "已重命名" = "Renamed";
@@ -1272,7 +1272,7 @@
 "暂不支持该类型的 SoundCloud 链接" = "SoundClaud Link Not supported for the moment";
 "暂不支持该类型的视频号内容（没有可下载的图片或视频）" = "The video number content of this type is not supported (no pictures or videos available for download)";
 "暂不支持该豆瓣链接，目前仅支持小组话题" = "The Douban link is not supported for the time being, only the panel topic is supported";
-"暂不支持这类链接：短链指向的页面不是可解析的%1$@作品，可以用网页嗅探试试" = "This link is not supported: the short-chain-directed page is not a decipherable %1$@ work, which can be tried on Web Media Detector";
+"暂不支持这类链接：短链指向的页面不是可解析的%1$@作品，可以用网页嗅探试试" = "Cloudn could not resolve the %1$@ post behind this short link. Try Web Media Detector.";
 "暂停" = "Pause";
 "暂停下载" = "Pause Download";
 "暂停所选" = "Pause Selected";
@@ -1346,7 +1346,7 @@
 "检测到 MSE 视频流（可录制）" = "MSE Stream Detected (Recordable)";
 "横屏" = "Landscape";
 "次数" = "Number";
-"正在从节点获取种子信息" = "Fetching torrent information from node";
+"正在从节点获取种子信息" = "Getting torrent metadata from peers";
 "正在保存…" = "Saving…";
 "正在停止…" = "Stopping…";
 "正在准备播放 %1$@%%" = "Preparing to play %1$@ %%";
@@ -1372,7 +1372,7 @@
 "正在读取文件夹…" = "Reading Folder…";
 "正在转存…" = "Saving to Drive…";
 "正在载入预览…" = "Loading preview...";
-"正在通过 DHT 与 Tracker 寻找节点…" = "Looking for nodes through DHT and tracker...";
+"正在通过 DHT 与 Tracker 寻找节点…" = "Finding peers through DHT and trackers…";
 "此 OneDrive 分享设置了密码，请填写密码后重新解析" = "This OneDrive share has set a password. Please resolve it after filling in the password";
 "此内容因违规无法查看" = "This is not available due to irregularities.";
 "此内容被投诉且经审核涉嫌侵权" = "Subject matter complained of and examined for alleged violation";
@@ -1457,7 +1457,7 @@
 "画质 %1$@" = "Painted %1$@";
 "登录" = "Sign In";
 "登录%1$@" = "Sign In to %1$@";
-"登录%1$@后可重新解析，也可以用网页嗅探：在网页里播放后抓取视频。" = "Sign in to %1$@ allows for re-dialysis, or use Web Media Detector: captures the video after playing on the web page.";
+"登录%1$@后可重新解析，也可以用网页嗅探：在网页里播放后抓取视频。" = "Sign in to %1$@ and try resolving the link again, or play the video in Web Media Detector to capture it.";
 "登录凭据只保存在本机钥匙串，只发给对应平台，不经过任何第三方服务器。" = "Login credentials are stored in your device's Keychain and sent only to the relevant service, not through third-party servers.";
 "登录凭据只保存在本机钥匙串，只用于向对应平台发起请求。" = "Login credentials remain in the device Keychain and are used only to access the corresponding service.";
 "登录后下载" = "Sign In to Download";
@@ -1471,7 +1471,7 @@
 "登录后可下载大文件（游客仅限小文件）" = "Big documents can be downloaded after sign in (visitors are limited to small documents only)";
 "登录后可下载（借助临时转存取直链，取完即删）" = "Sign in to download. Cloudn makes a temporary copy to obtain a direct URL, then deletes the copy.";
 "登录后可管理自己的 Dropbox" = "Manage your own Dropbox after sign in";
-"登录后可管理自己的 Google 云端硬盘，并把公开分享里的文件复制到自己的盘" = "Upon sign in, manage your Google Drive and copy the open shared files to your disk";
+"登录后可管理自己的 Google 云端硬盘，并把公开分享里的文件复制到自己的盘" = "Sign in to manage your Google Drive files and copy files from public shares to your drive.";
 "登录后可管理自己的 OneDrive，并打开只分享给你的链接" = "You can manage your own OneDrive after sign in and open a shared link to you";
 "登录后可管理自己的蓝奏云文件" = "Sign in to manage your Lanzou files.";
 "登录后可获取作者主页的全部作品（未登录通常只有第一页）" = "Sign in to get all posts on a creator’s profile. Guests usually see only the first page.";
@@ -1494,7 +1494,7 @@
 "登录成功，但凭据校验未通过，请稍后重试" = "Sign in successful, but not verified, please try again later";
 "登录方式" = "Sign-In Method";
 "登录状态校验失败，请确认已在页面中完成登录后再点「完成」" = "Sign in status check failed, please confirm that sign in is done on the page and then click \"completed\"";
-"登录网盘后可下载大文件、转存到自己的网盘；登录视频平台可获取更高清晰度和需要登录才能看的内容。凭据只保存在本机。" = "You can download large files and transfer them to your own disk when you sign in; you can access a video platform to get more clarity and content that you need to sign in to see.";
+"登录网盘后可下载大文件、转存到自己的网盘；登录视频平台可获取更高清晰度和需要登录才能看的内容。凭据只保存在本机。" = "Sign in to a cloud drive to download large files and save shares to your drive. Sign in to video services for higher video quality and access to content that requires an account. Cloudn stores your credentials on this device.";
 "登录页" = "Sign-in Page";
 "登录页打开失败" = "Could Not Open Sign-In Page";
 "登录页没有显示内容" = "Sign in page does not show content";
@@ -1651,7 +1651,7 @@
 "自动生成 · 存为 SRT" = "Auto Generate. Save as SRT";
 "自定义" = "Custom";
 "自定义前缀，如 https://example.com/" = "Custom prefix, e.g. https://example.com/";
-"节点" = "Nodes";
+"节点" = "Peers";
 "苔绿" = "Moss Green";
 "获取 115 上传凭证失败" = "Failed to retrieve 115 upload certificate";
 "获取 115 上传凭证失败（HTTP %1$@）" = "Failed to get 115 upload vouchers (HTTP %1$@)";
@@ -1769,7 +1769,7 @@
 "解析、转存和网盘管理使用主账号；开启「多账号下载」后，批量下载会轮换使用全部账号。" = "The main account is used for the resolution, transfer and web management; when the \"multi-account download\" is enabled, the bulk download will rotate over the entire account.";
 "解析中…" = "Resolving…";
 "解析失败，请稍后重试" = "Could not resolve the link. Try again later.";
-"解析微信视频号需要登录腾讯元宝" = "Parsing WeChat Channels needs to sign in to Tencent Yuambao";
+"解析微信视频号需要登录腾讯元宝" = "Sign in to Tencent Yuanbao to resolve WeChat Channels links.";
 "解析视频号需要登录腾讯元宝：请先到「我的」页登录腾讯元宝" = "Parsing video numbers requires sign in to Tencent Yuambao: go to \"My\" first and sign in to Tencent Yuambao";
 "解析链接失败" = "Failed to parse link";
 "计算 SHA-256" = "Calculation SHA-256";
@@ -1838,7 +1838,7 @@
 "请先到「我的」页登录%1$@" = "Please go to my page first. %1$@.";
 "请先验证 Dropbox 账号的邮箱" = "Please verify the mailbox for the Dropbox account.";
 "请刷新列表后重试分享" = "Please try sharing again after refreshing the list";
-"请换个节点（最好是住宅 IP）或换个网络后重试，也可以稍后再试。" = "Please try again at a different node (preferably residential IP) or a different network, or at a later stage.";
+"请换个节点（最好是住宅 IP）或换个网络后重试，也可以稍后再试。" = "Try a different network or proxy endpoint, ideally with a residential IP address, or try again later.";
 "请求" = "Request";
 "请求失败" = "Request Failed";
 "请求失败（HTTP %1$@）" = "Request failed (HTTP %1$@)";
