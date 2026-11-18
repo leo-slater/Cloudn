@@ -604,7 +604,7 @@ public actor DownloadEngine {
         leaveBackground(i)
         items[i].status = .failed
         items[i].speed = 0
-        items[i].errorMessage = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+        items[i].errorMessage = CloudnLocalization.error(error)
         Log.error("下载失败：\(items[i].request.fileName)：\(items[i].errorMessage ?? "")（\(items[i].request.url)）")
         runners[id] = nil
         runIds[id] = nil

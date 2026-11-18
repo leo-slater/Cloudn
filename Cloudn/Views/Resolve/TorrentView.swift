@@ -95,14 +95,14 @@ struct TorrentView: View {
         .sensoryFeedback(.selection, trigger: selected)
         .onAppear {
             // 一打开就记进「最近」：还没拿到种子信息就退出，也能从解析页找回来
-            if info == nil { app.bookmarks.record(title: title, text: target.magnet.uri, source: L("磁力链接")) }
+            if info == nil { app.bookmarks.record(title: title, text: target.magnet.uri, source: "磁力链接") }
             app.torrents.start(target.magnet)
             if let info, selected.isEmpty { selected = Set(info.visibleFiles.map(\.id)) }
         }
         .onChange(of: info?.hexHash) { _, _ in
             guard let info else { return }
             selected = Set(info.visibleFiles.map(\.id))
-            app.bookmarks.record(title: info.name, text: target.magnet.uri, source: L("磁力链接"))
+            app.bookmarks.record(title: info.name, text: target.magnet.uri, source: "磁力链接")
         }
     }
 
@@ -152,7 +152,7 @@ struct TorrentView: View {
                     .background(Color.claySoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L("离线到网盘")).font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
-                    Text(L("由") + app.offlineDrives.prefix(3).map { L($0.displayName) }.joined(separator: "、") + L("下载，不占手机流量"))
+                    Text(L("由%1$@下载，不占手机流量", app.offlineDrives.prefix(3).map { L($0.displayName) }.joined(separator: L("、"))))
                         .font(.caption).foregroundStyle(Color.ink3).lineLimit(1)
                 }
                 Spacer(minLength: 0)

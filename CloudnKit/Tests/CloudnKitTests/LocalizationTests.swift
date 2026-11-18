@@ -10,11 +10,15 @@ final class LocalizationTests: XCTestCase {
         XCTAssertEqual(error, CloudnError(raw, code: 7))
         XCTAssertEqual(error.localizedDescription, raw)
 
-        let english = Bundle.module.url(forResource: "en", withExtension: "lproj").flatMap(Bundle.init(url:))
+        let english = CloudnLocalization.localizationBundle(for: "en")
         let format = english?.localizedString(forKey: "网络请求失败：%1$@", value: nil, table: nil)
         XCTAssertEqual(format, "Network request failed: %1$@")
         XCTAssertEqual(format.map { CloudnLocalization.format($0, ["A 100% result"]) },
                        "Network request failed: A 100% result")
+        let chinese = CloudnLocalization.localizationBundle(for: "zh-Hans")
+        XCTAssertNotNil(chinese)
+        XCTAssertEqual(chinese?.localizedString(forKey: "网络请求失败：%1$@", value: nil, table: nil),
+                       "网络请求失败：%1$@")
     }
 
     func testFormatAllowsReorderingAndLiteralPercent() {

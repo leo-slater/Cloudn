@@ -4,23 +4,30 @@ import Foundation
 /// The host app and CloudnKit share a strings table. Use the app's selected
 /// language on iOS so the package also follows a per-app language override.
 public enum CloudnLocalization {
-    private static let bundle: Bundle = {
+    private static let bundle: Bundle? = {
         #if os(iOS)
-        if let language = Bundle.main.preferredLocalizations.first,
-           let url = Bundle.module.url(forResource: language, withExtension: "lproj"),
-           let localization = Bundle(url: url) {
-            return localization
-        }
+        return localizationBundle(for: Bundle.main.preferredLocalizations.first ?? "en")
+            ?? localizationBundle(for: "en")
+        #else
+        // Command-line clients have no iOS app language. Keep the original
+        // messages used by existing CloudnKit callers and tests.
+        return nil
         #endif
-        return .module
     }()
+
+    static func localizationBundle(for language: String) -> Bundle? {
+        guard let name = Bundle.module.localizations.first(where: {
+            $0.caseInsensitiveCompare(language) == .orderedSame
+        }), let url = Bundle.module.url(forResource: name, withExtension: "lproj") else { return nil }
+        return Bundle(url: url)
+    }
 
     public static func text(_ key: String, _ arguments: String...) -> String {
         text(key, arguments: arguments)
     }
 
     public static func text(_ key: String, arguments: [String]) -> String {
-        format(bundle.localizedString(forKey: key, value: key, table: nil), arguments)
+        format(bundle?.localizedString(forKey: key, value: key, table: nil) ?? key, arguments)
     }
 
     static func format(_ template: String, _ arguments: [String]) -> String {
@@ -34,6 +41,7 @@ public enum CloudnLocalization {
         switch error {
         case let error as CloudnError: return error.displayMessage
         case let error as VideoParseError: return error.displayMessage
+        case let error as HTTPError: return error.displayMessage
         default: return text((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
         }
     }

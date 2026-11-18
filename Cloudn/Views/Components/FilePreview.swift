@@ -319,12 +319,12 @@ struct FilePreviewView: View {
             do {
                 let copy = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp4")
                 try FileManager.default.copyItem(at: converted, to: copy)
-                try await app.downloads.importLocalFile(copy, name: base + ".mp4", source: L("格式转换"))
+                try await app.downloads.importLocalFile(copy, name: base + ".mp4", source: "格式转换")
                 for (i, sub) in subtitles.enumerated() {
                     let tag = [sub.language, sub.name].filter { !$0.isEmpty }.first ?? "\(i + 1)"
                     let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".srt")
                     try Data(sub.srt.utf8).write(to: file)
-                    try await app.downloads.importLocalFile(file, name: "\(base).\(tag).srt", source: L("格式转换"))
+                    try await app.downloads.importLocalFile(file, name: "\(base).\(tag).srt", source: "格式转换")
                 }
                 app.show(subtitles.isEmpty ? L("MP4 已加入下载") : L("MP4 和 %1$@ 个字幕已加入下载", "\(subtitles.count)"))
             } catch {

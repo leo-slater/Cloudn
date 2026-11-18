@@ -1,15 +1,13 @@
-# Cloudn English — first translation pass
+# Cloudn v1.4.2 English build
 
-Branch: `english-v1.4.2` (based on Cloudn v1.4.2). Main remains unchanged.
+Cloudn follows the iOS app language. This branch packages English and Simplified Chinese resources for the app, share extension, and Download Live Activity. English is the fallback language for the iOS app.
 
-This is an **initial English translation**, not a complete localization. The main tabs, setup notice, common controls and much of Resolve, Downloads, Accounts, Settings, media browsing, and GitHub screens are translated. Some help text, dynamic notifications, error messages, and deeper screens remain in Chinese.
+## Download the unsigned IPA
 
-Only exact user-facing string literals in selected app UI files were changed. Networking code, cloud service adapters, credentials, and signing settings were not intentionally modified.
+Open GitHub Actions → CI, then choose a successful run on `complete-english-v1.4.2`. Sign in to GitHub and download **Cloudn-unsigned-ipa** from the run’s Artifacts section. Unzip it in Files and import `Cloudn-unsigned.ipa` into Feather. Sign it with your certificate and matching provisioning profile before installing.
 
-## Build on an iPhone
-1. Open GitHub → this repo → Actions → CI.
-2. Select the `english-v1.4.2` branch and run the workflow, or open the run started by the branch push.
-3. When the **iOS app** job succeeds, download its `Cloudn-unsigned-ipa` artifact (a ZIP).
-4. Extract it in iOS Files to get `Cloudn-unsigned.ipa`, then import into Feather and sign/install it.
+## Editing translations
 
-Warning: An unsigned IPA cannot be installed directly. Keep a backup of the current app/data, as sideload-signing with a different identity may require uninstalling your existing Cloudn installation. For sensitive cloud logins, assess the exact resulting build before use.
+The app and its core package share `CloudnKit/Sources/CloudnKit/Resources/*/Localizable.strings`. The share extension and widget have their own tables. Keep the original key and preserve every positional format argument (for example, `%1$@`), even when English uses a different word order. Use a full sentence when adding a message with dynamic values.
+
+The original error text and platform names remain available to the code that classifies service responses or selects download settings. Translate those values when the app presents them. Provider websites, server-provided messages, repository release notes, filenames, and media content can still appear in their source language. Diagnostic logs and older saved records can also contain original text.

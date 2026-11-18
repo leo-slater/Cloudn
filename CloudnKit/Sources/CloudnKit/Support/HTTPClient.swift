@@ -70,8 +70,15 @@ public enum HTTPError: Error, LocalizedError, Sendable {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidURL(let u): return CloudnLocalization.text("无效的地址：%1$@", "\(u)")
-        case .network(let m): return CloudnLocalization.text("网络请求失败：%1$@", "\(m)")
+        case .invalidURL(let url): return "无效的地址：\(url)"
+        case .network(let message): return "网络请求失败：\(message)"
+        }
+    }
+
+    var displayMessage: String {
+        switch self {
+        case .invalidURL(let url): return CloudnLocalization.text("无效的地址：%1$@", url)
+        case .network(let message): return CloudnLocalization.text("网络请求失败：%1$@", CloudnLocalization.text(message))
         }
     }
 

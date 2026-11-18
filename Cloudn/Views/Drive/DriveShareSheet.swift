@@ -22,17 +22,17 @@ struct DriveShareSheet: View {
                     Section {
                         if manager.shareAudienceOptions.count > 1 {
                             Picker(L("谁能访问"), selection: $options.audience) {
-                                ForEach(manager.shareAudienceOptions) { Text($0.label).tag($0) }
+                                ForEach(manager.shareAudienceOptions) { Text(L($0.label)).tag($0) }
                             }
                         }
                         if manager.shareRoleOptions.count > 1 {
                             Picker(L("权限"), selection: $options.role) {
-                                ForEach(manager.shareRoleOptions) { Text($0.label).tag($0) }
+                                ForEach(manager.shareRoleOptions) { Text(L($0.label)).tag($0) }
                             }
                         }
                         if manager.shareExpiryOptions.count > 1 {
                             Picker(L("有效期"), selection: $options.expiry) {
-                                ForEach(manager.shareExpiryOptions) { Text($0.label).tag($0) }
+                                ForEach(manager.shareExpiryOptions) { Text(L($0.label)).tag($0) }
                             }
                         }
                         if manager.supportsSharePassword {

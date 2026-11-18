@@ -65,7 +65,7 @@
 "%1$@暂不支持重新取链，请到「我的网盘」重新下载" = "%1$@ does not support re-linking, please redownload my disk";
 "%1$@用户" = "%1$@ User";
 "%1$@登录已失效" = "%1$@ sign in invalid";
-"%1$@登录已失效，下载、转存可能失败" = "%1$@ sign in is invalid, downloading and re-storing may fail";
+"%1$@登录已失效，下载、转存可能失败" = "Your %1$@ session expired. Downloads and copies to your drive may fail.";
 "%1$@登录已失效，请重新登录" = "%1$@ sign in is invalid, please re-entry";
 "%1$@登录态已失效，请到「我的」页重新登录" = "%1$@ sign in is invalid, please re-enter \"My\" page";
 "%1$@登录有效" = "%1$@ Sign in Valid";
@@ -470,7 +470,7 @@
 "下载这张" = "Download This Image";
 "下载镜像" = "Download Mirror";
 "下载限速" = "Download Speed Limit";
-"下载，不占手机流量" = "Download, no phone traffic.";
+"下载，不占手机流量" = "downloads on your behalf without using mobile data";
 "不像夸克 / UC 口令" = "Unlike Quark / UC password";
 "不到 1 分钟" = "Less than 1 min left";
 "不到 30 秒或很小的视频，多半是预览或广告。" = "Less than 30 seconds or very small videos, mostly previews or ads.";
@@ -505,7 +505,7 @@
 "仅团队内的人" = "It's just the team.";
 "仅有权访问的人" = "Persons only entitled to visit";
 "仅查看" = "View Only";
-"仅组织内的人" = "It's just people in the organization.";
+"仅组织内的人" = "People in Your Organization";
 "仅这一次" = "Just This Once";
 "仅音频" = "Audio Only";
 "今日分享次数已达上限，请明天再试" = "Today's share has reached its limit. Please try again tomorrow.";
@@ -614,7 +614,7 @@
 "内容不存在或已删除（HTTP 404）" = "Content does not exist or has been deleted (HTTP 404)";
 "内容已删除" = "Deleted";
 "再输一次" = "Re-enter Passphrase";
-"写入文件失败，BT 下载已停止：%1$@" = "Writing file failed, BT download stopped: %1$@";
+"写入文件失败，BT 下载已停止：%1$@" = "BitTorrent download stopped because the file could not be written: %1$@";
 "凭据在哪" = "Where Credentials Are Stored";
 "凭据无效或已过期，请重新复制" = "Please copy again if the certificate is invalid or expired";
 "分享" = "Share";
@@ -727,7 +727,7 @@
 "可以重试，或用网页嗅探：在网页里播放后抓取视频。" = "You can try again, or use Web Media Detector: capture the video after playing it on the web page.";
 "可用手机号验证码登录；若只显示二维码，可在页面中切换登录方式" = "Sign in using cell phone number authentication code; if only 2D code is shown, you can switch sign in to page";
 "可用播放器倍速加快录制，中途尽量别切清晰度。" = "The player can be used to speed up the recording and try not to be as clear as possible in the middle.";
-"可编辑" = "Editable";
+"可编辑" = "Can Edit";
 "可能是预览片段或广告" = "It could be a preview or an ad.";
 "可评论" = "Commentable";
 "可重新取链" = "Can Refresh URL";
@@ -735,7 +735,7 @@
 "合并分片失败" = "Failed to merge fractions";
 "合并分片失败（HTTP %1$@）" = "Failed to merge fraction (HTTP %1$@)";
 "合集" = "Collection";
-"合集「%1$@」" = "Joint \"%1$@\"";
+"合集「%1$@」" = "the collection “%1$@”";
 "同时下载任务" = "Concurrent Downloads";
 "同时进行的离线任务过多，请稍后再试" = "There's a lot of offline work going on at the same time. Please try again later.";
 "名称" = "Name";
@@ -899,7 +899,7 @@
 "存储" = "Storage";
 "存储空间不足，BT 下载已停止：请清理空间后继续" = "Insufficient storage space, BT download stopped: please continue after cleaning the space";
 "存储空间不足，写入失败：请清理空间后继续" = "Insufficient storage space, writing failed: please clear the space and continue";
-"存储空间不足：需要约 %1$@，剩余 %2$@" = "Insufficient storage space: approximately %1$@ required, remaining %2$@";
+"存储空间不足：需要约 %1$@，剩余 %2$@" = "Not enough storage. About %1$@ is required and %2$@ is available.";
 "安全连接失败" = "Secure connection failed";
 "安装包 %1$@" = "Install Package %1$@";
 "安装包请用「分享」发送到对应的安装工具" = "Install packages to send to the corresponding installation tool using \"Share\"";
@@ -1302,10 +1302,10 @@
 "未在知乎日报中找到原文链接，也没有可下载的图片" = "No original link found in Zhihu daily, no downloadable pictures";
 "未完成安全验证；也可以改用短信验证码登录" = "Security clearance not completed; SMS validation code could also be used instead";
 "未登录" = "Not Signed In";
-"未登录 115：只能下载小文件" = "Unlogged 115: Only small files can be downloaded";
-"未登录 UC：可直接下载，登录后视频取原画" = "Unlogged UC: Direct downloadable, video taken after sign in";
-"未登录%1$@：可浏览，下载需先登录" = "Unregistered %1$@: browseable, downloading requires first sign in";
-"未登录夸克：只能下载约 50MB 以内的文件" = "Quark not sign in: only about 50MB files can be downloaded";
+"未登录 115：只能下载小文件" = "Sign in to 115 to download large files.";
+"未登录 UC：可直接下载，登录后视频取原画" = "Guest downloads are available. Sign in to UC to download original-quality video.";
+"未登录%1$@：可浏览，下载需先登录" = "You can browse as a guest. Sign in to %1$@ to download.";
+"未登录夸克：只能下载约 50MB 以内的文件" = "As a guest, you can download Quark files up to about 50 MB.";
 "未登录抖音时网页版通常只给第一页作品，到「我的」页登录抖音后可获取全部" = "The web page is usually only available on the first page of Douyin when it is not on the Douyin page and can be accessed on Douyin.";
 "未知" = "Unknown";
 "未知格式" = "Unknown format";
@@ -1381,7 +1381,7 @@
 "此阿里云盘分享需要提取码，请填写后重新解析" = "This Aliyun Drive share requires access codes. Please fill in and resolve";
 "每个任务同时开几条连接，越多越快。默认 %1$@ 条；百度、115 对并发敏感，默认最多 2 条。遇到 403 或频繁失败时可调低。" = "Sets the number of simultaneous connections per download. The default is %1$@. Baidu and 115 default to at most 2 connections because they limit concurrency. Lower the setting if you see HTTP 403 errors or frequent failures.";
 "永久" = "Permanent";
-"永久有效" = "Permanently valid";
+"永久有效" = "Never Expires";
 "没录到视频，请开始录制后在网页里播放" = "No video recorded, please start recording it and play it on the web page.";
 "没有匹配的仓库" = "No Matching Repositories";
 "没有匹配的文件" = "No Matching Files";
@@ -1453,6 +1453,7 @@
 "用时 / 平均速度" = "Time/ Average Speed";
 "用浏览器打开" = "Open in Browser";
 "由" = "By";
+"由%1$@下载，不占手机流量" = "Downloads run on %1$@ and use no mobile data.";
 "画质 %1$@" = "Painted %1$@";
 "登录" = "Sign In";
 "登录%1$@" = "Sign In to %1$@";
@@ -1551,7 +1552,7 @@
 "知乎登录已失效，请到「我的」页重新登录知乎" = "Zhihu sign in invalid. Please re-enter Zhihu on \"My\" page.";
 "知乎问题回答列表" = "Zhihu Question Answer List";
 "知乎需要登录：请先到「我的」页登录知乎" = "Zhihu needs to sign in: go to my page first and sign in to Zhihu";
-"知道链接的任何人" = "Anyone who knows the link.";
+"知道链接的任何人" = "Anyone With the Link";
 "短信验证码" = "SMS Code";
 "短信验证码错误或已过期，请重新获取" = "SMS authentication code is wrong or expired, please retrievate";
 "短链展开失败，请复制完整链接后重试" = "Shortlink extension failed, please try again after copying the full link";
@@ -1823,11 +1824,11 @@
 "该网站分段播放（MSE），没有可直接下载的地址，只能边播边录。录制时可关闭此面板。" = "You can close the panel when you record it.";
 "该视频为儿童内容，当前方式无法播放" = "This video is for children and cannot be played in the current way";
 "该视频使用 DRM 加密，无法下载" = "This video is encrypted using DRM and cannot be downloaded";
-"该视频共 %1$@ 个分 P，可在列表里选择要下载的分 P；直接下载的是 P1" = "The video consists of %1$@ parts, which can be selected in the list to download; the direct download is P1";
+"该视频共 %1$@ 个分 P，可在列表里选择要下载的分 P；直接下载的是 P1" = "This video has %1$@ parts. Select parts from the list, or download Part 1 directly.";
 "该视频受 DRM 保护（如付费影片），无法下载" = "The video is protected by DRM (e. g. paid video) and cannot be downloaded";
 "该视频在 YouTube 上无法播放%1$@" = "The video cannot be played on YouTube %1$@";
 "该视频在所在网络的地区不可用（地区限制），可切换到其他地区的代理后重试" = "The video is not available in the area where the network is located (regional limitation) and can be switched to agents in other areas before retrying";
-"该视频属于%1$@，共 %2$@ 个视频，可在列表里选择下载" = "This video belongs to %1$@, with %2$@ videos, and can be selected for download in the list";
+"该视频属于%1$@，共 %2$@ 个视频，可在列表里选择下载" = "This video is in %1$@. Select from %2$@ videos to download.";
 "该视频更高的画质只有 VP9 编码，iOS 无法合并，已提供可用的最高画质（%1$@p）" = "This video is of a higher quality than VP9 code, iOS cannot be merged and provides the highest available quality (%1$@ p)";
 "该视频有年龄限制，需要登录并通过年龄验证的 YouTube 账号才能观看，暂不支持" = "The video is age-limited and requires sign in and age-certified YouTube account to be viewed, which is not supported at this time";
 "该视频需要登录 YouTube 才能观看，暂不支持%1$@" = "This video needs to sign in for YouTube to be viewed. %1$@ is not supported.";
