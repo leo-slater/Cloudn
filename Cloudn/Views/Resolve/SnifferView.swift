@@ -19,12 +19,12 @@ struct SniffedMedia: Identifiable, Equatable {
 
     /// 列表里显示的一行说明：清晰度 · 大小 · 时长
     var detail: String {
-        guard let info else { return probing ? "正在获取大小…" : "大小未知" }
+        guard let info else { return probing ? "Checking File Size…" : "Unknown Size" }
         var parts: [String] = []
         if info.height > 0 { parts.append("\(info.height)p") }
         if let size = info.size { parts.append((info.estimated ? "约 " : "") + ByteFormat.string(size)) }
         if let d = info.duration { parts.append(Self.clock(d)) }
-        return parts.isEmpty ? "大小未知" : parts.joined(separator: " · ")
+        return parts.isEmpty ? "Unknown Size" : parts.joined(separator: " · ")
     }
 
     var isPreview: Bool { info?.looksLikePreview ?? false }
@@ -40,9 +40,9 @@ struct SniffedMedia: Identifiable, Equatable {
 
     var label: String {
         switch kind {
-        case .hls: return "m3u8 视频流"
-        case .video: return "视频"
-        case .audio: return "音频"
+        case .hls: return "M3U8 Stream"
+        case .video: return "Video"
+        case .audio: return "Audio"
         }
     }
 
@@ -87,26 +87,26 @@ struct SnifferView: View {
                         bottomBar
                     }
                 }
-                .navigationTitle(browser.title.isEmpty ? "网页嗅探" : browser.title)
+                .navigationTitle(browser.title.isEmpty ? "Web Media Sniffer" : browser.title)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
-                        Button("关闭") { dismiss() }
+                        Button("Close") { dismiss() }
                     }
                     ToolbarItem(placement: .primaryAction) {
                         Menu {
-                            Button { browser.retry() } label: { Label("刷新", glyph: .refresh) }
+                            Button { browser.retry() } label: { Label("Refresh", glyph: .refresh) }
                             Button {
                                 Clipboard.copy(browser.currentURL)
-                                app.show("已复制网页地址")
-                            } label: { Label("复制网页地址", glyph: .link) }
+                                app.show("Web Address Copied")
+                            } label: { Label("Copy Web Address", glyph: .link) }
                             if let url = URL(string: browser.currentURL) {
-                                Button { UIApplication.shared.open(url) } label: { Label("在 Safari 中打开", glyph: .share) }
+                                Button { UIApplication.shared.open(url) } label: { Label("Open in Safari", glyph: .share) }
                             }
                         } label: {
                             IconView(.more, size: 20).foregroundStyle(Color.ink)
                         }
-                        .accessibilityLabel("更多")
+                        .accessibilityLabel("More")
                     }
                 }
                 .sheet(isPresented: $browser.showingList) { mediaList.presentationDetents([.medium, .large]) }
@@ -122,7 +122,7 @@ struct SnifferView: View {
     private func loadErrorCard(_ message: String) -> some View {
         ZStack {
             Color.paper.ignoresSafeArea()
-            EmptyStateCard(icon: .warning, title: "网页打开失败", detail: message, actionTitle: "重试") { browser.retry() }
+            EmptyStateCard(icon: .warning, title: "Webpage Failed to Open", detail: message, actionTitle: "Retry") { browser.retry() }
                 .padding(.horizontal, 24)
         }
     }
@@ -135,17 +135,17 @@ struct SnifferView: View {
                 Image(systemName: browser.recording ? "record.circle.fill" : "record.circle")
                     .foregroundStyle(browser.recording ? Color.red : Color.clayInk)
                 if browser.recording {
-                    Text("正在录制 · " + ByteFormat.string(browser.recordedBytes))
+                    Text("Recording · " + ByteFormat.string(browser.recordedBytes))
                         .font(.subheadline.weight(.medium))
                         .monospacedDigit()
                         .foregroundStyle(Color.ink)
                 } else {
-                    Text("检测到 MSE 视频流（可录制）")
+                    Text("MSE Stream Detected (Recordable)")
                         .font(.subheadline)
                         .foregroundStyle(Color.ink)
                 }
                 Spacer(minLength: 8)
-                Text(browser.recording ? "停止录制" : "录制视频流")
+                Text(browser.recording ? "Stop Recording" : "Record Video Stream")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.clayInk)
             }
@@ -169,13 +169,13 @@ struct SnifferView: View {
                     tip("3", "可用播放器倍速加快录制，中途尽量别切清晰度。")
                     tip("4", "播完点「停止并保存」，视频会出现在下载列表。单次最多 2 GB。")
                 } header: {
-                    Text("怎么录")
+                    Text("How to Record")
                 } footer: {
                     Text("该网站分段播放（MSE），没有可直接下载的地址，只能边播边录。录制时可关闭此面板。")
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) { recorderButtons }
-            .navigationTitle("录制视频流")
+            .navigationTitle("Record Video Stream")
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -185,7 +185,7 @@ struct SnifferView: View {
             if browser.savingRecording {
                 HStack(spacing: 8) {
                     Spinner(size: 14)
-                    Text("正在保存…").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
+                    Text("Saving…").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
                 }
             } else if browser.recording {
                 HStack(spacing: 6) {
@@ -208,7 +208,7 @@ struct SnifferView: View {
                         .foregroundStyle(Color.ink2)
                 }
             } else {
-                Text("检测到 MSE 视频流").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
+                Text("MSE Stream Detected").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
                 if !browser.mseSummary.isEmpty {
                     Text(browser.mseSummary).font(.monoSmall).foregroundStyle(Color.ink3).lineLimit(3)
                 }
@@ -227,21 +227,21 @@ struct SnifferView: View {
     private var recorderButtons: some View {
         HStack(spacing: 12) {
             if browser.recording {
-                Button("放弃") {
+                Button("Discard") {
                     browser.cancelRecording()
-                    app.show("已放弃录制")
+                    app.show("Recording Discarded")
                 }
                 .buttonStyle(PillButtonStyle(kind: .secondary, height: 44))
                 // 宽度放在标签里，胶囊才会撑满（放在按钮外面撑不开）
-                Button { saveRecording() } label: { Text("停止并保存").frame(maxWidth: .infinity) }
+                Button { saveRecording() } label: { Text("Stop and Save").frame(maxWidth: .infinity) }
                     .buttonStyle(PillButtonStyle(kind: .primary, height: 44))
             } else {
                 Button {
                     browser.startRecording()
                     browser.showingRecorder = false
-                    app.show("开始录制：请在网页里播放视频")
+                    app.show("Start Recording: Play the Video in the Webpage")
                 } label: {
-                    Text("开始录制").frame(maxWidth: .infinity)
+                    Text("Start Recording").frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle(kind: .primary, height: 44))
                 .disabled(browser.savingRecording)
@@ -270,15 +270,15 @@ struct SnifferView: View {
         HStack(spacing: 18) {
             Button { browser.webView.goBack() } label: { Image(systemName: "chevron.left") }
                 .disabled(!browser.canGoBack)
-                .accessibilityLabel("后退")
+                .accessibilityLabel("Back")
             Button { browser.webView.goForward() } label: { Image(systemName: "chevron.right") }
                 .disabled(!browser.canGoForward)
-                .accessibilityLabel("前进")
+                .accessibilityLabel("Forward")
             Spacer()
             Button { browser.showingList = true } label: {
                 HStack(spacing: 6) {
                     if browser.loading { Spinner(size: 14) }
-                    Text(browser.medias.isEmpty ? (browser.loading ? "正在查找视频…" : "播放后自动抓取") : "发现 \(browser.medias.count) 个媒体")
+                    Text(browser.medias.isEmpty ? (browser.loading ? "Looking for Video…" : "Capture Automatically After Playback") : "发现 \(browser.medias.count) 个媒体")
                 }
             }
             .buttonStyle(PillButtonStyle(kind: browser.medias.isEmpty ? .secondary : .primary, height: 36))
@@ -368,15 +368,15 @@ struct SnifferView: View {
             let request: DownloadRequest
             switch media.kind {
             case .hls:
-                request = DownloadRequest(url: media.url, headers: headers, fileName: base + ".mp4", kind: .hls, source: "网页嗅探")
+                request = DownloadRequest(url: media.url, headers: headers, fileName: base + ".mp4", kind: .hls, source: "Web Media Sniffer")
             case .video, .audio:
                 let ext = URL(string: media.url)?.pathExtension.lowercased() ?? ""
                 let fallback = media.kind == .audio ? "m4a" : "mp4"
                 let name = base + "." + (ext.isEmpty || ext.count > 5 ? fallback : ext)
-                request = DownloadRequest(url: media.url, headers: headers, fileName: name, kind: .file, source: "网页嗅探")
+                request = DownloadRequest(url: media.url, headers: headers, fileName: name, kind: .file, source: "Web Media Sniffer")
             }
             app.downloads.enqueue(request)
-            app.show("已加入下载")
+            app.show("Added to Downloads")
         }
     }
 }

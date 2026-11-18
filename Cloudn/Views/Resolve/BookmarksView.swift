@@ -13,7 +13,7 @@ struct BookmarksView: View {
         NavigationStack {
             List {
                 if app.bookmarks.bookmarks.isEmpty {
-                    EmptyStateCard(icon: .star, title: "还没有收藏", detail: "在分享页点右上角的星标收藏").inList()
+                    EmptyStateCard(icon: .star, title: "No Bookmarks Yet", detail: "Tap the star in a share view to save a bookmark.").inList()
                 }
                 Group {
                     ForEach(app.bookmarks.bookmarks) { b in
@@ -34,30 +34,30 @@ struct BookmarksView: View {
                             }
                         }
                         .swipeActions {
-                            Button(role: .destructive) { app.bookmarks.remove([b.id]) } label: { Label("删除", glyph: .trash) }
+                            Button(role: .destructive) { app.bookmarks.remove([b.id]) } label: { Label("Delete", glyph: .trash) }
                                 .tint(Color.swipeDestructive)
-                            Button { newTitle = b.title; renaming = b } label: { Label("重命名", glyph: .pencil) }
+                            Button { newTitle = b.title; renaming = b } label: { Label("Rename", glyph: .pencil) }
                                 .tint(Color.swipeNeutral)
                         }
                         .contextMenu {
-                            Button { Clipboard.copy(b.text); app.show("已复制链接") } label: { Label("复制链接", glyph: .link) }
-                            Button { newTitle = b.title; renaming = b } label: { Label("重命名", glyph: .pencil) }
-                            Button(role: .destructive) { app.bookmarks.remove([b.id]) } label: { Label("删除", glyph: .trash) }
+                            Button { Clipboard.copy(b.text); app.show("Link Copied") } label: { Label("Copy Link", glyph: .link) }
+                            Button { newTitle = b.title; renaming = b } label: { Label("Rename", glyph: .pencil) }
+                            Button(role: .destructive) { app.bookmarks.remove([b.id]) } label: { Label("Delete", glyph: .trash) }
                         }
                     }
                 }
                 .paperRow()
             }
             .paperList()
-            .navigationTitle("收藏")
+            .navigationTitle("Bookmarks")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { Button("完成") { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
             }
-            .alert("重命名", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
-                TextField("名称", text: $newTitle)
-                Button("取消", role: .cancel) {}
-                Button("保存") {
+            .alert("Rename", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+                TextField("Name", text: $newTitle)
+                Button("Cancel", role: .cancel) {}
+                Button("Save") {
                     let title = newTitle.trimmingCharacters(in: .whitespacesAndNewlines)
                     if let r = renaming, !title.isEmpty { app.bookmarks.rename(r.id, title: title) }
                 }

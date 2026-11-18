@@ -18,13 +18,13 @@ struct NetworkProxyView: View {
         Form {
             Group {
                 Section {
-                    Toggle("使用代理", isOn: $settings.proxyEnabled)
+                    Toggle("Use Proxy", isOn: $settings.proxyEnabled)
                     if settings.proxyEnabled {
-                        Picker("类型", selection: $settings.proxyKind) {
+                        Picker("Type", selection: $settings.proxyKind) {
                             ForEach(NetworkProxy.Kind.allCases) { Text($0.title).tag($0) }
                         }
                         .pickerStyle(.segmented)
-                        LabeledContent("地址") {
+                        LabeledContent("Address") {
                             TextField("127.0.0.1", text: $host)
                                 .multilineTextAlignment(.trailing)
                                 .font(.mono)
@@ -33,7 +33,7 @@ struct NetworkProxyView: View {
                                 .keyboardType(.URL)
                                 .onSubmit(commit)
                         }
-                        LabeledContent("端口") {
+                        LabeledContent("Port") {
                             // 数字键盘没有回车键：停止输入片刻后自动保存（见下方 task(id: port)）
                             TextField("7890", text: $port)
                                 .multilineTextAlignment(.trailing)
@@ -51,7 +51,7 @@ struct NetworkProxyView: View {
                             Task { await test() }
                         } label: {
                             HStack {
-                                Text(testing ? "正在测试…" : "测试连接")
+                                Text(testing ? "Testing…" : "Test Connection")
                                 Spacer()
                                 if testing {
                                     Spinner(size: 18)
@@ -74,7 +74,7 @@ struct NetworkProxyView: View {
         .scrollContentBackground(.hidden)
         .readableWidth()
         .background(Color.paper)
-        .navigationTitle("网络代理")
+        .navigationTitle("Network Proxy")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             host = app.settings.proxyHost

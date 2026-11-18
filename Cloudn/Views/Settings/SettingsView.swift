@@ -19,60 +19,60 @@ struct SettingsView: View {
         Form {
             Group {
                     Section {
-                        AdaptiveStepper(title: "同时下载任务", value: "\(settings.maxConcurrentTasks)",
+                        AdaptiveStepper(title: "Concurrent Downloads", value: "\(settings.maxConcurrentTasks)",
                                         number: $settings.maxConcurrentTasks, range: 1...5)
-                        AdaptiveStepper(title: "失败自动重试", value: "\(settings.retryCount) 次",
+                        AdaptiveStepper(title: "Retry Failed Downloads Automatically", value: "\(settings.retryCount) 次",
                                         number: $settings.retryCount, range: 0...10)
-                        Picker("下载限速", selection: $settings.speedLimitKB) {
+                        Picker("Download Speed Limit", selection: $settings.speedLimitKB) {
                             ForEach(SpeedLimitOption.allCases) { Text($0.title).tag($0.rawValue) }
                         }
-                        NavigationLink("连接数（按平台）") { PlatformConnectionsView() }
-                        Toggle("下载完成后保存到相册", isOn: $settings.autoSaveToPhotos)
-                        Toggle("下载完成通知", isOn: $settings.notifyOnFinish)
-                        Toggle("锁屏与灵动岛显示进度", isOn: $settings.liveActivity)
+                        NavigationLink("Connections by Platform") { PlatformConnectionsView() }
+                        Toggle("Save to Photos After Download", isOn: $settings.autoSaveToPhotos)
+                        Toggle("Download Completion Notifications", isOn: $settings.notifyOnFinish)
+                        Toggle("Show Progress on Lock Screen and Dynamic Island", isOn: $settings.liveActivity)
                     } header: {
-                        Text("下载")
+                        Text("Downloads")
                     } footer: {
                         Text("切到后台后普通文件由系统继续下载，m3u8 与分轨视频回到前台后继续。文件在「文件」App →「我的 iPhone」→ Cloudn 中。")
                     }
 
                     Section {
-                        Toggle("回到应用时提示剪贴板链接", isOn: $settings.clipboardHint)
-                        Toggle("夸克免转存下载", isOn: $settings.directFirst)
-                        Toggle("多账号下载", isOn: $settings.multiAccountDownload)
+                        Toggle("Suggest Clipboard Links on Return", isOn: $settings.clipboardHint)
+                        Toggle("Quark Downloads Without Saving to Drive", isOn: $settings.directFirst)
+                        Toggle("Multi-Account Downloads", isOn: $settings.multiAccountDownload)
                         if settings.multiAccountDownload {
-                            Toggle("单文件多源分片（实验性）", isOn: $settings.multiSourceDownload)
+                            Toggle("Multi-Source Chunk Download (Experimental)", isOn: $settings.multiSourceDownload)
                         }
-                        Toggle("夸克 / UC 中文口令解析", isOn: $settings.allowCommandService)
-                        Toggle("抖音按「昵称_抖音号_发布时间」命名", isOn: $settings.authorStyledNames)
+                        Toggle("Parse Quark / UC Share Codes", isOn: $settings.allowCommandService)
+                        Toggle("Name Douyin Downloads by Creator and Date", isOn: $settings.authorStyledNames)
                     } header: {
-                        Text("解析")
+                        Text("Resolve")
                     } footer: {
                         Text("夸克免转存：先直接取链，失败再临时转存；关闭则总是先转存，下载后自动删除。多账号下载：同一网盘登录多个账号时，批量下载按文件轮换账号；多源分片会让大文件同时用各账号的直链下载。夸克 / UC 口令需发给第三方「\(QuarkKouling.serviceName)」换取分享 ID（只发口令文字），关闭后每次使用前询问。")
                     }
 
                     Section {
-                        Toggle("附加公共 Tracker", isOn: $settings.useExtraTrackers)
+                        Toggle("Add Public Trackers", isOn: $settings.useExtraTrackers)
                     } header: {
-                        Text("磁力 / BT")
+                        Text("Magnet / BitTorrent")
                     } footer: {
                         Text("磁力链接自带的 Tracker 常已失效，附加公共 Tracker 能更快找到节点。BT 只下载不上传，切到后台约半分钟后暂停。")
                     }
 
                     Section {
-                        LabeledContent("完成后保存到", value: app.settings.exportFolder?.lastPathComponent ?? "应用下载目录")
-                        Button("选择文件夹…") { pickingFolder = true }
+                        LabeledContent("Save Completed Files To", value: app.settings.exportFolder?.lastPathComponent ?? "App Downloads Folder")
+                        Button("Choose Folder…") { pickingFolder = true }
                         if app.settings.exportFolderBookmark != nil {
-                            Button("恢复为应用下载目录") { app.settings.setExportFolder(nil) }.foregroundStyle(Color.clayInk)
+                            Button("Restore App Downloads Folder") { app.settings.setExportFolder(nil) }.foregroundStyle(Color.clayInk)
                         }
                     } header: {
-                        Text("下载位置")
+                        Text("Download Location")
                     } footer: {
                         Text("选择「文件」App 中的文件夹（如 iCloud 云盘）后，下载完成的文件会移过去并保留目录层级。\n\n若选好后点「打开」没反应，是当前签名方式不允许访问外部文件夹：可在下载页多选文件，用文件夹按钮保存到「文件」。")
                     }
 
-                    Section("外观") {
-                        Picker("主题", selection: $settings.appearance) {
+                    Section("Appearance") {
+                        Picker("Theme", selection: $settings.appearance) {
                             ForEach(Appearance.allCases) { Text($0.title).tag($0) }
                         }
                         .pickerStyle(.segmented)
@@ -80,7 +80,7 @@ struct SettingsView: View {
                         PlatformIconStylePicker()
                         Button { showingLayout = true } label: {
                             HStack {
-                                Text("「我的」页排序与显示").foregroundStyle(Color.ink)
+                                Text("Customize My Tab").foregroundStyle(Color.ink)
                                 Spacer()
                                 IconView(.chevronRight, size: 13).foregroundStyle(Color.ink3)
                             }
@@ -92,68 +92,68 @@ struct SettingsView: View {
                             checkUpdate()
                         } label: {
                             HStack {
-                                Text("检查更新")
+                                Text("Check for Updates")
                                 Spacer()
                                 if checking { Spinner(size: 18) } else { Text("当前 \(AppModel.currentVersion)").font(.figures).foregroundStyle(Color.ink2) }
                             }
                         }
                         .disabled(checking)
-                        Toggle("自动检查更新", isOn: $settings.autoCheckUpdates)
-                        Toggle("接受预发布版更新", isOn: $settings.acceptPrerelease)
+                        Toggle("Check for Updates Automatically", isOn: $settings.autoCheckUpdates)
+                        Toggle("Include Prerelease Updates", isOn: $settings.acceptPrerelease)
                         Menu {
-                            Button("添加到 SideStore") { addSideloadSource(scheme: "sidestore://source?url=", name: "SideStore") }
-                            Button("添加到 AltStore") { addSideloadSource(scheme: "altstore://source?url=", name: "AltStore") }
-                            Button("复制软件源地址") {
+                            Button("Add to SideStore") { addSideloadSource(scheme: "sidestore://source?url=", name: "SideStore") }
+                            Button("Add to AltStore") { addSideloadSource(scheme: "altstore://source?url=", name: "AltStore") }
+                            Button("Copy Repository URL") {
                                 Clipboard.copy(sourceURLString())
-                                app.show("已复制软件源地址")
+                                app.show("Repository URL Copied")
                             }
                         } label: {
                             HStack {
-                                Text("添加侧载软件源").foregroundStyle(Color.ink)
+                                Text("Add Sideload Repository").foregroundStyle(Color.ink)
                                 Spacer()
                                 IconView(.chevronRight, size: 13).foregroundStyle(Color.ink3)
                             }
                         }
                     } header: {
-                        Text("更新")
+                        Text("Updates")
                     } footer: {
                         Text("从 GitHub Releases（\(UpdateChecker.repository)）检查，每天最多自动检查一次；也可将软件源添加到 SideStore / AltStore 自动接收更新。")
                     }
 
                     Section {
-                        NavigationLink("GitHub Token 与下载镜像") { GitHubSettingsView() }
+                        NavigationLink("GitHub Token and Download Mirrors") { GitHubSettingsView() }
                         NavigationLink {
                             NetworkProxyView()
                         } label: {
-                            LabeledContent("网络代理") {
-                                Text(settings.proxy.map { "\($0.kind.title) \($0.host):\($0.port)" } ?? "跟随系统")
+                            LabeledContent("Network Proxy") {
+                                Text(settings.proxy.map { "\($0.kind.title) \($0.host):\($0.port)" } ?? "Follow System Settings")
                                     .foregroundStyle(Color.ink2)
                             }
                         }
                     } header: {
-                        Text("网络与 GitHub")
+                        Text("Network and GitHub")
                     } footer: {
                         Text("GitHub 访问慢时可选下载镜像，或设置网络代理。")
                     }
 
-                    Section("诊断") {
+                    Section("Diagnostics") {
                         if let logFile {
-                            ShareLink(item: logFile) { Label("导出诊断日志", glyph: .share) }
+                            ShareLink(item: logFile) { Label("Export Diagnostic Logs", glyph: .share) }
                         }
-                        Button(logCleared ? "已清空日志" : "清空日志") {
+                        Button(logCleared ? "Logs Cleared" : "Clear Logs") {
                             Log.clear()
                             logCleared = true
                         }
                         .disabled(logCleared)
                     }
 
-                    Section("存储") {
-                        Button("打开下载目录") {
+                    Section("Storage") {
+                        Button("Open Downloads Folder") {
                             // 用「文件」App 打开本应用的文档目录
                             let path = app.downloads.engine.downloadsDirectory.path
                             if let url = URL(string: "shareddocuments://" + path) { UIApplication.shared.open(url) }
                         }
-                        Button(cacheCleared ? "已清除图片缓存" : "清除图片缓存") {
+                        Button(cacheCleared ? "Image Cache Cleared" : "Clear Image Cache") {
                             ImageLoader.shared.clear()
                             cacheCleared = true
                         }
@@ -161,11 +161,11 @@ struct SettingsView: View {
                     }
 
                     Section {
-                        NavigationLink("关于 Cloudn") { AboutView() }
-                        NavigationLink("开源许可") { LicenseView() }
+                        NavigationLink("About Cloudn") { AboutView() }
+                        NavigationLink("Open-Source Licenses") { LicenseView() }
                         Link(destination: URL(string: "https://github.com/mengangs/Cloudn/blob/main/PRIVACY.md")!) {
                             HStack {
-                                Text("隐私政策").foregroundStyle(Color.ink)
+                                Text("Privacy Policy").foregroundStyle(Color.ink)
                                 Spacer()
                                 IconView(.share, size: 14).foregroundStyle(Color.ink3)
                             }
@@ -177,7 +177,7 @@ struct SettingsView: View {
         .scrollContentBackground(.hidden)
         .readableWidth()
         .background(Color.paper)
-        .navigationTitle("设置")
+        .navigationTitle("Settings")
         .sheet(isPresented: $showingLayout) { PlatformLayoutView() }
         .navigationBarTitleDisplayMode(.inline)
         .documentPicker(isPresented: $pickingFolder, types: [.folder], asCopy: false) { urls in
@@ -213,7 +213,7 @@ extension SettingsView {
                 if let release = try await UpdateChecker.check(current: AppModel.currentVersion, includePrerelease: app.settings.acceptPrerelease) {
                     app.availableUpdate = release
                 } else {
-                    app.show("已是最新版本")
+                    app.show("You're Up to Date")
                 }
             } catch {
                 app.show(error.localizedDescription, error: true)
@@ -267,7 +267,7 @@ struct UpdateSheet: View {
                 Group {
                     Section { summary }
                     if !release.notes.isEmpty {
-                        Section("更新说明") {
+                        Section("Release Notes") {
                             MarkdownText(source: release.notes)
                                 .textSelection(.enabled)
                                 .padding(.vertical, 4)
@@ -295,16 +295,16 @@ struct UpdateSheet: View {
                                 .disabled(busy != nil)
                             }
                         } header: {
-                            Text("其他方式")
+                            Text("Other Options")
                         } footer: {
                             Text("下载后在下载页长按安装包，用「分享」交给 TrollStore、SideStore 等工具安装。GitHub 慢时可改用网盘下载。")
                         }
                     }
                     Section {
                         if let url = URL(string: release.pageURL) {
-                            Button { openURL(url) } label: { Label("前往发布页", glyph: .share) }
+                            Button { openURL(url) } label: { Label("View Release Page", glyph: .share) }
                         }
-                        Button("忽略此版本") {
+                        Button("Ignore This Version") {
                             app.settings.skippedVersion = release.tag
                             dismiss()
                         }
@@ -317,7 +317,7 @@ struct UpdateSheet: View {
             .safeAreaInset(edge: .bottom) {
                 if !release.ipaURL.isEmpty {
                     Button(action: downloadFromGitHub) {
-                        Label(release.ipaSize > 0 ? "下载更新 · \(ByteFormat.string(release.ipaSize))" : "下载更新", glyph: .download)
+                        Label(release.ipaSize > 0 ? "下载更新 · \(ByteFormat.string(release.ipaSize))" : "Download Update", glyph: .download)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PillButtonStyle(kind: .primary, height: 50))
@@ -328,10 +328,10 @@ struct UpdateSheet: View {
                     .bottomBarBackdrop()
                 }
             }
-            .navigationTitle("发现新版本")
+            .navigationTitle("Update Available")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("稍后") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Later") { dismiss() } }
             }
         }
     }
@@ -344,7 +344,7 @@ struct UpdateSheet: View {
                 IconView(.chevronRight, size: 14).foregroundStyle(Color.ink3)
                 Text(release.tag).font(.pageTitle).foregroundStyle(Color.ink)
                 if release.isPrerelease {
-                    Text("预发布")
+                    Text("Prerelease")
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(Color.claySoft, in: Capsule())
@@ -423,9 +423,9 @@ struct AboutView: View {
             }
             Group {
                 Section("能力") {
-                    LabeledContent("网盘", value: SharePlatform.allCases.filter(\.isResolvable).map(\.displayName).joined(separator: "、"))
-                    LabeledContent("视频", value: VideoPlatform.allCases.map(\.displayName).joined(separator: "、"))
-                    LabeledContent("下载", value: "多连接分片 · 断点续传 · m3u8 · 音视频合轨")
+                    LabeledContent("Cloud Drives", value: SharePlatform.allCases.filter(\.isResolvable).map(\.displayName).joined(separator: "、"))
+                    LabeledContent("Video", value: VideoPlatform.allCases.map(\.displayName).joined(separator: "、"))
+                    LabeledContent("Downloads", value: "多连接分片 · 断点续传 · m3u8 · 音视频合轨")
                 }
                 Section {
                     Text("本应用为个人独立开发，仅供学习与技术交流。请只解析你有权访问的内容，并遵守各平台的服务条款与当地法律法规。")
@@ -474,7 +474,7 @@ struct LicenseView: View {
             .padding()
         }
         .background(Color.paper)
-        .navigationTitle("开源许可")
+        .navigationTitle("Open-Source Licenses")
         .navigationBarTitleDisplayMode(.inline)
     }
 }

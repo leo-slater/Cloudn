@@ -5,7 +5,7 @@ import SwiftUI
 /// 「我的」页平台的顺序与显示，存在 UserDefaults（逗号分隔的 rawValue）
 enum PlatformLayout {
     enum Group: String, CaseIterable, Identifiable {
-        case drives = "网盘", videos = "视频平台"
+        case drives = "Cloud Drives", videos = "Video Platforms"
         var id: Self { self }
     }
 
@@ -76,7 +76,7 @@ struct PlatformLayoutView: View {
             .paperList()
             .animation(.snappy, value: group)
             .safeAreaInset(edge: .top, spacing: 0) {
-                Picker("类别", selection: $group) {
+                Picker("Category", selection: $group) {
                     ForEach(PlatformLayout.Group.allCases) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)
@@ -84,21 +84,21 @@ struct PlatformLayoutView: View {
                 .padding(.vertical, 8)
                 .background(Color.paper)
             }
-            .navigationTitle("排序与显示")
+            .navigationTitle("Sort and Show")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        Button { setAll(true) } label: { Label("全部显示", systemImage: "eye") }
-                        Button { setLoggedInOnly() } label: { Label("只显示已登录", systemImage: "person.crop.circle.badge.checkmark") }
+                        Button { setAll(true) } label: { Label("Show All", systemImage: "eye") }
+                        Button { setLoggedInOnly() } label: { Label("Only Signed-In", systemImage: "person.crop.circle.badge.checkmark") }
                         Divider()
-                        Button { resetOrder() } label: { Label("恢复默认顺序", systemImage: "arrow.counterclockwise") }
+                        Button { resetOrder() } label: { Label("Restore Default Order", systemImage: "arrow.counterclockwise") }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("更多")
+                    .accessibilityLabel("More")
                 }
-                ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
             .sensoryFeedback(.selection, trigger: pinned)
             .onAppear(perform: load)
@@ -119,10 +119,10 @@ struct PlatformLayoutView: View {
                     .foregroundStyle(on ? Color.ink : Color.ink2)
                 Group {
                     if let account {
-                        Text(app.accounts.isExpired(kind) ? "登录已失效" : "已登录 · \(account.nickname)")
+                        Text(app.accounts.isExpired(kind) ? "Login Expired" : "已登录 · \(account.nickname)")
                             .foregroundStyle(app.accounts.isExpired(kind) ? Color.clayInk : Color.success)
                     } else {
-                        Text("未登录").foregroundStyle(Color.ink3)
+                        Text("Not Signed In").foregroundStyle(Color.ink3)
                     }
                 }
                 .font(.caption)

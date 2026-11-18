@@ -24,7 +24,7 @@ struct DownloadsView: View {
     @State private var fileFacts = FileFactsCache()
 
     enum Filter: String, CaseIterable, Identifiable {
-        case all = "全部", active = "进行中", done = "已完成", failed = "失败"
+        case all = "All", active = "In Progress", done = "Completed", failed = "Failed"
         var id: String { rawValue }
     }
 
@@ -93,14 +93,14 @@ struct DownloadsView: View {
         .contextMenu { menu(item) }
         .rowDialog(item.displayName, isPresented: presenting($deleting) { $0.id == item.id }) {
             if item.status == .completed {
-                Button("删除任务和文件", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
-                Button("仅删除记录") { app.downloads.remove(item, deleteFile: false) }
+                Button("Delete Task and File", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
+                Button("Delete Record Only") { app.downloads.remove(item, deleteFile: false) }
             } else {
-                Button("删除任务", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
+                Button("Delete Task", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
             }
         }
         // 不用 destructive 角色：那会让列表立刻播放「删除这一行」的动画，确认框随行一起消失、行又弹回来和别的卡片重叠
-        .modifier(SwipeAction(edge: .trailing, action: selecting ? nil : SwipeAction.Item(title: "删除", glyph: .trash, tint: Color.swipeDestructive) {
+        .modifier(SwipeAction(edge: .trailing, action: selecting ? nil : SwipeAction.Item(title: "Delete", glyph: .trash, tint: Color.swipeDestructive) {
             deleting = item
         }))
         .modifier(SwipeAction(edge: .leading, action: selecting ? nil : leadingAction(item)))
@@ -115,25 +115,25 @@ struct DownloadsView: View {
               !facts.isDirectory else { return nil }
         let url = facts.url
         if facts.canSaveToPhotos {
-            return DownloadRow.Save(toPhotos: true, label: facts.isLivePhoto ? "保存为实况照片" : "保存到相册") {
+            return DownloadRow.Save(toPhotos: true, label: facts.isLivePhoto ? "Save as Live Photo" : "Save to Photos") {
                 Task {
                     do { app.show(try await MediaTools.saveToPhotosSmart(url)) } catch { app.show(error.localizedDescription, error: true) }
                 }
             }
         }
-        return DownloadRow.Save(toPhotos: false, label: "保存到「文件」") { exportURLs = [url] }
+        return DownloadRow.Save(toPhotos: false, label: "Save to Files") { exportURLs = [url] }
     }
 
     /// 右滑：下载中给「暂停」，暂停 / 失败给「继续」，已完成没有（不注册空的右滑，免得出现错位的按钮）
     private func leadingAction(_ item: DownloadItem) -> SwipeAction.Item? {
         if item.status.isActive {
-            return SwipeAction.Item(title: "暂停", glyph: .pause, tint: Color.swipeNeutral) { app.downloads.pause(item) }
+            return SwipeAction.Item(title: "Pause", glyph: .pause, tint: Color.swipeNeutral) { app.downloads.pause(item) }
         }
         if item.needsFreshLink {
-            return SwipeAction.Item(title: "重试", glyph: .refresh, tint: Color.swipePositive) { refresh(item) }
+            return SwipeAction.Item(title: "Retry", glyph: .refresh, tint: Color.swipePositive) { refresh(item) }
         }
         if item.status == .paused || item.status == .failed {
-            return SwipeAction.Item(title: "继续", glyph: .play, tint: Color.swipePositive) { app.downloads.resume(item) }
+            return SwipeAction.Item(title: "Resume", glyph: .play, tint: Color.swipePositive) { app.downloads.resume(item) }
         }
         return nil
     }
@@ -161,7 +161,7 @@ struct DownloadsView: View {
         .onTapGesture { tapGroup(group.id, ids: ids, allOn: allOn, open: open) }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selecting && allOn ? [.isButton, .isSelected] : [.isButton])
-        .accessibilityHint(selecting ? "" : (open ? "收起" : "展开"))
+        .accessibilityHint(selecting ? "" : (open ? "Collapse" : "Expand"))
         .accessibilityAction { tapGroup(group.id, ids: ids, allOn: allOn, open: open) }
         .contextMenu { groupMenu(members) }
         .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
@@ -182,13 +182,13 @@ struct DownloadsView: View {
     @ViewBuilder
     private func groupMenu(_ members: [DownloadItem]) -> some View {
         Button { app.downloads.resume(members.filter { $0.status == .paused || $0.status == .failed }) } label: {
-            Label("全部继续", glyph: .play)
+            Label("Resume All", glyph: .play)
         }
-        Button { app.downloads.pause(members.filter(\.status.isActive)) } label: { Label("全部暂停", glyph: .pause) }
+        Button { app.downloads.pause(members.filter(\.status.isActive)) } label: { Label("Pause All", glyph: .pause) }
         Menu {
-            Button("删除任务和文件", role: .destructive) { app.downloads.remove(members, deleteFile: true) }
-            Button("仅删除记录") { app.downloads.remove(members, deleteFile: false) }
-        } label: { Label("删除这一组", glyph: .trash) }
+            Button("Delete Task and File", role: .destructive) { app.downloads.remove(members, deleteFile: true) }
+            Button("Delete Record Only") { app.downloads.remove(members, deleteFile: false) }
+        } label: { Label("Delete This Group", glyph: .trash) }
     }
 
     var body: some View {
@@ -230,41 +230,41 @@ struct DownloadsView: View {
             .environment(\.defaultMinListRowHeight, 0)
             .readableWidth()
             .background(Color.paper)
-            .navigationTitle("下载")
+            .navigationTitle("Downloads")
             .toolbar {
                 ToolbarItemGroup(placement: .topBarTrailing) {
                     if selecting {
                         // 按当前筛选下的任务判断（selection 里可能还留着别的筛选下选中的、或已被删掉的任务）
                         let visible = Set(items.map(\.id))
                         let allOn = !visible.isEmpty && visible.isSubset(of: selection)
-                        Button(allOn ? "全不选" : "全选") {
+                        Button(allOn ? "Deselect All" : "Select All") {
                             if allOn { selection.subtract(visible) } else { selection.formUnion(visible) }
                         }
                         .disabled(visible.isEmpty)
-                        Button("完成") { withAnimation(.snappy(duration: 0.25)) { selecting = false; selection = [] } }.fontWeight(.semibold)
+                        Button("Done") { withAnimation(.snappy(duration: 0.25)) { selecting = false; selection = [] } }.fontWeight(.semibold)
                     } else {
                         Menu {
-                            Button { withAnimation(.snappy(duration: 0.25)) { selecting = true } } label: { Label("选择", glyph: .checkCircle) }
-                            Button { app.downloads.resumeAll() } label: { Label("全部继续", glyph: .play) }
+                            Button { withAnimation(.snappy(duration: 0.25)) { selecting = true } } label: { Label("Select", glyph: .checkCircle) }
+                            Button { app.downloads.resumeAll() } label: { Label("Resume All", glyph: .play) }
                                 .disabled(!app.downloads.items.contains { $0.status == .paused || $0.status == .failed })
-                            Button { app.downloads.pauseAll() } label: { Label("全部暂停", glyph: .pause) }
+                            Button { app.downloads.pauseAll() } label: { Label("Pause All", glyph: .pause) }
                                 .disabled(!app.downloads.items.contains { $0.status.isActive })
                             Button(role: .destructive) { confirmClear = true } label: {
-                                Label("清除已完成记录", glyph: .trash)
+                                Label("Clear Completed Records", glyph: .trash)
                             }
                             .disabled(!app.downloads.items.contains { $0.status == .completed })
                         } label: { Image(icon: .more).foregroundStyle(Color.ink) }
-                        .accessibilityLabel("更多")
+                        .accessibilityLabel("More")
                         .disabled(app.downloads.items.isEmpty)
-                        .rowDialog("清除已完成的记录？", isPresented: $confirmClear, message: "只清除列表里的记录，已下载的文件保留") {
-                            Button("清除记录", role: .destructive) { app.downloads.clearFinished() }
+                        .rowDialog("Clear completed records?", isPresented: $confirmClear, message: "Only the list entries will be cleared. Downloaded files will be kept.") {
+                            Button("Clear Records", role: .destructive) { app.downloads.clearFinished() }
                         }
                     }
                 }
             }
             .exportPicker(urls: $exportURLs) { done in
                 guard done else { return }
-                app.show("已保存到「文件」")
+                app.show("Saved to Files")
                 withAnimation(.snappy(duration: 0.25)) { selecting = false; selection = [] }
             }
             .safeAreaInset(edge: .bottom) {
@@ -294,7 +294,7 @@ struct DownloadsView: View {
         let canResume = chosen.contains { $0.status == .paused || $0.status == .failed }
         return HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(chosen.isEmpty ? "未选择" : "已选 \(chosen.count) 项").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
+                Text(chosen.isEmpty ? "Nothing Selected" : "已选 \(chosen.count) 项").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
                     .contentTransition(.numericText())
                 let size = chosen.reduce(Int64(0)) { $0 + max(0, $1.totalBytes) }
                 if size > 0 { Text(ByteFormat.string(size)).font(.figuresSmall).foregroundStyle(Color.ink3) }
@@ -304,25 +304,25 @@ struct DownloadsView: View {
             if !files.isEmpty {
                 Button { exportURLs = files } label: { IconView(.folder, size: 16) }
                     .buttonStyle(CircleIconButtonStyle(size: 40))
-                    .accessibilityLabel("保存到「文件」")
+                    .accessibilityLabel("Save to Files")
             }
             if canResume {
                 Button { app.downloads.resume(chosen.filter { $0.status == .paused || $0.status == .failed }) } label: {
                     IconView(.play, size: 16)
                 }
                 .buttonStyle(CircleIconButtonStyle(size: 40))
-                .accessibilityLabel("继续所选")
+                .accessibilityLabel("Resume Selected")
             }
             if canPause {
                 Button { app.downloads.pause(chosen.filter(\.status.isActive)) } label: { IconView(.pause, size: 16) }
                     .buttonStyle(CircleIconButtonStyle(size: 40))
-                    .accessibilityLabel("暂停所选")
+                    .accessibilityLabel("Pause Selected")
             }
             Menu {
-                Button("删除任务和文件", role: .destructive) { removeSelected(deleteFiles: true) }
-                Button("仅删除记录") { removeSelected(deleteFiles: false) }
+                Button("Delete Task and File", role: .destructive) { removeSelected(deleteFiles: true) }
+                Button("Delete Record Only") { removeSelected(deleteFiles: false) }
             } label: {
-                HStack(spacing: 6) { Image(icon: .trash); Text("删除") }
+                HStack(spacing: 6) { Image(icon: .trash); Text("Delete") }
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(Color.surface)
                     .padding(.horizontal, 16)
@@ -384,10 +384,10 @@ struct DownloadsView: View {
 
     private var emptyTitle: String {
         switch filter {
-        case .all: return "还没有下载"
-        case .active: return "没有进行中的任务"
-        case .done: return "还没有完成的任务"
-        case .failed: return "没有失败的任务"
+        case .all: return "No Downloads Yet"
+        case .active: return "No Active Downloads"
+        case .done: return "No Completed Downloads"
+        case .failed: return "No Failed Downloads"
         }
     }
 
@@ -398,12 +398,12 @@ struct DownloadsView: View {
                 .font(.cardTitle)
                 .foregroundStyle(Color.ink)
             if filter == .all {
-                Text("在「解析」页粘贴链接即可开始").font(.footnote).foregroundStyle(Color.ink2)
-                Button("去解析") { app.selectedTab = .resolve }
+                Text("Paste a link in the Resolve tab to get started.").font(.footnote).foregroundStyle(Color.ink2)
+                Button("Go to Resolve") { app.selectedTab = .resolve }
                     .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                     .padding(.top, 4)
             } else {
-                Button("查看全部任务") { filter = .all }
+                Button("View All Tasks") { filter = .all }
                     .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                     .padding(.top, 4)
             }
@@ -418,7 +418,7 @@ struct DownloadsView: View {
         case .completed:
             // 文件被「文件」App 删掉或挪走时，给个说明而不是打开一个空预览
             guard let url = app.downloads.fileURL(item), FileManager.default.fileExists(atPath: url.path) else {
-                app.show("找不到文件，可能已被移动或删除", error: true)
+                app.show("File not found. It may have been moved or deleted.", error: true)
                 return
             }
             if url.hasDirectoryPath || Self.isDirectory(url) { Self.revealInFiles(url) } else { previewURL = url }
@@ -435,41 +435,41 @@ struct DownloadsView: View {
         if item.status == .completed, let facts = fileFacts.facts(for: item, resolve: { app.downloads.fileURL(item) }) {
             let url = facts.url
             if facts.isDirectory {
-                Button { Self.revealInFiles(url) } label: { Label("在「文件」中查看", glyph: .folder) }
+                Button { Self.revealInFiles(url) } label: { Label("View in Files", glyph: .folder) }
             } else {
-                Button { previewURL = url } label: { Label("打开", glyph: .eye) }
+                Button { previewURL = url } label: { Label("Open", glyph: .eye) }
             }
-            ShareLink(item: url) { Label("分享 / 保存到「文件」", glyph: .share) }
+            ShareLink(item: url) { Label("Share / Save to Files", glyph: .share) }
             if facts.canSaveToPhotos {
                 Button {
                     Task {
                         do { app.show(try await MediaTools.saveToPhotosSmart(url)) } catch { app.show(error.localizedDescription, error: true) }
                     }
-                } label: { Label(facts.isLivePhoto ? "保存为实况照片" : "保存到相册", glyph: .image) }
+                } label: { Label(facts.isLivePhoto ? "Save as Live Photo" : "Save to Photos", glyph: .image) }
             }
         } else {
             if item.status.isActive {
-                Button { app.downloads.pause(item) } label: { Label("暂停", glyph: .pause) }
+                Button { app.downloads.pause(item) } label: { Label("Pause", glyph: .pause) }
             } else {
-                Button { app.downloads.resume(item) } label: { Label("继续", glyph: .play) }
+                Button { app.downloads.resume(item) } label: { Label("Resume", glyph: .play) }
             }
             if item.request.canRefresh {
-                Button { refresh(item) } label: { Label("重新获取直链并继续", glyph: .refresh) }
+                Button { refresh(item) } label: { Label("Refresh Direct Link and Resume", glyph: .refresh) }
             }
         }
-        Button { Clipboard.copy(item.request.url); app.show("已复制下载地址") } label: {
-            Label("复制下载地址", glyph: .link)
+        Button { Clipboard.copy(item.request.url); app.show("Download URL Copied") } label: {
+            Label("Copy Download URL", glyph: .link)
         }
-        Button { debugging = item } label: { Label("调试信息", glyph: .doc) }
+        Button { debugging = item } label: { Label("Debug Information", glyph: .doc) }
         // 删除放在二级菜单里：选中具体方式就是确认，不再额外弹确认框
         Menu {
             if item.status == .completed {
-                Button("删除任务和文件", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
-                Button("仅删除记录") { app.downloads.remove(item, deleteFile: false) }
+                Button("Delete Task and File", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
+                Button("Delete Record Only") { app.downloads.remove(item, deleteFile: false) }
             } else {
-                Button("删除任务", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
+                Button("Delete Task", role: .destructive) { app.downloads.remove(item, deleteFile: true) }
             }
-        } label: { Label("删除", glyph: .trash) }
+        } label: { Label("Delete", glyph: .trash) }
     }
 
     /// 多文件种子下完是一个目录：QuickLook 打不开，交给「文件」App 打开那个位置
@@ -489,7 +489,7 @@ struct DownloadsView: View {
             defer { refreshing.remove(item.id) }
             do {
                 try await app.downloads.refreshLink(item)
-                app.show("已重新获取直链")
+                app.show("Direct Link Refreshed")
             } catch {
                 app.show(error.localizedDescription, error: true)
             }
@@ -608,7 +608,7 @@ private struct SummaryCard: View {
         VStack(alignment: .leading, spacing: 12) {
             if active.isEmpty {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(items.contains { $0.status == .failed } ? "有任务未完成" : "全部完成")
+                    Text(items.contains { $0.status == .failed } ? "Some Tasks Are Incomplete" : "All Complete")
                         .font(.cardTitle)
                         .foregroundStyle(Color.ink)
                     Spacer()
@@ -685,10 +685,10 @@ enum Humanize {
     /// 剩余时间说成人话
     static func eta(_ seconds: Double) -> String {
         guard seconds.isFinite, seconds > 0 else { return "" }
-        if seconds < 10 { return "马上就好" }
-        if seconds < 60 { return "不到 1 分钟" }
+        if seconds < 10 { return "Almost Done" }
+        if seconds < 60 { return "Less than a minute" }
         if seconds < 3600 { return "还剩约 \(Int((seconds / 60).rounded())) 分钟" }
-        if seconds > 86400 * 2 { return "还要很久" }
+        if seconds > 86400 * 2 { return "A Long Time Remaining" }
         let h = Int(seconds / 3600)
         let m = Int((seconds - Double(h) * 3600) / 60)
         return m > 0 ? "还剩约 \(h) 小时 \(m) 分" : "还剩约 \(h) 小时"
@@ -794,7 +794,7 @@ struct DownloadRow: View {
                     Button(action: save.action) {
                         HStack(spacing: 4) {
                             IconView(save.toPhotos ? .image : .folder, size: 14)
-                            Text("保存")
+                            Text("Save")
                         }
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(Color.ink)
@@ -840,8 +840,8 @@ struct DownloadRow: View {
             return ByteFormat.speed(item.speed) + eta
         case .paused: return "已暂停"
         case .merging: return "合并中"
-        case .failed: return "失败"
-        case .completed: return item.finishedAt.map { $0.formatted(.relative(presentation: .named)) } ?? "已完成"
+        case .failed: return "Failed"
+        case .completed: return item.finishedAt.map { $0.formatted(.relative(presentation: .named)) } ?? "Completed"
         }
     }
 

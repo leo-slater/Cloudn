@@ -92,9 +92,9 @@ struct AppTabView<Resolve: View, Me: View>: View {
         }
     }
 
-    private var resolveLabel: some View { Label { Text("解析") } icon: { Image(icon: .link) } }
-    private var downloadsLabel: some View { Label { Text("下载") } icon: { Image(icon: .download) } }
-    private var meLabel: some View { Label { Text("我的") } icon: { Image(icon: .user) } }
+    private var resolveLabel: some View { Label { Text("Resolve") } icon: { Image(icon: .link) } }
+    private var downloadsLabel: some View { Label { Text("Downloads") } icon: { Image(icon: .download) } }
+    private var meLabel: some View { Label { Text("My") } icon: { Image(icon: .user) } }
 }
 
 /// 首次启动的使用须知
@@ -111,15 +111,15 @@ struct NoticeSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                     .overlay { RoundedRectangle(cornerRadius: 15, style: .continuous).strokeBorder(Color.hairline, lineWidth: 1) }
                     .padding(.top, 48)
-                Text("使用前请了解")
+                Text("Before You Start")
                     .font(.pageTitle)
                     .foregroundStyle(Color.ink)
                 VStack(alignment: .leading, spacing: 0) {
-                    NoticeRow(icon: .link, title: "能做什么", text: "粘贴网盘分享、短视频或 GitHub 链接，浏览内容并直接下载。")
+                    NoticeRow(icon: .link, title: "What Cloudn Can Do", text: "Paste cloud-drive shares, video links, or GitHub links to browse and download files directly.")
                     RowDivider(leading: 50)
-                    NoticeRow(icon: .lock, title: "凭据在哪", text: "登录凭据只保存在本机钥匙串，只发给对应平台，不经过任何第三方服务器。")
+                    NoticeRow(icon: .lock, title: "Where Credentials Are Stored", text: "Login credentials are stored in your device's Keychain and sent only to the relevant service, not through third-party servers.")
                     RowDivider(leading: 50)
-                    NoticeRow(icon: .warning, title: "使用边界", text: "仅供个人学习与技术交流。请只解析你有权访问的内容，遵守各平台服务条款与当地法律。")
+                    NoticeRow(icon: .warning, title: "Responsible Use", text: "For personal learning and technical use. Only access content you're authorized to use, and follow applicable terms and laws.")
                 }
                 .card()
             }
@@ -130,7 +130,7 @@ struct NoticeSheet: View {
         }
         .safeAreaInset(edge: .bottom) {
             Button(action: onAccept) {
-                Text("我已了解").frame(maxWidth: .infinity)
+                Text("I Understand").frame(maxWidth: .infinity)
             }
             .buttonStyle(PillButtonStyle(kind: .primary))
             .padding(.horizontal, 24)

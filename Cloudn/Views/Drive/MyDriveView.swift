@@ -18,7 +18,7 @@ struct MyDriveView: View {
                 .task { if quota == nil { quota = await manager.quota() } }
         } else {
             ScrollView {
-                EmptyStateCard(icon: .cloud, title: "暂不支持", detail: "\(platform.displayName)暂不支持文件管理").padding(16)
+                EmptyStateCard(icon: .cloud, title: "Not Supported Yet", detail: "\(platform.displayName)暂不支持文件管理").padding(16)
             }
             .background(Color.paper)
         }
@@ -95,19 +95,19 @@ struct DriveFolderView: View {
                 }
             }
             if let errorMessage {
-                EmptyStateCard(icon: .warning, title: "加载失败", detail: errorMessage, actionTitle: "重试") { Task { await load() } }.inList()
+                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: errorMessage, actionTitle: "Retry") { Task { await load() } }.inList()
             } else if items.isEmpty && !loading && uploads.isEmpty {
-                EmptyStateCard(icon: .folder, title: "空文件夹", actionTitle: uploader != nil ? "上传文件" : nil) { importingFiles = true }
+                EmptyStateCard(icon: .folder, title: "Empty Folder", actionTitle: uploader != nil ? "Upload Files" : nil) { importingFiles = true }
                     .inList()
             } else if visibleItems.isEmpty && !query.isEmpty {
-                EmptyStateCard(icon: .search, title: "没有匹配的文件", detail: "当前文件夹里没有名字包含「\(query)」的文件").inList()
+                EmptyStateCard(icon: .search, title: "No Matching Files", detail: "当前文件夹里没有名字包含「\(query)」的文件").inList()
             }
             ForEach(visibleItems) { item in
                 row(item)
                 .paperRow()
                 .rowDialog("删除「\(item.name)」？", isPresented: presenting($deleting) { $0.fid == item.fid },
                            message: "通常可在网盘回收站中找回") {
-                    Button("删除", role: .destructive) { perform("已删除") { try await manager.delete([item]) } }
+                    Button("Delete", role: .destructive) { perform("已删除") { try await manager.delete([item]) } }
                 }
             }
         }
@@ -116,7 +116,7 @@ struct DriveFolderView: View {
         .background(Color.paper)
         .overlay { if loading && items.isEmpty { Spinner(size: 28) } }
         .refreshable { await load() }
-        .searchable(text: $query, prompt: "在当前文件夹中搜索")
+        .searchable(text: $query, prompt: "Search in This Folder")
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -126,18 +126,18 @@ struct DriveFolderView: View {
                 } else if caps.contains(.createFolder) || uploader != nil || offline != nil {
                     Menu {
                         if caps.contains(.createFolder) {
-                            Button { nameText = ""; naming = .newFolder } label: { Label("新建文件夹", glyph: .folderPlus) }
+                            Button { nameText = ""; naming = .newFolder } label: { Label("New Folder", glyph: .folderPlus) }
                         }
                         if uploader != nil {
-                            Button { importingFiles = true } label: { Label("上传文件", glyph: .arrowUp) }
-                            Button { pickingMedia = true } label: { Label("上传照片或视频", glyph: .image) }
+                            Button { importingFiles = true } label: { Label("Upload Files", glyph: .arrowUp) }
+                            Button { pickingMedia = true } label: { Label("Upload Photos or Videos", glyph: .image) }
                         }
                         if offline != nil {
                             Divider()
-                            Button { showingOffline = true } label: { Label("离线下载", glyph: .magnet) }
+                            Button { showingOffline = true } label: { Label("Offline Download", glyph: .magnet) }
                         }
                     } label: { Image(icon: .plus).foregroundStyle(Color.ink) }
-                    .accessibilityLabel("新建或上传")
+                    .accessibilityLabel("Create or Upload")
                 }
             }
         }
@@ -160,9 +160,9 @@ struct DriveFolderView: View {
             await load()
         }
         .alert(namingTitle, isPresented: Binding(get: { naming != nil }, set: { if !$0 { naming = nil } })) {
-            TextField("名称", text: $nameText)
-            Button("取消", role: .cancel) {}
-            Button("确定") { if let target = naming { commitName(target) } }
+            TextField("Name", text: $nameText)
+            Button("Cancel", role: .cancel) {}
+            Button("OK") { if let target = naming { commitName(target) } }
                 .disabled(nameText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .navigationDestination(isPresented: $showingOffline) {
@@ -176,14 +176,14 @@ struct DriveFolderView: View {
         }
         .sheet(item: $moving) { file in
             DriveFolderPicker(platform: platform, manager: manager, excluding: file.fid) { target, _ in
-                perform("已移动") { try await manager.move([file], to: target) }
+                perform("Moved") { try await manager.move([file], to: target) }
             }
         }
     }
 
     private var namingTitle: String {
-        if case .rename = naming { return "重命名" }
-        return "新建文件夹"
+        if case .rename = naming { return "Rename" }
+        return "New Folder"
     }
 
     @ViewBuilder
@@ -202,19 +202,19 @@ struct DriveFolderView: View {
         .swipeActions(edge: .trailing) {
             if caps.contains(.delete) {
                 // 不用 destructive 角色：它会触发列表删除动画，确认框刚弹出就被收回、行又弹回来
-                Button { deleting = item } label: { Label("删除", glyph: .trash) }
+                Button { deleting = item } label: { Label("Delete", glyph: .trash) }
                     .tint(Color.swipeDestructive)
             }
         }
         .contextMenu {
             if !item.isDirectory {
                 if OnlinePreview.supports(item.name) {
-                    Button { preview(item) } label: { Label("预览", glyph: .eye) }
+                    Button { preview(item) } label: { Label("Preview", glyph: .eye) }
                 }
-                Button { download(item) } label: { Label("下载", glyph: .download) }
+                Button { download(item) } label: { Label("Downloads", glyph: .download) }
             }
             if caps.contains(.share) && !manager.shareAudienceOptions.isEmpty {
-                Button { sharing = item } label: { Label("分享设置…", glyph: .link) }
+                Button { sharing = item } label: { Label("Sharing Options…", glyph: .link) }
             } else if caps.contains(.share) {
                 let options = manager.shareExpiryOptions
                 if options.count > 1 {
@@ -222,19 +222,19 @@ struct DriveFolderView: View {
                         ForEach(options) { expiry in
                             Button(expiry.label) { share(item, expiry: expiry) }
                         }
-                    } label: { Label("创建分享并复制", glyph: .link) }
+                    } label: { Label("Create and Copy Share Link", glyph: .link) }
                 } else {
-                    Button { share(item, expiry: options.first ?? .forever) } label: { Label("创建分享并复制", glyph: .link) }
+                    Button { share(item, expiry: options.first ?? .forever) } label: { Label("Create and Copy Share Link", glyph: .link) }
                 }
             }
             if caps.contains(.rename) {
-                Button { nameText = item.name; naming = .rename(item) } label: { Label("重命名", glyph: .pencil) }
+                Button { nameText = item.name; naming = .rename(item) } label: { Label("Rename", glyph: .pencil) }
             }
             if caps.contains(.move) {
-                Button { moving = item } label: { Label("移动到…", glyph: .move) }
+                Button { moving = item } label: { Label("Move To…", glyph: .move) }
             }
             if caps.contains(.delete) {
-                Button(role: .destructive) { deleting = item } label: { Label("删除", glyph: .trash) }
+                Button(role: .destructive) { deleting = item } label: { Label("Delete", glyph: .trash) }
             }
         }
     }
@@ -286,7 +286,7 @@ struct DriveFolderView: View {
         guard !fetching.contains(file.fid) else { return }
         let kind = FileNames.kind(of: file.name)
         if kind == .document, file.size > RemoteFileItem.limit {
-            app.show("文件较大，请下载后查看", error: true)
+            app.show("File Is Too Large to Preview. Download to Open.", error: true)
             return
         }
         fetching.insert(file.fid)
@@ -318,7 +318,7 @@ struct DriveFolderView: View {
                 let link = try await manager.driveDownloadLink(file)
                 app.downloads.enqueue(link: link, platform: platform, folder: "", origin: nil,
                                       refresh: .drive(platform: platform, file: DriveFileRef(file)))
-                app.show("已加入下载")
+                app.show("Added to Downloads")
             } catch {
                 app.show(error.localizedDescription, error: true)
             }
@@ -346,7 +346,7 @@ struct DriveFolderView: View {
         perform(nil) {
             let link = try await manager.createShare([file], expiry: expiry)
             Clipboard.copy(link.text)
-            app.show(expiry.isForever ? "分享链接已复制" : "分享链接已复制 · \(expiry.label)有效")
+            app.show(expiry.isForever ? "Share Link Copied" : "分享链接已复制 · \(expiry.label)有效")
         }
     }
 
@@ -354,8 +354,8 @@ struct DriveFolderView: View {
         let name = nameText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         switch target {
-        case .newFolder: perform("已新建文件夹") { try await manager.createFolder(name, in: folderId) }
-        case .rename(let file): perform("已重命名") { try await manager.rename(file, to: name) }
+        case .newFolder: perform("Folder Created") { try await manager.createFolder(name, in: folderId) }
+        case .rename(let file): perform("Renamed") { try await manager.rename(file, to: name) }
         }
     }
 
@@ -384,7 +384,7 @@ struct DriveFolderPicker: View {
     let platform: SharePlatform
     let manager: DriveManager
     let excluding: String
-    var actionVerb = "移动到"
+    var actionVerb = "Move To"
     let onPick: (String, String) -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -396,7 +396,7 @@ struct DriveFolderPicker: View {
                 dismiss()
             }
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             }
         }
     }
@@ -416,12 +416,12 @@ struct DriveFolderPicker: View {
         var body: some View {
             List {
                 if let errorMessage {
-                    EmptyStateCard(icon: .warning, title: "加载失败", detail: errorMessage, actionTitle: "重试") {
+                    EmptyStateCard(icon: .warning, title: "Failed to Load", detail: errorMessage, actionTitle: "Retry") {
                         Task { await load() }
                     }
                     .inList()
                 } else if !loading && folders.filter({ $0.fid != excluding }).isEmpty {
-                    EmptyStateCard(icon: .folder, title: "这里没有子文件夹", detail: "可以直接\(actionVerb)当前文件夹").inList()
+                    EmptyStateCard(icon: .folder, title: "No Subfolders Here", detail: "可以直接\(actionVerb)当前文件夹").inList()
                 }
                 ForEach(folders.filter { $0.fid != excluding }) { folder in
                     NavigationLink {
@@ -519,10 +519,10 @@ struct UploadRow: View {
 
     private var statusText: String {
         switch item.status {
-        case .waiting: return "等待上传"
+        case .waiting: return "Waiting to Upload"
         case .failed(let message): return message
-        case .cancelled: return "已取消"
-        case .done: return "已完成"
+        case .cancelled: return "Cancelled"
+        case .done: return "Completed"
         case .running:
             switch item.phase {
             case .hashing: return "校验中 \(Int(item.fraction * 100))%"
@@ -551,11 +551,11 @@ struct UploadRow: View {
             if failed {
                 Button { app.uploads.retry(item.id) } label: { IconView(.refresh, size: 15) }
                     .buttonStyle(CircleIconButtonStyle(size: 32))
-                    .accessibilityLabel("重试")
+                    .accessibilityLabel("Retry")
             }
             Button { app.uploads.dismiss(item.id) } label: { IconView(.close, size: 13) }
                 .buttonStyle(CircleIconButtonStyle(size: 32))
-                .accessibilityLabel(failed ? "移除" : "取消上传")
+                .accessibilityLabel(failed ? "Remove" : "取消上传")
         }
         .padding(.vertical, 4)
     }

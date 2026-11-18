@@ -15,7 +15,7 @@ extension AppModel {
         }
         downloads.enqueue(DownloadRequest(url: mirrored, headers: headers, fileName: name, folder: folder,
                                           expectedSize: size, source: "GitHub", group: group))
-        show("已加入下载")
+        show("Added to Downloads")
     }
 
     /// Release 附件：私有仓库带 Token 走 API 地址（浏览器下载地址对私有仓库是 404），公开仓库照常（可走镜像）
@@ -26,7 +26,7 @@ extension AppModel {
         }
         downloads.enqueue(DownloadRequest(url: asset.apiURL, headers: asset.privateDownloadHeaders(token: token), fileName: asset.name,
                                           folder: folder, expectedSize: asset.size, source: "GitHub"))
-        show("已加入下载")
+        show("Added to Downloads")
     }
 
     /// GitHub 文件最近一次的下载任务（按文件名与目录对上）
@@ -48,7 +48,7 @@ struct GitHubAccountView: View {
         let shown = query.isEmpty ? repos : repos.filter { $0.name.localizedCaseInsensitiveContains(query) }
         List {
             if let error {
-                EmptyStateCard(icon: .warning, title: "加载失败", detail: error, actionTitle: "重试") {
+                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: error, actionTitle: "Retry") {
                     Task { await load() }
                 }
                 .inList()
@@ -82,7 +82,7 @@ struct GitHubAccountView: View {
         .readableWidth()
         .background(Color.paper)
         .overlay { if loading { Spinner(size: 28) } }
-        .searchable(text: $query, prompt: "搜索仓库")
+        .searchable(text: $query, prompt: "Search Repositories")
         .navigationTitle(owner)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -111,7 +111,7 @@ struct GitHubRepoView: View {
     @State private var error: String?
 
     enum Tab: String, CaseIterable, Identifiable {
-        case files = "文件", releases = "Releases"
+        case files = "Files", releases = "Releases"
         var id: String { rawValue }
     }
 
@@ -146,14 +146,14 @@ struct GitHubRepoView: View {
             } else if let error {
                 ScrollView {
                     VStack(spacing: 12) {
-                        EmptyStateCard(icon: .warning, title: "无法打开仓库", detail: error, actionTitle: "重试") {
+                        EmptyStateCard(icon: .warning, title: "Unable to Open Repository", detail: error, actionTitle: "Retry") {
                             self.error = nil
                             Task { await loadInfo() }
                         }
                         // 提示要填 Token 的（接口限额、私有仓库）：直接给入口
                         if error.contains("Token") {
                             NavigationLink { GitHubSettingsView() } label: {
-                                Label { Text("填写 GitHub Token") } icon: { Image(icon: .gear) }
+                                Label { Text("Enter GitHub Token") } icon: { Image(icon: .gear) }
                             }
                             .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                         }
@@ -201,7 +201,7 @@ struct GitHubDirectoryView: View {
                     .listRowBackground(Color.clear)
             }
             if let error {
-                EmptyStateCard(icon: .warning, title: "加载失败", detail: error, actionTitle: "重试") {
+                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: error, actionTitle: "Retry") {
                     Task { await load() }
                 }
                 .inList()
@@ -289,17 +289,17 @@ struct GitHubReleasesView: View {
     var body: some View {
         List {
             if let error {
-                EmptyStateCard(icon: .warning, title: "加载失败", detail: error, actionTitle: "重试") {
+                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: error, actionTitle: "Retry") {
                     Task { await load() }
                 }
                 .inList()
             } else if releases.isEmpty && !loading {
-                EmptyStateCard(icon: .tag, title: "没有发布版本").inList()
+                EmptyStateCard(icon: .tag, title: "No Releases").inList()
             }
             ForEach(releases) { release in
                 Section {
                     if release.assets.isEmpty {
-                        Text("没有附件").foregroundStyle(Color.ink3).paperRow()
+                        Text("No Assets").foregroundStyle(Color.ink3).paperRow()
                     }
                     ForEach(release.assets) { asset in
                         HStack(spacing: 12) {
@@ -316,7 +316,7 @@ struct GitHubReleasesView: View {
                         .paperRow()
                     }
                     if !release.notes.isEmpty {
-                        DisclosureGroup("更新说明") {
+                        DisclosureGroup("Release Notes") {
                             Text(release.notes).font(.callout).foregroundStyle(Color.ink2).textSelection(.enabled)
                         }
                         .paperRow()
@@ -325,7 +325,7 @@ struct GitHubReleasesView: View {
                     HStack(spacing: 8) {
                         Text(release.name).font(.serif(16, relativeTo: .headline)).foregroundStyle(Color.ink).textCase(nil)
                         if release.isPrerelease {
-                            Text("预发布").font(.caption2.weight(.medium)).foregroundStyle(Color.clayInk)
+                            Text("Prerelease").font(.caption2.weight(.medium)).foregroundStyle(Color.clayInk)
                                 .padding(.horizontal, 6).padding(.vertical, 2)
                                 .background(Color.claySoft, in: Capsule())
                         }
@@ -377,23 +377,23 @@ struct GitHubSettingsView: View {
                     SecureField("ghp_… / github_pat_…", text: $token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    Button(checking ? "正在校验…" : "保存并校验") { save() }
+                    Button(checking ? "Verifying…" : "Save and Verify") { save() }
                         .disabled(checking || token == app.settings.githubToken)
                     if !app.settings.githubToken.isEmpty {
-                        Button("清除 Token") {
+                        Button("Clear Token") {
                             app.settings.githubToken = ""
                             token = ""
-                            app.show("已清除 Token")
+                            app.show("Token Cleared")
                         }
                         .foregroundStyle(Color.clayInk)
                     }
                 } header: {
-                    Text("GitHub Token（可选）")
+                    Text("GitHub Token (Optional)")
                 } footer: {
                     Text("不填每小时只能调用 60 次接口，填写后为 5000 次，并可浏览私有仓库。Token 只存在本机钥匙串，建议只给只读权限。")
                 }
                 Section {
-                    mirrorRow(name: "直连 GitHub", prefix: "")
+                    mirrorRow(name: "Connect Directly to GitHub", prefix: "")
                     ForEach(GitHubMirrorPresets.all, id: \.prefix) { mirrorRow(name: $0.name, prefix: $0.prefix) }
                     TextField("自定义前缀，如 https://example.com/", text: $settings.githubMirror)
                         .textInputAutocapitalization(.never)
@@ -402,9 +402,9 @@ struct GitHubSettingsView: View {
                         .font(.mono)
                 } header: {
                     HStack {
-                        Text("下载镜像")
+                        Text("Download Mirror")
                         Spacer()
-                        Button(probing ? "测速中…" : "测速") { Task { await probe() } }
+                        Button(probing ? "Testing Speed…" : "Test Speed") { Task { await probe() } }
                             .font(.footnote)
                             .disabled(probing)
                             .textCase(nil)
@@ -439,7 +439,7 @@ struct GitHubSettingsView: View {
                 }
                 Spacer()
                 if let result = latency[prefix] {
-                    Text(result.map { "\($0) ms" } ?? "不可用")
+                    Text(result.map { "\($0) ms" } ?? "Unavailable")
                         .font(.monoSmall)
                         .foregroundStyle(result == nil ? Color.clayInk : (result! < 800 ? Color.success : Color.ink2))
                 }

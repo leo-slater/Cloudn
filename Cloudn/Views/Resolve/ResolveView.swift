@@ -122,7 +122,7 @@ struct ResolveView: View {
             .background(Color.paper)
             // 输入框浮在底部：提示出现在它上方
             .liftsToast()
-            .navigationTitle("解析")
+            .navigationTitle("Resolve")
             .navigationDestination(item: $shareModel) { ShareBrowserView(model: $0) }
             // 离开分享页（返回或换了一个分享）：清掉预览 / 复制直链留下的临时转存
             .onChange(of: shareModel) { old, new in
@@ -145,10 +145,10 @@ struct ResolveView: View {
             }
             .fullScreenCover(item: $sniffTarget) { SnifferView(url: $0.url) }
             .sheet(item: $batchJob) { BatchView(job: $0) }
-            .alert("使用第三方服务解析口令？", isPresented: $askingKoulingConsent) {
-                Button("取消", role: .cancel) {}
-                Button("仅这一次") { resolveKouling(consented: true) }
-                Button("总是允许") {
+            .alert("Use a Third-Party Service to Decode This Share Code?", isPresented: $askingKoulingConsent) {
+                Button("Cancel", role: .cancel) {}
+                Button("Just This Once") { resolveKouling(consented: true) }
+                Button("Always Allow") {
                     app.settings.allowCommandService = true
                     resolveKouling(consented: true)
                 }
@@ -158,17 +158,17 @@ struct ResolveView: View {
             .alert(sniffOffer?.message ?? "", isPresented: Binding(get: { sniffOffer != nil }, set: { if !$0 { sniffOffer = nil } })) {
                 // 需要登录时「去登录」排第一，嗅探是备选；其他失败首选嗅探，另给「重试」
                 if let kind = sniffOffer?.loginKind {
-                    Button("去登录") {
+                    Button("Go to Login") {
                         loginRetry = LoginRetry(text: sniffOffer?.text ?? "", kind: kind,
                                                 stamp: app.accounts.list(kind).first?.updatedAt)
                         loginKind = kind
                     }
-                    Button("网页嗅探") { if let offer = sniffOffer { sniffTarget = SniffTarget(url: offer.url) } }
+                    Button("Web Media Sniffer") { if let offer = sniffOffer { sniffTarget = SniffTarget(url: offer.url) } }
                 } else {
-                    Button("网页嗅探") { if let offer = sniffOffer { sniffTarget = SniffTarget(url: offer.url) } }
-                    Button("重试") { if let text = sniffOffer?.text, !text.isEmpty { open(text: text) } }
+                    Button("Web Media Sniffer") { if let offer = sniffOffer { sniffTarget = SniffTarget(url: offer.url) } }
+                    Button("Retry") { if let text = sniffOffer?.text, !text.isEmpty { open(text: text) } }
                 }
-                Button("取消", role: .cancel) {}
+                Button("Cancel", role: .cancel) {}
             } message: {
                 Text(sniffOffer?.loginKind.map { "登录\($0.displayName)后可重新解析，也可以用网页嗅探：在网页里播放后抓取视频。" }
                      ?? "可以重试，或用网页嗅探：在网页里播放后抓取视频。")
@@ -269,7 +269,7 @@ struct ResolveView: View {
                 .contentShape(Rectangle())
             }
                 .buttonStyle(.plain)
-                .accessibilityLabel("正在解析，点按取消")
+                .accessibilityLabel("Resolving… Tap to Cancel")
         } else if trimmed.isEmpty {
             // 输入框为空：一键粘贴（系统粘贴控件，不弹授权提示）。上方已有剪贴板卡片时不重复
             if !showsClipboardCard {
@@ -281,15 +281,15 @@ struct ResolveView: View {
                 }
             }
             Menu {
-                Button { showBookmarks = true } label: { Label { Text("从收藏打开") } icon: { Image(icon: .star) } }
-                Button { importingTorrent = true } label: { Label { Text("打开种子文件") } icon: { Image(icon: .magnet) } }
-                Button { focused = true } label: { Label { Text("手动输入") } icon: { Image(icon: .pencil) } }
+                Button { showBookmarks = true } label: { Label { Text("Open Bookmarks") } icon: { Image(icon: .star) } }
+                Button { importingTorrent = true } label: { Label { Text("Open Torrent File") } icon: { Image(icon: .magnet) } }
+                Button { focused = true } label: { Label { Text("Enter Manually") } icon: { Image(icon: .pencil) } }
             } label: {
                 IconView(.plus, size: 18)
                     .frame(width: 34, height: 34)
                     .foregroundStyle(Color.ink2)
             }
-            .accessibilityLabel("更多来源")
+            .accessibilityLabel("More Sources")
         } else {
             HStack(spacing: 2) {
                 Button {
@@ -298,7 +298,7 @@ struct ResolveView: View {
                 } label: {
                     IconView(.close, size: 14).frame(width: 34, height: 34).contentShape(Rectangle().inset(by: -5)).foregroundStyle(Color.ink3)
                 }
-                .accessibilityLabel("清空")
+                .accessibilityLabel("Clear")
                 Button(action: submit) { IconView(.arrowUp, size: 17) }
                     .buttonStyle(CircleIconButtonStyle(size: 34, filled: canSubmit))
                     .disabled(!canSubmit)
@@ -329,9 +329,9 @@ struct ResolveView: View {
     }
 
     private var submitLabel: String {
-        if case .direct = detected { return "加入下载" }
-        if case .github(.file) = detected { return "加入下载" }
-        return "开始解析"
+        if case .direct = detected { return "Add to Downloads" }
+        if case .github(.file) = detected { return "Add to Downloads" }
+        return "Start Resolving"
     }
 
     /// 识别结果：平台 + 说明；网盘分享可就地改提取码
@@ -364,9 +364,9 @@ struct ResolveView: View {
             .lineLimit(1)
             Spacer(minLength: 0)
             if collectStopping {
-                Text("正在停止…").font(.footnote).foregroundStyle(Color.ink3)
+                Text("Stopping…").font(.footnote).foregroundStyle(Color.ink3)
             } else {
-                Button("停止") {
+                Button("Stop") {
                     collectProgress?.requestStop()
                     collectStopping = true
                 }
@@ -399,7 +399,7 @@ struct ResolveView: View {
         let value = pwd.isEmpty ? (recognized ?? "") : pwd
         return Group {
             if editingPwd {
-                TextField("提取码", text: $pwd)
+                TextField("Access Code", text: $pwd)
                     .font(.mono)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -412,17 +412,17 @@ struct ResolveView: View {
             } else {
                 Button { pwd = value; editingPwd = true } label: {
                     if value.isEmpty {
-                        Text("加提取码").font(.caption).foregroundStyle(Color.ink2)
+                        Text("Add Access Code").font(.caption).foregroundStyle(Color.ink2)
                     } else {
                         // 带上「提取码」三个字，不然像一个随手贴的标签
                         HStack(spacing: 4) {
-                            Text("提取码").font(.caption).foregroundStyle(Color.ink2)
+                            Text("Access Code").font(.caption).foregroundStyle(Color.ink2)
                             Text(value).font(.mono).foregroundStyle(Color.clayInk)
                         }
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(value.isEmpty ? "添加提取码" : "提取码 \(value)，点按修改")
+                .accessibilityLabel(value.isEmpty ? "Add Access Code" : "提取码 \(value)，点按修改")
             }
         }
         .padding(.horizontal, 8)
@@ -450,13 +450,13 @@ struct ResolveView: View {
             return v.platform.displayName + (input.count > v.url.count + 8 ? " · 已从文案里取出链接" : "")
         case .github(.file): return "GitHub 文件 · 直接下载"
         case .github(.account(let owner)): return "GitHub · \(owner) 的仓库"
-        case .github: return "GitHub 仓库"
+        case .github: return "GitHub Repository"
         case .direct: return "链接 · 直接下载或网页嗅探"
-        case .magnet(let m): return m.displayName.isEmpty ? "磁力链接" : "磁力链接 · " + m.displayName
+        case .magnet(let m): return m.displayName.isEmpty ? "Magnet Link" : "磁力链接 · " + m.displayName
         case nil:
-            guard isKouling else { return "没有识别到链接" }
-            if QuarkKouling.mentionsQuarkOrUC(input) || !isXunleiKouling { return "夸克 / UC 口令" }
-            return isQuarkKouling ? "迅雷 / 夸克口令" : "迅雷口令"
+            guard isKouling else { return "No Link Recognized" }
+            if QuarkKouling.mentionsQuarkOrUC(input) || !isXunleiKouling { return "Quark / UC Share Code" }
+            return isQuarkKouling ? "Xunlei / Quark Share Code" : "Xunlei Share Code"
         }
     }
 
@@ -470,14 +470,14 @@ struct ResolveView: View {
     /// 首次打开：告诉用户第一步做什么（下方输入框旁就是「粘贴」）
     private var firstRunCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("粘贴一个链接").font(.cardTitle).foregroundStyle(Color.ink)
-            Text("网盘分享、短视频、网页视频、GitHub 或磁力链接都可以。复制后点下方的「粘贴」，Cloudn 会自动识别并解析。")
+            Text("Paste a Link").font(.cardTitle).foregroundStyle(Color.ink)
+            Text("Cloudn supports cloud shares, short videos, web videos, GitHub, and magnet links. Copy a link and tap Paste to recognize it automatically.")
                 .font(.subheadline)
                 .foregroundStyle(Color.ink2)
                 .fixedSize(horizontal: false, vertical: true)
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 IconView(.share, size: 14).foregroundStyle(Color.ink3)
-                Text("在其他 App 里点「分享」→ Cloudn 也能直接打开")
+                Text("You can also open links in Cloudn from another app's Share menu.")
                     .font(.footnote)
                     .foregroundStyle(Color.ink3)
                     .fixedSize(horizontal: false, vertical: true)
@@ -500,8 +500,8 @@ struct ResolveView: View {
                 .frame(width: 38, height: 38)
                 .overlay { IconView(.paste, size: 20).foregroundStyle(Color.ink) }
             VStack(alignment: .leading, spacing: 2) {
-                Text("剪贴板里有一个链接").font(.subheadline)
-                Text("粘贴后自动识别并打开").font(.caption).foregroundStyle(Color.ink2)
+                Text("Link Found on Clipboard").font(.subheadline)
+                Text("Paste to Recognize and Open").font(.caption).foregroundStyle(Color.ink2)
             }
             Spacer(minLength: 0)
             // 系统粘贴控件：读取剪贴板不弹授权提示
@@ -520,7 +520,7 @@ struct ResolveView: View {
             Button { markClipboardHandled() } label: {
                 IconView(.close, size: 12).frame(width: 36, height: 44).contentShape(Rectangle()).foregroundStyle(Color.ink3)
             }
-            .accessibilityLabel("忽略")
+            .accessibilityLabel("Ignore")
         }
         .padding(.leading, 14)
         .padding(.trailing, 8)
@@ -552,9 +552,9 @@ struct ResolveView: View {
     private var batchSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                SectionLabel(title: "批量任务")
+                SectionLabel(title: "Batch Tasks")
                 if app.batchJobs.contains(where: { $0.finished && $0.failedCount == 0 }) {
-                    Button("清除已完成") { withAnimation { app.batchJobs.removeAll { $0.finished && $0.failedCount == 0 } } }
+                    Button("Clear Completed") { withAnimation { app.batchJobs.removeAll { $0.finished && $0.failedCount == 0 } } }
                         .font(.subheadline)
                         .buttonStyle(TextLinkButtonStyle())
                 }
@@ -565,15 +565,15 @@ struct ResolveView: View {
                     BatchJobRow(job: job) { batchJob = job }
                         .contextMenu {
                             if job.running {
-                                Button { job.cancel() } label: { Label { Text("停止") } icon: { Image(icon: .close) } }
+                                Button { job.cancel() } label: { Label { Text("Stop") } icon: { Image(icon: .close) } }
                             } else if job.failedCount > 0 {
-                                Button { job.retryFailed(app: app) } label: { Label { Text("重试失败的") } icon: { Image(icon: .refresh) } }
+                                Button { job.retryFailed(app: app) } label: { Label { Text("Retry Failed") } icon: { Image(icon: .refresh) } }
                             } else if !job.finished {
-                                Button { job.start(app: app) } label: { Label { Text("继续") } icon: { Image(icon: .play) } }
+                                Button { job.start(app: app) } label: { Label { Text("Resume") } icon: { Image(icon: .play) } }
                             }
                             if !job.running {
                                 Button(role: .destructive) { withAnimation { app.batchJobs.removeAll { $0.id == job.id } } } label: {
-                                    Label { Text("移除") } icon: { Image(icon: .trash) }
+                                    Label { Text("Remove") } icon: { Image(icon: .trash) }
                                 }
                             }
                         }
@@ -589,8 +589,8 @@ struct ResolveView: View {
     private var bookmarkSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                SectionLabel(title: "收藏")
-                Button("全部") { showBookmarks = true }.font(.subheadline).buttonStyle(TextLinkButtonStyle())
+                SectionLabel(title: "Bookmarks")
+                Button("All") { showBookmarks = true }.font(.subheadline).buttonStyle(TextLinkButtonStyle())
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
@@ -611,7 +611,7 @@ struct ResolveView: View {
                         .buttonStyle(.plain)
                         .contextMenu {
                             Button(role: .destructive) { app.bookmarks.remove([b.id]) } label: {
-                                Label { Text("取消收藏") } icon: { Image(icon: .trash) }
+                                Label { Text("Remove Bookmark") } icon: { Image(icon: .trash) }
                             }
                         }
                     }
@@ -625,12 +625,12 @@ struct ResolveView: View {
     private var historySection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                SectionLabel(title: "最近")
-                Button("清空") { confirmClearHistory = true }
+                SectionLabel(title: "Recent")
+                Button("Clear") { confirmClearHistory = true }
                     .font(.subheadline)
                     .buttonStyle(TextLinkButtonStyle())
-                    .rowDialog("清空最近记录？", isPresented: $confirmClearHistory, message: "收藏不受影响") {
-                        Button("清空", role: .destructive) { withAnimation { app.bookmarks.clearHistory() } }
+                    .rowDialog("Clear Recent History?", isPresented: $confirmClearHistory, message: "Your bookmarks will be preserved.") {
+                        Button("Clear", role: .destructive) { withAnimation { app.bookmarks.clearHistory() } }
                     }
             }
             VStack(spacing: 0) {
@@ -638,15 +638,15 @@ struct ResolveView: View {
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, h in
                     HistoryRow(item: h, progress: downloadProgress(for: h.text)) { open(text: h.text) }
                         .contextMenu {
-                            Button { Clipboard.copy(h.text) } label: { Label { Text("复制链接") } icon: { Image(icon: .link) } }
+                            Button { Clipboard.copy(h.text) } label: { Label { Text("Copy Link") } icon: { Image(icon: .link) } }
                             Button {
                                 app.bookmarks.add(title: h.title, text: h.text, source: h.source)
-                                app.show("已收藏")
+                                app.show("Bookmarked")
                             } label: {
-                                Label { Text("收藏") } icon: { Image(icon: .star) }
+                                Label { Text("Bookmarks") } icon: { Image(icon: .star) }
                             }
                             Button(role: .destructive) { withAnimation { app.bookmarks.removeHistory(h.id) } } label: {
-                                Label { Text("删除这条记录") } icon: { Image(icon: .trash) }
+                                Label { Text("Delete This Entry") } icon: { Image(icon: .trash) }
                             }
                         }
                     if index < items.count - 1 { RowDivider() }
@@ -758,7 +758,7 @@ struct ResolveView: View {
     /// 解析失败时要不要给「去登录」：平台支持登录，且报错提到登录、还没登录或登录已失效
     private func loginSuggestion(for platform: VideoPlatform, message: String) -> AccountKind? {
         guard let kind = platform.accountKind else { return nil }
-        let mentionsLogin = message.contains("登录") || message.localizedCaseInsensitiveContains("login")
+        let mentionsLogin = message.contains("Login") || message.localizedCaseInsensitiveContains("login")
         return mentionsLogin || !app.accounts.isLoggedIn(kind) || app.accounts.isExpired(kind) ? kind : nil
     }
 
@@ -813,7 +813,7 @@ struct ResolveView: View {
                 do {
                     let result = try await CollectionProgress.$current.withValue(progress) { try await parseVideo(link) }
                     try Task.checkCancellation()
-                    guard !result.medias.isEmpty || !result.entries.isEmpty else { throw CloudnError("没有解析到可下载的媒体") }
+                    guard !result.medias.isEmpty || !result.entries.isEmpty else { throw CloudnError("No Downloadable Media Found") }
                     app.bookmarks.record(title: result.title.isEmpty ? result.platform.displayName : result.title,
                                          text: text, source: result.platform.displayName)
                     videoResult = result
@@ -892,8 +892,8 @@ struct ResolveView: View {
         let kind: DownloadKind = url.lowercased().contains(".m3u8") ? .hls : .file
         app.downloads.enqueue(DownloadRequest(url: url, headers: ["User-Agent": VideoHTTP.uaChrome],
                                               fileName: kind == .hls ? (name as NSString).deletingPathExtension + ".mp4" : name,
-                                              kind: kind, source: "直链"))
-        app.show("已加入下载")
+                                              kind: kind, source: "Direct Link"))
+        app.show("Added to Downloads")
         input = ""
     }
 
@@ -992,7 +992,7 @@ private struct HistoryRow: View {
     private var trailing: some View {
         if let progress {
             if progress.done == progress.total {
-                IconView(.check, size: 18).foregroundStyle(Color.success).accessibilityLabel("已下载")
+                IconView(.check, size: 18).foregroundStyle(Color.success).accessibilityLabel("Downloaded")
             } else {
                 HStack(spacing: 5) {
                     ZStack {
