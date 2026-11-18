@@ -21,11 +21,11 @@ struct DownloadStateControl: View {
                 case .completed:
                     IconView(.checkCircle, size: size * 0.7)
                         .foregroundStyle(Color.success)
-                        .accessibilityLabel("已下载")
+                        .accessibilityLabel(L("已下载"))
                 case .failed:
                     Button { retry(item) } label: { IconView(.refresh, size: size * 0.55) }
                         .buttonStyle(CircleIconButtonStyle(size: size, foreground: Color.clayInk))
-                        .accessibilityLabel("下载失败，重试")
+                        .accessibilityLabel(L("下载失败，重试"))
                 default:
                     Button {
                         if item.status == .paused { app.downloads.resume(item) } else { app.downloads.pause(item) }
@@ -35,12 +35,12 @@ struct DownloadStateControl: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(item.status == .paused ? "继续下载" : "暂停下载")
+                    .accessibilityLabel(item.status == .paused ? L("继续下载") : L("暂停下载"))
                 }
             } else {
                 Button(action: start) { IconView(.download, size: size * 0.53) }
                     .buttonStyle(CircleIconButtonStyle(size: size))
-                    .accessibilityLabel("下载")
+                    .accessibilityLabel(L("下载"))
             }
         }
         .frame(width: max(size, 44), height: max(size, 44))
@@ -67,9 +67,9 @@ struct DownloadStateControl: View {
             defer { refreshing = false }
             do {
                 try await app.downloads.refreshLink(item)
-                app.show("已重新获取直链")
+                app.show(L("已重新获取直链"))
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
             }
         }
     }

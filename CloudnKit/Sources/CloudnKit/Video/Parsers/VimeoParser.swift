@@ -66,11 +66,11 @@ struct VimeoParser: VideoParser {
         case 404, 410: throw VideoParseError(.notFound, "Vimeo 视频不存在或已删除")
         case 401, 403:
             if hash.isEmpty {
-                throw VideoParseError(.unknown, "Vimeo 拒绝了请求（HTTP \(max(r.status, page.status))）：如果是不公开视频，请复制带哈希的完整分享链接")
+                throw VideoParseError(.unknown, LocalizedMessage("Vimeo 拒绝了请求（HTTP %1$@）：如果是不公开视频，请复制带哈希的完整分享链接", "\(max(r.status, page.status))"))
             }
-            throw VideoParseError(.blocked, "Vimeo 拒绝了请求（HTTP \(max(r.status, page.status))），所在网络的 IP 可能被限制")
+            throw VideoParseError(.blocked, LocalizedMessage("Vimeo 拒绝了请求（HTTP %1$@），所在网络的 IP 可能被限制", "\(max(r.status, page.status))"))
         case 429: throw VideoParseError(.blocked, "Vimeo 请求过于频繁（HTTP 429），请稍后重试")
-        default: throw VideoParseError(.unknown, "Vimeo 播放器配置获取失败（HTTP \(r.status)）")
+        default: throw VideoParseError(.unknown, LocalizedMessage("Vimeo 播放器配置获取失败（HTTP %1$@）", "\(r.status)"))
         }
     }
 

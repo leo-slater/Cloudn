@@ -105,7 +105,7 @@ extension QuarkFamilyResolver: DriveOfflineDownloader {
         let r = try await client.send(HTTPRequest(url: Self.offlineBase + path + "?pr=ucpro&fr=pc" + query, method: method,
                                                   headers: headers, body: body))
         let json = Self.decodeOfflineResponse(r)
-        guard let json, json.isObject else { throw CloudnError("夸克响应解析失败（HTTP \(r.status)）") }
+        guard let json, json.isObject else { throw CloudnError(LocalizedMessage("夸克响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.checkOffline(json, status: r.status, fallback: fallback)
         return json["data"].isNull ? json : json["data"]
     }

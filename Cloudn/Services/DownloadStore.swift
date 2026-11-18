@@ -179,7 +179,7 @@ final class DownloadStore {
     func refreshLink(_ item: DownloadItem) async throws {
         if let origin = item.request.origin {
             guard let resolver = resolvers.resolver(for: origin.platform), let share = ShareLinkParser.parse(origin.shareURL) else {
-                throw CloudnError("该任务没有可重新解析的来源，请回到解析页重新下载")
+                throw CloudnError(L("该任务没有可重新解析的来源，请回到解析页重新下载"))
             }
             let session = try await resolver.openSession(share, pwd: origin.pwd)
             let link = try await resolver.downloadLink(session, file: origin.file)
@@ -190,24 +190,24 @@ final class DownloadStore {
         switch item.request.refresh {
         case .drive(let platform, let file):
             guard let manager = resolvers.manager(for: platform) else {
-                throw CloudnError("\(platform.displayName)暂不支持重新取链，请到「我的网盘」重新下载")
+                throw CloudnError(L("%1$@暂不支持重新取链，请到「我的网盘」重新下载", "\(L(platform.displayName))"))
             }
             let link = try await manager.driveDownloadLink(file.file)
             background.cancel(itemId: item.id)
             await engine.replaceLink(item.id, url: link.url, headers: link.headers)
         case .video(let pageURL, let fileName, let index):
-            guard let detected = VideoLinkParser.parse(pageURL) else { throw CloudnError("作品链接无法识别，请回到解析页重新解析") }
+            guard let detected = VideoLinkParser.parse(pageURL) else { throw CloudnError(L("作品链接无法识别，请回到解析页重新解析")) }
             let result = try await videoService.parse(detected)
             // 先按文件名对上；文件名变了（标题被改）再按序号
             guard let media = result.medias.first(where: { $0.fileName == fileName })
                     ?? (index < result.medias.count ? result.medias[index] : nil) else {
-                throw CloudnError("作品里已找不到这个文件，可能已被删除")
+                throw CloudnError(L("作品里已找不到这个文件，可能已被删除"))
             }
             let kind: DownloadKind = !media.audioURL.isEmpty ? .dash(audioURL: media.audioURL) : (media.isHLS ? .hls : .file)
             background.cancel(itemId: item.id)
             await engine.replaceLink(item.id, url: media.url, headers: media.headers, kind: kind)
         case nil:
-            throw CloudnError("该任务没有可重新解析的来源，请回到解析页重新下载")
+            throw CloudnError(L("该任务没有可重新解析的来源，请回到解析页重新下载"))
         }
     }
 }

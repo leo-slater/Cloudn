@@ -228,13 +228,14 @@ enum MSERecordingSaver {
                      downloads: DownloadStore) async throws -> Outcome {
         let usable = results.filter { $0.best.bytes >= 4096 }
         guard !usable.isEmpty else {
-            throw CloudnError("没录到视频，请开始录制后在网页里播放")
+            throw CloudnError(L("没录到视频，请开始录制后在网页里播放"))
         }
         let videos = usable.filter { MSERecorder.isVideo($0.best.mime) }.sorted { $0.best.bytes > $1.best.bytes }
         let audios = usable.filter { MSERecorder.isAudio($0.best.mime) }.sorted { $0.best.bytes > $1.best.bytes }
         var notes: [String] = []
+        var mergeFailed = false
         if usable.contains(where: { $0.switched }) {
-            notes.append("中途切换过清晰度，只保留了最长一段")
+            notes.append(L("中途切换过清晰度，只保留了最长一段"))
         }
 
         if let video = videos.first, let audio = audios.first, MSERecorder.isMP4(video.best.mime), MSERecorder.isMP4(audio.best.mime) {
@@ -242,10 +243,11 @@ enum MSERecordingSaver {
             do {
                 try await MediaTools.merger(video.best.url, audio.best.url, output)
                 try await downloads.importLocalFile(output, name: base + ".mp4", source: source, page: page)
-                return Outcome(saved: 1, message: joined("录制的视频已存到下载", notes))
+                return Outcome(saved: 1, message: joined(L("录制的视频已存到下载"), notes))
             } catch {
                 Log.error("网页录制合并失败：\(error.localizedDescription)")
-                notes.append("音视频合并失败，已分别保存")
+                mergeFailed = true
+                notes.append(L("音视频合并失败，已分别保存"))
             }
         }
 
@@ -253,8 +255,8 @@ enum MSERecordingSaver {
         if let video = videos.first { picks.append((video, audios.isEmpty ? "" : "（画面）")) }
         if let audio = audios.first { picks.append((audio, videos.isEmpty ? "" : "（声音）")) }
         if picks.isEmpty, let other = usable.max(by: { $0.best.bytes < $1.best.bytes }) { picks.append((other, "")) }
-        if picks.count > 1, !notes.contains(where: { $0.contains("分别保存") }) {
-            notes.append("WebM 无法合并，画面和声音分成两个文件")
+        if picks.count > 1, !mergeFailed {
+            notes.append(L("WebM 无法合并，画面和声音分成两个文件"))
         }
 
         var saved = 0
@@ -274,11 +276,11 @@ enum MSERecordingSaver {
                 if firstError == nil { firstError = error }
             }
         }
-        if saved == 0 { throw firstError ?? CloudnError("保存失败") }
+        if saved == 0 { throw firstError ?? CloudnError(L("保存失败")) }
         if picks.contains(where: { $0.0.best.mime.lowercased().contains("webm") }) {
-            notes.append("WebM 需用 VLC 等播放器打开")
+            notes.append(L("WebM 需用 VLC 等播放器打开"))
         }
-        return Outcome(saved: saved, message: joined(saved > 1 ? "已存 \(saved) 个文件到下载" : "录制的视频已存到下载", notes))
+        return Outcome(saved: saved, message: joined(saved > 1 ? L("已存 %1$@ 个文件到下载", "\(saved)") : L("录制的视频已存到下载"), notes))
     }
 
     private static func joined(_ head: String, _ notes: [String]) -> String {

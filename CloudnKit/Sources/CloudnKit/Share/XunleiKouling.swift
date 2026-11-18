@@ -55,10 +55,10 @@ public enum XunleiKouling {
         let r = try await client.send(.get(jumpURL(keyword), headers: [
             ("User-Agent", userAgent), ("Accept", "*/*"), ("Origin", origin), ("Referer", origin + "/"), ("Accept-Language", "zh-CN")
         ]))
-        guard r.isSuccess else { throw CloudnError("口令解析失败（HTTP \(r.status)）") }
+        guard r.isSuccess else { throw CloudnError(LocalizedMessage("口令解析失败（HTTP %1$@）", "\(r.status)")) }
         guard let json = r.json, json.isObject else { throw CloudnError("口令解析失败：响应格式异常") }
         guard json["ext"]["kouling_type"].string == "share_page", let url = shareURL(fromLocation: json["location"].string) else {
-            throw CloudnError("口令「\(keyword)」没有对应的迅雷分享")
+            throw CloudnError(LocalizedMessage("口令「%1$@」没有对应的迅雷分享", "\(keyword)"))
         }
         return url
     }

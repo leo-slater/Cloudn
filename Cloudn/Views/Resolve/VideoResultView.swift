@@ -84,7 +84,7 @@ struct VideoResultView: View {
                 if !result.notice.isEmpty {
                     HStack(alignment: .top, spacing: 10) {
                         IconView(.warning, size: 16)
-                        Text(result.notice).font(.footnote).fixedSize(horizontal: false, vertical: true)
+                        Text(L(result.notice)).font(.footnote).fixedSize(horizontal: false, vertical: true)
                     }
                     .foregroundStyle(Color.clayInk)
                     .padding(14)
@@ -107,26 +107,26 @@ struct VideoResultView: View {
             let hidden = y < 0
             if hidden != headerHidden { headerHidden = hidden }
         }
-        .navigationTitle(headerHidden ? (result.title.isEmpty ? result.platform.displayName : result.title) : "")
+        .navigationTitle(headerHidden ? (result.title.isEmpty ? L(result.platform.displayName) : result.title) : "")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     if !result.url.isEmpty {
-                        Button { Clipboard.copy(result.url); app.show("Post Link Copied") } label: {
-                            Label { Text("Copy Post Link") } icon: { Image(icon: .link) }
+                        Button { Clipboard.copy(result.url); app.show(L("已复制作品链接")) } label: {
+                            Label { Text(L("复制作品链接")) } icon: { Image(icon: .link) }
                         }
                     }
                     if !result.text.isEmpty {
-                        Button { Clipboard.copy(result.text); app.show("Caption Copied") } label: {
-                            Label { Text("Copy Caption") } icon: { Image(icon: .text) }
+                        Button { Clipboard.copy(result.text); app.show(L("已复制文案")) } label: {
+                            Label { Text(L("复制文案")) } icon: { Image(icon: .text) }
                         }
                     }
                     if let url = URL(string: result.url), !result.url.isEmpty {
-                        Link(destination: url) { Label { Text("Open in Browser") } icon: { Image(icon: .share) } }
+                        Link(destination: url) { Label { Text(L("在浏览器中打开")) } icon: { Image(icon: .share) } }
                     }
                 } label: { Image(icon: .more).foregroundStyle(Color.ink) }
-                .accessibilityLabel("More")
+                .accessibilityLabel(L("更多"))
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -152,14 +152,14 @@ struct VideoResultView: View {
             HStack(alignment: .center, spacing: 12) {
                 IconView(.user, size: 18).foregroundStyle(Color.clayInk)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(kind.displayName)登录已失效").font(.footnote.weight(.semibold))
-                    Text("重新登录可获取更高清晰度").font(.caption)
+                    Text(L("%1$@登录已失效", "\(L(kind.displayName))")).font(.footnote.weight(.semibold))
+                    Text(L("重新登录可获取更高清晰度")).font(.caption)
                 }
                 .foregroundStyle(Color.clayInk)
                 .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
-            Button("Sign In Again") { loginKind = kind }
+            Button(L("重新登录")) { loginKind = kind }
                 .buttonStyle(PillButtonStyle(kind: .dark, height: 30))
                 .font(.footnote)
         }
@@ -175,7 +175,7 @@ struct VideoResultView: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 PlatformGlyph(mark: .video(result.platform), size: 15)
                 Text(result.timestamp > 0
-                     ? result.platform.displayName + " · "
+                     ? L(result.platform.displayName) + " · "
                          + Date(timeIntervalSince1970: TimeInterval(result.timestamp)).formatted(date: .abbreviated, time: .omitted)
                      : result.platform.displayName)
             }
@@ -212,7 +212,7 @@ struct VideoResultView: View {
                         .lineLimit(textExpanded ? nil : 4)
                         .textSelection(.enabled)
                     if result.text.count > 90 {
-                        Button(textExpanded ? "Collapse" : "Expand") { withAnimation(.snappy) { textExpanded.toggle() } }
+                        Button(textExpanded ? L("收起") : L("展开")) { withAnimation(.snappy) { textExpanded.toggle() } }
                             .font(.footnote.weight(.medium))
                             .buttonStyle(TextLinkButtonStyle())
                     }
@@ -237,7 +237,7 @@ struct VideoResultView: View {
                 .overlay(alignment: .bottomLeading) {
                     HStack(spacing: 6) {
                         Image(icon: .play).resizable().scaledToFit().frame(width: 13, height: 13)
-                        Text("Play").font(.footnote.weight(.semibold))
+                        Text(L("播放")).font(.footnote.weight(.semibold))
                     }
                     .foregroundStyle(Color.ink)
                     .padding(.horizontal, 14)
@@ -247,11 +247,11 @@ struct VideoResultView: View {
                 }
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Play Video")
+        .accessibilityLabel(L("播放视频"))
         .contextMenu {
-            Button { saveCover() } label: { Label { Text("Download Thumbnail") } icon: { Image(icon: .download) } }
-            Button { Clipboard.copy(result.cover); app.show("Thumbnail URL Copied") } label: {
-                Label { Text("Copy Thumbnail URL") } icon: { Image(icon: .link) }
+            Button { saveCover() } label: { Label { Text(L("下载封面")) } icon: { Image(icon: .download) } }
+            Button { Clipboard.copy(result.cover); app.show(L("已复制封面地址")) } label: {
+                Label { Text(L("复制封面地址")) } icon: { Image(icon: .link) }
             }
         }
     }
@@ -262,12 +262,12 @@ struct VideoResultView: View {
         let name = FileNames.base(result.title, fallback: result.platform.displayName) + "_cover."
             + (["jpg", "jpeg", "png", "webp", "heic", "avif", "gif"].contains(ext) ? ext : "jpg")
         if let item = app.downloads.items.last(where: { $0.request.url == result.cover }), item.status != .failed {
-            app.show("Thumbnail Is Already in Downloads")
+            app.show(L("封面已在下载列表中"))
             return
         }
         app.downloads.enqueue(DownloadRequest(url: result.cover, headers: videos.first?.headers ?? [:], fileName: name,
                                               kind: .file, source: result.platform.displayName))
-        app.show("Thumbnail Added to Downloads")
+        app.show(L("封面已加入下载"))
     }
 
     // MARK: 视频
@@ -275,7 +275,7 @@ struct VideoResultView: View {
     private var videoSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             let rows = videoRows
-            SectionLabel(title: (videos.allSatisfy { $0.kind == .audio } ? "Audio" : "Video") + (rows.count > 1 ? " \(rows.count) 个" : ""))
+            SectionLabel(title: (videos.allSatisfy { $0.kind == .audio } ? L("音频") : L("视频")) + (rows.count > 1 ? L(" %1$@ 个", "\(rows.count)") : ""))
             VStack(spacing: 0) {
                 ForEach(Array(rows.enumerated()), id: \.element[0].id) { index, options in
                     let media = selection(options)
@@ -289,11 +289,11 @@ struct VideoResultView: View {
                                 if let size = sizeText(media) {
                                     Text(size)
                                 } else if probing.contains(media.id) {
-                                    Text("Checking File Size…")
+                                    Text(L("正在获取大小…"))
                                 }
                                 if let duration = probes[media.id]?.duration { Text(Self.clock(duration)) }
                                 if media.isHLS { Text("m3u8") }
-                                if !media.audioURL.isEmpty { Text("Separate Audio and Video") }
+                                if !media.audioURL.isEmpty { Text(L("音视频分轨")) }
                             }
                             .font(.figuresSmall)
                             .foregroundStyle(Color.ink3)
@@ -301,7 +301,7 @@ struct VideoResultView: View {
                         Spacer(minLength: 0)
                         Button { play(media) } label: { IconView(.play, size: 15) }
                             .buttonStyle(CircleIconButtonStyle(size: 32))
-                            .accessibilityLabel("Stream Online")
+                            .accessibilityLabel(L("在线播放"))
                         DownloadStateControl(item: state(of: media)) { download([media]) }
                     }
                     .padding(.horizontal, 14)
@@ -313,7 +313,7 @@ struct VideoResultView: View {
             }
             .card()
             if videos.contains(where: { !$0.audioURL.isEmpty }) {
-                Text("This stream has separate audio. Downloading will merge both tracks.")
+                Text(L("分轨视频在线播放无声，下载后会自动合并音轨"))
                     .font(.caption)
                     .foregroundStyle(Color.ink3)
                     .padding(.horizontal, 4)
@@ -323,11 +323,11 @@ struct VideoResultView: View {
 
     @ViewBuilder
     private func videoMenu(_ media: VideoMedia) -> some View {
-        Button { Clipboard.copy(media.url); app.show("Direct URL Copied (May Require Request Headers)") } label: {
-            Label { Text("Copy Direct URL") } icon: { Image(icon: .link) }
+        Button { Clipboard.copy(media.url); app.show(L("已复制直链（下载可能需带请求头）")) } label: {
+            Label { Text(L("复制直链")) } icon: { Image(icon: .link) }
         }
         if let url = URL(string: media.url) {
-            ShareLink(item: url) { Label { Text("Share Link") } icon: { Image(icon: .share) } }
+            ShareLink(item: url) { Label { Text(L("分享链接")) } icon: { Image(icon: .share) } }
         }
     }
 
@@ -349,7 +349,7 @@ struct VideoResultView: View {
             .onAppear { Task { await probe(options) } }
         } label: {
             HStack(spacing: 4) {
-                Text(qualityText(selected) ?? "Select Quality")
+                Text(qualityText(selected) ?? L("选择清晰度"))
                 Image(icon: .chevronRight).resizable().scaledToFit().frame(width: 9, height: 9).rotationEffect(.degrees(90))
             }
             .font(.footnote.weight(.medium))
@@ -359,7 +359,7 @@ struct VideoResultView: View {
             .background(Color.claySoft, in: Capsule())
             .expandedHitArea(10)
         }
-        .accessibilityLabel("清晰度：\(selected.quality)")
+        .accessibilityLabel(L("清晰度：%1$@", L(selected.quality)))
     }
 
     private func optionTitle(_ media: VideoMedia) -> String {
@@ -371,7 +371,7 @@ struct VideoResultView: View {
     // MARK: 大小与清晰度探测
 
     private func qualityText(_ media: VideoMedia) -> String? {
-        if !media.quality.isEmpty { return media.quality }
+        if !media.quality.isEmpty { return L(media.quality) }
         if let height = probes[media.id]?.height, height > 0 { return "\(height)P" }
         return nil
     }
@@ -379,7 +379,7 @@ struct VideoResultView: View {
     private func sizeText(_ media: VideoMedia) -> String? {
         if media.size > 0 { return ByteFormat.string(media.size) }
         guard let info = probes[media.id], let size = info.size else { return nil }
-        return (info.estimated ? "约 " : "") + ByteFormat.string(size)
+        return (info.estimated ? L("约 ") : "") + ByteFormat.string(size)
     }
 
     /// 平台没给大小或清晰度的才探测：一开始只探每行当前选中的那个，其余清晰度等打开清晰度菜单再探
@@ -423,9 +423,9 @@ struct VideoResultView: View {
     private var imageSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                SectionLabel(title: "图片 \(images.count) 张")
+                SectionLabel(title: L("图片 %1$@ 张", "\(images.count)"))
                 Spacer()
-                Button(selecting ? "Done" : "Select Multiple") {
+                Button(selecting ? L("完成") : L("多选")) {
                     selecting.toggle()
                     selected = []
                 }
@@ -445,8 +445,8 @@ struct VideoResultView: View {
         let state = state(of: media)
         let live = livePairs[media.id]
         let position = (images.firstIndex { $0.id == media.id } ?? 0) + 1
-        let spoken = "图片 \(position)，共 \(images.count) 张" + (live != nil ? "，实况照片" : "")
-            + (state?.status == .completed ? "，已下载" : "")
+        let spoken = L("图片 %1$@，共 %2$@ 张", "\(position)", "\(images.count)") + (live != nil ? L("，实况照片") : "")
+            + (state?.status == .completed ? L("，已下载") : "")
         return Button {
             if selecting {
                 if on { selected.remove(media.id) } else { selected.insert(media.id) }
@@ -468,14 +468,14 @@ struct VideoResultView: View {
                 }
                 .overlay(alignment: .bottomLeading) {
                     if live != nil {
-                        Text("Live")
+                        Text(L("实况"))
                             .font(.caption2.weight(.bold))
                             .foregroundStyle(Color.ink)
                             .padding(.horizontal, 6)
                             .frame(height: 18)
                             .background(.ultraThinMaterial, in: Capsule())
                             .padding(8)
-                            .accessibilityLabel("Live Photo")
+                            .accessibilityLabel(L("实况照片"))
                     }
                 }
                 .scaleEffect(on ? 0.96 : 1)
@@ -490,7 +490,7 @@ struct VideoResultView: View {
                             .frame(width: 22, height: 22)
                             .background(Color.success, in: Circle())
                             .padding(8)
-                            .accessibilityLabel("Downloaded")
+                            .accessibilityLabel(L("已下载"))
                     }
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.7), value: on)
@@ -500,12 +500,12 @@ struct VideoResultView: View {
         .accessibilityLabel(spoken)
         .accessibilityAddTraits(selecting && on ? .isSelected : [])
         .contextMenu {
-            Button { download(withLive([media])) } label: { Label { Text("下载这张") } icon: { Image(icon: .download) } }
+            Button { download(withLive([media])) } label: { Label { Text(L("下载这张")) } icon: { Image(icon: .download) } }
             if let live {
-                Button { play(live) } label: { Label { Text("播放实况") } icon: { Image(icon: .play) } }
+                Button { play(live) } label: { Label { Text(L("播放实况")) } icon: { Image(icon: .play) } }
             }
-            Button { Clipboard.copy(media.url); app.show("已复制图片地址") } label: {
-                Label { Text("复制图片地址") } icon: { Image(icon: .link) }
+            Button { Clipboard.copy(media.url); app.show(L("已复制图片地址")) } label: {
+                Label { Text(L("复制图片地址")) } icon: { Image(icon: .link) }
             }
         }
     }
@@ -518,9 +518,9 @@ struct VideoResultView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 // 作者主页叫「作品」，播放列表 / 合集叫「合集」
-                SectionLabel(title: "\(result.title.hasSuffix("的作品") ? "作品" : "合集") \(result.entries.count) 个")
+                SectionLabel(title: L("%1$@ %2$@ 个", "\(result.title.hasSuffix("的作品") ? L("作品") : L("合集"))", "\(result.entries.count)"))
                 Spacer()
-                Button(unpicked.isEmpty ? "Deselect All" : "Select All") {
+                Button(unpicked.isEmpty ? L("全不选") : L("全选")) {
                     unpicked = unpicked.isEmpty ? Set(result.entries.map(\.id)) : []
                 }
                 .font(.footnote.weight(.medium))
@@ -557,7 +557,7 @@ struct VideoResultView: View {
                 }
             }
             .card()
-            Text("逐条按最高画质加入下载")
+            Text(L("逐条按最高画质加入下载"))
                 .font(.caption)
                 .foregroundStyle(Color.ink3)
                 .padding(.horizontal, 4)
@@ -574,14 +574,14 @@ struct VideoResultView: View {
 
     private var subtitleSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel(title: "字幕 \(result.subtitles.count) 个")
+            SectionLabel(title: L("字幕 %1$@ 个", "\(result.subtitles.count)"))
             VStack(spacing: 0) {
                 ForEach(Array(result.subtitles.enumerated()), id: \.element.id) { index, track in
                     HStack(spacing: 12) {
                         IconView(.text, size: 18).foregroundStyle(Color.ink2).frame(width: 26)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(track.name).font(.subheadline).foregroundStyle(Color.ink)
-                            Text(track.automatic ? "自动生成 · 存为 SRT" : "存为 SRT").font(.caption).foregroundStyle(Color.ink3)
+                            Text(track.automatic ? L("自动生成 · 存为 SRT") : L("存为 SRT")).font(.caption).foregroundStyle(Color.ink3)
                         }
                         Spacer(minLength: 0)
                         if savingSubtitles.contains(track.id) {
@@ -589,7 +589,7 @@ struct VideoResultView: View {
                         } else {
                             Button { saveSubtitle(track) } label: { IconView(.download, size: 15) }
                                 .buttonStyle(CircleIconButtonStyle(size: 32))
-                                .accessibilityLabel("下载\(track.name)字幕")
+                                .accessibilityLabel(L("下载%1$@字幕", "\(track.name)"))
                         }
                     }
                     .padding(.horizontal, 14)
@@ -608,9 +608,9 @@ struct VideoResultView: View {
             do {
                 let name = try await app.saveSubtitle(track, title: result.title.isEmpty ? result.platform.displayName : result.title,
                                                       source: result.platform.displayName, page: result.url)
-                app.show("字幕已加入下载：\(name)")
+                app.show(L("字幕已加入下载：%1$@", "\(name)"))
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
             }
         }
     }
@@ -626,7 +626,7 @@ struct VideoResultView: View {
             } label: {
                 HStack(spacing: 6) {
                     Image(icon: .download)
-                    Text(picked.isEmpty ? "选择要下载的条目" : "下载所选 · \(picked.count) 个").contentTransition(.numericText())
+                    Text(picked.isEmpty ? L("选择要下载的条目") : L("下载所选 · %1$@ 个", "\(picked.count)")).contentTransition(.numericText())
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -644,8 +644,8 @@ struct VideoResultView: View {
         let targets = selecting ? withLive(picked) : downloadAll
         // 数量按作品算：实况照片的视频随图片一起下，不另计
         let count = selecting ? picked.count : videoRows.count + images.count
-        let title = selecting ? (picked.isEmpty ? "选择要下载的图片" : "下载所选 · \(count) 张")
-            : (count > 1 ? "全部下载 · \(count) 项" : "Downloads")
+        let title = selecting ? (picked.isEmpty ? L("选择要下载的图片") : L("下载所选 · %1$@ 张", "\(count)"))
+            : (count > 1 ? L("全部下载 · %1$@ 项", "\(count)") : L("下载"))
         Button {
             download(targets)
             selecting = false
@@ -690,7 +690,7 @@ struct VideoResultView: View {
         // 已下载或正在下载的跳过
         let pending = medias.filter { m in state(of: m).map { $0.status == .failed } ?? true }
         guard !pending.isEmpty else {
-            app.show("已在下载列表中")
+            app.show(L("已在下载列表中"))
             return
         }
         // 多张图片归到以作品标题命名的文件夹；实况照片的视频跟着图片走（同一目录才能配对），不单独计数
@@ -699,7 +699,7 @@ struct VideoResultView: View {
         let group = units > 1 ? DownloadGroup(title: result.title.isEmpty ? result.platform.displayName : result.title) : nil
         for m in pending { app.downloads.enqueue(media: m, result: result, folder: folder, group: group) }
         let skipped = medias.filter { !liveClipIDs.contains($0.id) }.count - units
-        app.show(units > 1 ? "已加入下载 \(units) 个" + (skipped > 0 ? " · 跳过 \(skipped) 个已下载" : "") : "Added to Downloads")
+        app.show(units > 1 ? L("已加入下载 %1$@ 个", "\(units)") + (skipped > 0 ? L(" · 跳过 %1$@ 个已下载", "\(skipped)") : "") : L("已加入下载"))
     }
 }
 

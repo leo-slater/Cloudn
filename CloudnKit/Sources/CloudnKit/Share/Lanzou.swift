@@ -346,7 +346,7 @@ public final class LanzouResolver: ShareResolver, @unchecked Sendable {
         if r.status == 429 { throw CloudnError("蓝奏请求过于频繁，请稍后再试") }
         guard let json = r.json, json.isObject else {
             if r.text.trimmed.hasPrefix("<") { throw CloudnError("蓝奏返回了验证页面，请稍后重试") }
-            throw CloudnError("蓝奏解析服务响应异常（HTTP \(r.status)），请稍后重试")
+            throw CloudnError(LocalizedMessage("蓝奏解析服务响应异常（HTTP %1$@），请稍后重试", "\(r.status)"))
         }
         return json
     }
@@ -639,7 +639,7 @@ extension LanzouResolver: DriveUploader {
                                         body: .file(body, offset: 0, length: total)) { done in
             progress(.uploading, Double(done) / Double(max(1, total)))
         }
-        guard let json = r.json, json.isObject else { throw CloudnError("蓝奏上传失败（HTTP \(r.status)），可能是文件类型不被允许") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("蓝奏上传失败（HTTP %1$@），可能是文件类型不被允许", "\(r.status)")) }
         try Self.checkDoupload(json, allowEnd: false)
         progress(.finishing, 1)
     }

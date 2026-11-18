@@ -52,7 +52,7 @@ struct DownloadLiveActivity: Widget {
                         Ring(fraction: state.fraction, done: state.active == 0, paused: state.isPaused, failed: state.isFailed,
                              tint: state.islandTint, size: 26)
                             .opacity(stale ? 0.5 : 1)
-                        Text(state.active > 0 ? "\(state.active) 个" : (state.isFailed ? "失败" : (state.isPaused ? "已暂停" : "完成")))
+                        Text(state.active > 0 ? L("%1$@ 个", "\(state.active)") : (state.isFailed ? L("失败") : (state.isPaused ? L("已暂停") : L("完成"))))
                             .font(.subheadline.weight(.semibold))
                     }
                     .padding(.leading, 4)
@@ -72,7 +72,7 @@ struct DownloadLiveActivity: Widget {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(state.title).font(.footnote).lineLimit(1).foregroundStyle(.secondary)
                         if stale {
-                            Text("进度未更新，打开应用查看").font(.caption2).foregroundStyle(.secondary)
+                            Text(L("进度未更新，打开应用查看")).font(.caption2).foregroundStyle(.secondary)
                         } else if !state.note.isEmpty {
                             Text(state.note).font(.caption2).foregroundStyle(.secondary)
                         }
@@ -123,13 +123,13 @@ extension DownloadActivityAttributes.ContentState {
     var etaText: String? {
         guard active > 0, speed > 0, let remaining, remaining > 0 else { return nil }
         let seconds = Double(remaining) / Double(speed)
-        if seconds < 10 { return "马上就好" }
-        if seconds < 60 { return "不到 1 分钟" }
-        if seconds < 3600 { return "还剩约 \(Int((seconds / 60).rounded())) 分钟" }
-        if seconds > 86400 * 2 { return "还要很久" }
+        if seconds < 10 { return L("马上就好") }
+        if seconds < 60 { return L("不到 1 分钟") }
+        if seconds < 3600 { return L("还剩约 %1$@ 分钟", "\(Int((seconds / 60).rounded()))") }
+        if seconds > 86400 * 2 { return L("还要很久") }
         let h = Int(seconds / 3600)
         let m = Int((seconds - Double(h) * 3600) / 60)
-        return m > 0 ? "还剩约 \(h) 小时 \(m) 分" : "还剩约 \(h) 小时"
+        return m > 0 ? L("还剩约 %1$@ 小时 %2$@ 分", "\(h)", "\(m)") : L("还剩约 %1$@ 小时", "\(h)")
     }
 
     /// 主题色的浅色 / 深色两份；没设过（默认陶土色）为 nil
@@ -152,10 +152,10 @@ extension DownloadActivityAttributes.ContentState {
 
     /// 灵动岛右侧：知道进度显示百分比，否则显示速度，再不然显示任务数
     var compactText: String {
-        if active == 0 { return isFailed ? "失败" : (isPaused ? "暂停" : "完成") }
+        if active == 0 { return isFailed ? L("失败") : (isPaused ? L("暂停") : L("完成")) }
         if fraction >= 0 { return "\(Int(fraction * 100))%" }
         if speed > 0 { return ByteCountFormatter.string(fromByteCount: speed, countStyle: .file) }
-        return "\(active) 个"
+        return L("%1$@ 个", "\(active)")
     }
 }
 
@@ -216,9 +216,9 @@ private struct LockScreenView: View {
     private var dimmed: Bool { stale && state.active > 0 }
 
     private var headline: String {
-        if state.active > 0 { return "正在下载 \(state.active) 个文件" }
-        if state.isFailed { return "下载失败" }
-        return state.isPaused ? "下载已暂停" : "下载完成"
+        if state.active > 0 { return L("正在下载 %1$@ 个文件", "\(state.active)") }
+        if state.isFailed { return L("下载失败") }
+        return state.isPaused ? L("下载已暂停") : L("下载完成")
     }
 
     var body: some View {
@@ -233,7 +233,7 @@ private struct LockScreenView: View {
                         Text(state.title).font(.footnote).lineLimit(1).foregroundStyle(.secondary)
                     }
                     if dimmed {
-                        Text("进度未更新，打开应用查看").font(.caption).lineLimit(1).foregroundStyle(.secondary)
+                        Text(L("进度未更新，打开应用查看")).font(.caption).lineLimit(1).foregroundStyle(.secondary)
                     } else if !state.note.isEmpty {
                         Text(state.note).font(.caption).lineLimit(1).foregroundStyle(.secondary)
                     }
@@ -254,7 +254,7 @@ private struct LockScreenView: View {
                     .opacity(dimmed ? 0.5 : 1)
             }
             if state.finished > 0 {
-                Text("已完成 \(state.finished) 个").font(.caption2).foregroundStyle(.secondary)
+                Text(L("已完成 %1$@ 个", "\(state.finished)")).font(.caption2).foregroundStyle(.secondary)
             }
         }
     }

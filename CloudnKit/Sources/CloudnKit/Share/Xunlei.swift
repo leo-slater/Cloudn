@@ -375,7 +375,7 @@ public final class XunleiResolver: ShareResolver, @unchecked Sendable {
             }
             if let method { req.method = method }
             let r = try await client.send(req)
-            guard let json = r.json, json.isObject else { throw CloudnError("迅雷响应解析失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("迅雷响应解析失败（HTTP %1$@）", "\(r.status)")) }
             let err = json["error"].string
             if r.isSuccess && !json.has("error") { return json["data"].isObject ? json["data"] : json }
             // 验证码相关的错误（captcha_invalid / captcha_required / 验证码无效…）：第一次带旧 token 重新初始化，
@@ -824,7 +824,7 @@ extension XunleiResolver: DriveUploader {
                                            contentType: "application/xml", body: Data(xml.utf8))
         // S3 合并失败时可能是 HTTP 200 + <Error>
         if done.text.contains("<Error>") {
-            throw CloudnError("迅雷合并分片失败：\(UploadUtil.xmlValue("Code", in: done.text) ?? "未知错误")")
+            throw CloudnError(LocalizedMessage("迅雷合并分片失败：%1$@", "\(UploadUtil.xmlValue("Code", in: done.text) ?? "未知错误")"))
         }
     }
 
@@ -841,6 +841,6 @@ extension XunleiResolver: DriveUploader {
             last = r
         }
         let code = last.flatMap { UploadUtil.xmlValue("Code", in: $0.text) } ?? ""
-        throw CloudnError("迅雷对象存储上传失败（HTTP \(last?.status ?? 0)\(code.isEmpty ? "" : " " + code)）")
+        throw CloudnError(LocalizedMessage("迅雷对象存储上传失败（HTTP %1$@%2$@）", "\(last?.status ?? 0)", "\(code.isEmpty ? "" : " " + code)"))
     }
 }

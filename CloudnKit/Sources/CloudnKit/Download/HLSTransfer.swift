@@ -224,7 +224,7 @@ struct HLSTransfer {
         if playlist.isLive {
             // 直播流没有尽头：只能下到当前播放列表里已有的片段
             Log.info("m3u8 没有 EXT-X-ENDLIST，按直播流处理，只下载当前已有的 \(playlist.segments.count) 个分片")
-            progress.setNote("直播流：只下载当前已有的片段（约 \(Int(saturating: playlist.totalDuration)) 秒）")
+            progress.setNote(CloudnLocalization.text("直播流：只下载当前已有的片段（约 %1$@ 秒）", "\(Int(saturating: playlist.totalDuration))"))
         }
 
         let fm = FileManager.default

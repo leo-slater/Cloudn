@@ -205,7 +205,7 @@ public final class Pan123Resolver: ShareResolver, @unchecked Sendable {
 
     func callJSON(_ req: HTTPRequest) async throws -> JSON {
         let r = try await client.send(req)
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 
@@ -272,7 +272,7 @@ extension Pan123Resolver: ShareSaver {
             guard let json = try? await callJSON(.get(url, headers: headers)) else { continue }
             if json["code"].int != 0 {
                 let msg = json["message"].string
-                if !msg.isEmpty { throw CloudnError("转存失败：\(msg)") }
+                if !msg.isEmpty { throw CloudnError(LocalizedMessage("转存失败：%1$@", "\(msg)")) }
                 continue
             }
             let data = json["data"]
@@ -492,7 +492,7 @@ extension Pan123Resolver: DriveUploader {
                 if urls[n] == nil {
                     urls.merge(try await presignedURLs(session, from: n, to: min(n + 10, count + 1), single: count == 1, token: token)) { $1 }
                 }
-                guard let url = urls[n] else { throw CloudnError("123 云盘未返回第 \(n) 片的上传地址") }
+                guard let url = urls[n] else { throw CloudnError(LocalizedMessage("123 云盘未返回第 %1$@ 片的上传地址", "\(n)")) }
                 let base = sent
                 let r = try await client.upload(HTTPRequest(url: url, method: "PUT", headers: [("Content-Type", "application/octet-stream")]),
                                                 body: .file(file, offset: part.offset, length: part.length)) { done in
@@ -500,7 +500,7 @@ extension Pan123Resolver: DriveUploader {
                 }
                 if r.isSuccess { break }
                 attempt += 1
-                guard attempt < 3 else { throw CloudnError("123 云盘分片上传失败（HTTP \(r.status)）") }
+                guard attempt < 3 else { throw CloudnError(LocalizedMessage("123 云盘分片上传失败（HTTP %1$@）", "\(r.status)")) }
                 urls[n] = nil
             }
             sent += part.length

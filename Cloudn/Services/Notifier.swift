@@ -30,7 +30,7 @@ enum Notifier {
     /// 一个任务下载完成（调用方已判断应用不在前台、用户打开了通知）
     @MainActor static func downloadFinished(_ name: String) {
         finished.append(name)
-        let (title, body) = summary(count: finished.count, names: finished, noun: "下载完成")
+        let (title, body) = summary(count: finished.count, names: finished, noun: L("下载完成"))
         post(title: title, body: body, identifier: finishedIdentifier)
     }
 
@@ -38,9 +38,9 @@ enum Notifier {
     @MainActor static func downloadFailed(_ name: String, message: String) {
         failed.append((name, message))
         if failed.count == 1 {
-            post(title: "下载失败", body: "\(name)：\(message)", identifier: failedIdentifier)
+            post(title: L("下载失败"), body: L("%1$@：%2$@", name, L(message)), identifier: failedIdentifier)
         } else {
-            let (title, body) = summary(count: failed.count, names: failed.map(\.name), noun: "下载失败")
+            let (title, body) = summary(count: failed.count, names: failed.map(\.name), noun: L("下载失败"))
             post(title: title, body: body, identifier: failedIdentifier)
         }
     }
@@ -54,9 +54,9 @@ enum Notifier {
     /// 1 个：标题「下载完成」、正文为文件名；多个：标题「12 个下载完成」、正文列出最近几个
     static func summary(count: Int, names: [String], noun: String) -> (title: String, body: String) {
         guard count > 1 else { return (noun, names.last ?? "") }
-        let recent = names.suffix(3).reversed().joined(separator: "、")
-        let body = count > 3 ? "\(recent) 等 \(count) 个文件" : recent
-        return ("\(count) 个\(noun)", body)
+        let recent = names.suffix(3).reversed().joined(separator: L("、"))
+        let body = count > 3 ? L("%1$@ 等 %2$@ 个文件", "\(recent)", "\(count)") : recent
+        return (L("%1$@ 个%2$@", "\(count)", "\(noun)"), body)
     }
 
     @MainActor private static func post(title: String, body: String, identifier: String) {

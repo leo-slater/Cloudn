@@ -7,7 +7,7 @@ struct AccentPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("主题色")
+            Text(L("主题色"))
             HStack(spacing: 0) {
                 ForEach(AppSettings.accentPresets, id: \.hex) { preset in
                     let selected = app.settings.accentHex == preset.hex
@@ -26,7 +26,7 @@ struct AccentPicker: View {
                     .accessibilityLabel(preset.name)
                     .accessibilityAddTraits(selected ? .isSelected : [])
                 }
-                ColorPicker("自定义", selection: Binding(
+                ColorPicker(L("自定义"), selection: Binding(
                     get: { app.settings.accentColor },
                     set: { app.settings.accentHex = $0.hexString }
                 ), supportsOpacity: false)

@@ -18,11 +18,11 @@ struct LoginVerifyView: View {
                 dismiss()
             }
             .overlay(alignment: .top) { if loading { ProgressLine(value: nil) } }
-            .navigationTitle("迅雷安全验证")
+            .navigationTitle(L("迅雷安全验证"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { onFinish(false); dismiss() }
+                    Button(L("取消")) { onFinish(false); dismiss() }
                 }
             }
         }

@@ -18,13 +18,13 @@ struct NetworkProxyView: View {
         Form {
             Group {
                 Section {
-                    Toggle("Use Proxy", isOn: $settings.proxyEnabled)
+                    Toggle(L("使用代理"), isOn: $settings.proxyEnabled)
                     if settings.proxyEnabled {
-                        Picker("Type", selection: $settings.proxyKind) {
+                        Picker(L("类型"), selection: $settings.proxyKind) {
                             ForEach(NetworkProxy.Kind.allCases) { Text($0.title).tag($0) }
                         }
                         .pickerStyle(.segmented)
-                        LabeledContent("Address") {
+                        LabeledContent(L("地址")) {
                             TextField("127.0.0.1", text: $host)
                                 .multilineTextAlignment(.trailing)
                                 .font(.mono)
@@ -33,7 +33,7 @@ struct NetworkProxyView: View {
                                 .keyboardType(.URL)
                                 .onSubmit(commit)
                         }
-                        LabeledContent("Port") {
+                        LabeledContent(L("端口")) {
                             // 数字键盘没有回车键：停止输入片刻后自动保存（见下方 task(id: port)）
                             TextField("7890", text: $port)
                                 .multilineTextAlignment(.trailing)
@@ -42,7 +42,7 @@ struct NetworkProxyView: View {
                         }
                     }
                 } footer: {
-                    Text("关闭时跟随系统网络（含 VPN 与系统代理）。开启后解析、下载、上传和网页登录都走此代理；已打开的网页需重开，后台下载需重新打开应用后生效。磁力（BT）不走此代理。")
+                    Text(L("关闭时跟随系统网络（含 VPN 与系统代理）。开启后解析、下载、上传和网页登录都走此代理；已打开的网页需重开，后台下载需重新打开应用后生效。磁力（BT）不走此代理。"))
                 }
 
                 if settings.proxyEnabled {
@@ -51,7 +51,7 @@ struct NetworkProxyView: View {
                             Task { await test() }
                         } label: {
                             HStack {
-                                Text(testing ? "Testing…" : "Test Connection")
+                                Text(testing ? L("正在测试…") : L("测试连接"))
                                 Spacer()
                                 if testing {
                                     Spinner(size: 18)
@@ -65,7 +65,7 @@ struct NetworkProxyView: View {
                         }
                         .disabled(testing || draft == nil)
                     } footer: {
-                        if draft == nil { Text("填写地址和端口（1–65535）后可测试。") }
+                        if draft == nil { Text(L("填写地址和端口（1–65535）后可测试。")) }
                     }
                 }
             }
@@ -74,7 +74,7 @@ struct NetworkProxyView: View {
         .scrollContentBackground(.hidden)
         .readableWidth()
         .background(Color.paper)
-        .navigationTitle("Network Proxy")
+        .navigationTitle(L("网络代理"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             host = app.settings.proxyHost
@@ -121,7 +121,7 @@ struct NetworkProxyView: View {
                 result = .failure(TestFailure(message: "HTTP \(r.status)"))
             }
         } catch {
-            result = .failure(TestFailure(message: "连接失败：\(error.localizedDescription)"))
+            result = .failure(TestFailure(message: L("连接失败：%1$@", "\(displayError(error))")))
         }
     }
 }

@@ -112,7 +112,7 @@ struct WxChannelsParser: VideoParser {
     static func yuanbaoData(status: Int, json: JSON?) throws -> JSON {
         if status == 401 { throw VideoParseError(.unsupported, expired) }
         guard let json, json.isObject else {
-            if !(200..<300).contains(status) { throw VideoParseError(.unknown, "腾讯元宝解析请求失败（HTTP \(status)）") }
+            if !(200..<300).contains(status) { throw VideoParseError(.unknown, LocalizedMessage("腾讯元宝解析请求失败（HTTP %1$@）", "\(status)")) }
             throw VideoParseError(.unknown, "腾讯元宝返回的不是合法 JSON")
         }
         let error = json["error"]
@@ -122,9 +122,9 @@ struct WxChannelsParser: VideoParser {
             if error["code"].string == "20000" { throw VideoParseError(.unsupported, expired) }
             let message = error["message"].string
             let detail = message.isEmpty ? error.string : message
-            throw VideoParseError(.unknown, "腾讯元宝解析失败：\(detail.isEmpty ? "未知错误" : detail)")
+            throw VideoParseError(.unknown, LocalizedMessage("腾讯元宝解析失败：%1$@", "\(detail.isEmpty ? "未知错误" : detail)"))
         }
-        if !(200..<300).contains(status) { throw VideoParseError(.unknown, "腾讯元宝解析请求失败（HTTP \(status)）") }
+        if !(200..<300).contains(status) { throw VideoParseError(.unknown, LocalizedMessage("腾讯元宝解析请求失败（HTTP %1$@）", "\(status)")) }
         if !json.has("code") || json["code"].int != 0 {
             let message = json.string("message", "msg")
             throw VideoParseError(.unknown, message.isEmpty ? "微信视频号解析失败" : "微信视频号解析失败：\(message)")
@@ -142,7 +142,7 @@ struct WxChannelsParser: VideoParser {
             let message = json["errMsg"].string
             throw VideoParseError(.unknown, message.isEmpty ? "微信视频号解析失败" : "微信视频号解析失败：\(stripHTML(message))")
         }
-        if !errorText.isEmpty { throw VideoParseError(.unknown, "微信视频号：\(errorText)") }
+        if !errorText.isEmpty { throw VideoParseError(.unknown, LocalizedMessage("微信视频号：%1$@", "\(errorText)")) }
         return data
     }
 

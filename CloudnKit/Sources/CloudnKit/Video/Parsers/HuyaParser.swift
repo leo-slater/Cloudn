@@ -18,7 +18,7 @@ struct HuyaParser: VideoParser {
         let info = moment["videoInfo"]
         guard info.isObject else {
             let msg = payload["message"].string
-            throw VideoParseError(.notFound, "虎牙视频不存在或已删除\(msg.isEmpty ? "" : "：\(msg)")")
+            throw VideoParseError(.notFound, LocalizedMessage("虎牙视频不存在或已删除%1$@", "\(msg.isEmpty ? "" : "：\(msg)")"))
         }
         let variants = Self.variants(info["definitions"].array)
         guard !variants.isEmpty else {

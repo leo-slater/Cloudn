@@ -30,7 +30,7 @@ struct CctvParser: VideoParser {
         let status = data["status"].string
         guard status == "001" else {
             let msg = data["title"].string.nilIfBlank ?? status
-            throw VideoParseError(.notFound, "央视网视频不可用（\(msg)）")
+            throw VideoParseError(.notFound, LocalizedMessage("央视网视频不可用（%1$@）", "\(msg)"))
         }
         let title = data["title"].string
         let base = FileNames.base(title, fallback: "cctv_\(guid)")

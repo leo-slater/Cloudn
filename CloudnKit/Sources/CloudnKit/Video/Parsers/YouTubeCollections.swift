@@ -139,11 +139,11 @@ extension YouTubeParser {
 
         var notice = ""
         if stopped {
-            notice = "已停止加载，列出了已获取的 \(entries.count) 个视频"
+            notice = CloudnLocalization.text("已停止加载，列出了已获取的 %1$@ 个视频", "\(entries.count)")
         } else if truncated {
-            notice = "播放列表较长，只列出了前 \(Self.playlistLimit) 个视频"
+            notice = CloudnLocalization.text("播放列表较长，只列出了前 %1$@ 个视频", "\(Self.playlistLimit)")
         } else if incomplete {
-            notice = "播放列表后面的部分加载失败，只列出了 \(entries.count) 个视频"
+            notice = CloudnLocalization.text("播放列表后面的部分加载失败，只列出了 %1$@ 个视频", "\(entries.count)")
         }
         let info = Self.playlistInfo(first)
         let title = info.title.isEmpty ? "YouTube 播放列表 \(id)" : info.title
@@ -161,9 +161,9 @@ extension YouTubeParser {
         case 429: throw VideoParseError(.blocked, "YouTube 请求过于频繁（HTTP 429）")
         case 400, 404:
             if let json = r.json, let error = Self.alertError(json) { throw error }
-            throw VideoParseError(.notFound, "YouTube 播放列表不存在或不可见（HTTP \(r.status)）")
+            throw VideoParseError(.notFound, LocalizedMessage("YouTube 播放列表不存在或不可见（HTTP %1$@）", "\(r.status)"))
         case 403: throw VideoParseError(.unknown, "YouTube 拒绝了请求（HTTP 403），所在网络的 IP 可能被风控，可更换代理节点后重试")
-        default: throw VideoParseError(.unknown, "YouTube 播放列表接口请求失败（HTTP \(r.status)）")
+        default: throw VideoParseError(.unknown, LocalizedMessage("YouTube 播放列表接口请求失败（HTTP %1$@）", "\(r.status)"))
         }
     }
 
@@ -391,7 +391,7 @@ extension YouTubeParser {
                 guard a["type"].string.uppercased() == "ERROR" else { continue }
                 let message = text(a["text"]).trimmed
                 let suffix = message.isEmpty ? "" : "（\(message)）"
-                return VideoParseError(.notFound, "YouTube 播放列表不存在、已删除或为私享\(suffix)")
+                return VideoParseError(.notFound, LocalizedMessage("YouTube 播放列表不存在、已删除或为私享%1$@", "\(suffix)"))
             }
         }
         return nil

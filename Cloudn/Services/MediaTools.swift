@@ -27,7 +27,7 @@ enum MediaTools {
         let audioAsset = AVURLAsset(url: a)
         let composition = AVMutableComposition()
         guard let videoTrack = try await videoAsset.loadTracks(withMediaType: .video).first else {
-            throw MergeError("视频轨读取失败")
+            throw MergeError(L("视频轨读取失败"))
         }
         // 按轨道自己的时间范围取：网页中途开始录制的流，时间戳不从 0 开始（如从 2:00 起），
         // 从 0 取会在开头留一段空白、时长也算错
@@ -46,7 +46,7 @@ enum MediaTools {
                                                at: CMTimeSubtract(start, videoRange.start))
             }
         }
-        try await MediaTools.exportPassthrough(composition, to: output, failure: "音视频合并失败")
+        try await MediaTools.exportPassthrough(composition, to: output, failure: L("音视频合并失败"))
     }
 
     /// 单个 MP4 的时间戳不从 0 开始时（中途开始录制的网页视频），把所有轨道整体平移到 0 起，
@@ -64,13 +64,13 @@ enum MediaTools {
             try comp?.insertTimeRange(range, of: track, at: CMTimeSubtract(range.start, origin))
             if track.mediaType == .video { comp?.preferredTransform = try await track.load(.preferredTransform) }
         }
-        try await exportPassthrough(composition, to: output, failure: "视频整理失败")
+        try await exportPassthrough(composition, to: output, failure: L("视频整理失败"))
         return true
     }
 
     private static func exportPassthrough(_ composition: AVComposition, to output: URL, failure: String) async throws {
         guard let export = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetPassthrough) else {
-            throw MergeError("无法创建合并任务")
+            throw MergeError(L("无法创建合并任务"))
         }
         try? FileManager.default.removeItem(at: output)
         export.outputURL = output
@@ -80,7 +80,7 @@ enum MediaTools {
             export.exportAsynchronously { cont.resume() }
         }
         if export.status != .completed {
-            throw MergeError("\(failure)：\(export.error?.localizedDescription ?? "未知错误")")
+            throw MergeError("\(failure)：\(export.error?.localizedDescription ?? L("未知错误"))")
         }
     }
 
@@ -101,7 +101,7 @@ enum MediaTools {
     /// 存入相册（只申请「仅添加」权限）
     static func saveToPhotos(_ url: URL) async throws {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { throw MergeError("没有相册权限，请在系统设置中允许") }
+        guard status == .authorized || status == .limited else { throw MergeError(L("没有相册权限，请在系统设置中允许")) }
         let isImage = FileNames.kind(of: url.lastPathComponent) == .image
         try await PHPhotoLibrary.shared().performChanges {
             let request = PHAssetCreationRequest.forAsset()

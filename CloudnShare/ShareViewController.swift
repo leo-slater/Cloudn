@@ -44,7 +44,7 @@ final class ShareViewController: UIViewController {
     private func handle() async {
         let text = await sharedText()
         guard !text.isEmpty else {
-            show(title: "没有识别到链接", detail: "这条分享里没有可解析的链接或口令。", canRetry: false)
+            show(title: L("没有识别到链接"), detail: L("这条分享里没有可解析的链接或口令。"), canRetry: false)
             return
         }
         var comps = URLComponents()
@@ -55,7 +55,7 @@ final class ShareViewController: UIViewController {
         if await open() { return }
         // 没能跳过去才借用剪贴板兜底：手动打开 Cloudn 也会提示粘贴
         UIPasteboard.general.string = text
-        show(title: "链接已复制", detail: "点「打开 Cloudn」继续；如果仍没有跳转，手动打开 Cloudn 即可粘贴解析。", canRetry: true)
+        show(title: L("链接已复制"), detail: L("点「打开 Cloudn」继续；如果仍没有跳转，手动打开 Cloudn 即可粘贴解析。"), canRetry: true)
     }
 
     /// 唤起主应用，并等它真的到前台（最多 2 秒）；到了就收起扩展，返回 true
@@ -108,7 +108,7 @@ final class ShareViewController: UIViewController {
         spinner.color = Self.clay
 
         var primary = UIButton.Configuration.filled()
-        primary.title = "打开 Cloudn"
+        primary.title = L("打开 Cloudn")
         primary.baseBackgroundColor = Self.clay
         primary.baseForegroundColor = Self.onClay
         primary.cornerStyle = .capsule
@@ -117,7 +117,7 @@ final class ShareViewController: UIViewController {
         openButton.addAction(UIAction { [weak self] _ in self?.retryOpen() }, for: .primaryActionTriggered)
 
         var plain = UIButton.Configuration.plain()
-        plain.title = "完成"
+        plain.title = L("完成")
         plain.baseForegroundColor = Self.ink2
         doneButton.configuration = plain
         doneButton.addAction(UIAction { [weak self] _ in
@@ -145,7 +145,7 @@ final class ShareViewController: UIViewController {
     private func setOpening() {
         spinner.startAnimating()
         spinner.isHidden = false
-        titleLabel.text = "正在打开 Cloudn…"
+        titleLabel.text = L("正在打开 Cloudn…")
         detailLabel.isHidden = true
         openButton.isHidden = true
         doneButton.isHidden = true
@@ -167,7 +167,7 @@ final class ShareViewController: UIViewController {
     private func retryOpen() {
         Task {
             if await open() { return }
-            show(title: "没能自动跳转", detail: "链接已在剪贴板里，手动打开 Cloudn 即可粘贴解析。", canRetry: true)
+            show(title: L("没能自动跳转"), detail: L("链接已在剪贴板里，手动打开 Cloudn 即可粘贴解析。"), canRetry: true)
         }
     }
 

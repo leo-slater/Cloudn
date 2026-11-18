@@ -27,7 +27,7 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>BitTorrent 种子</string>
+			<string>BitTorrent torrent</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
@@ -44,7 +44,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>org.bittorrent.torrent</string>
 			<key>UTTypeDescription</key>
-			<string>BitTorrent 种子</string>
+			<string>BitTorrent torrent</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>

@@ -53,7 +53,7 @@ struct AccountsView: View {
 
     private var loggedInSummary: String {
         let n = AccountKind.allCases.filter { $0.isDrive && app.accounts.accounts[$0] != nil }.count
-        return n == 0 ? "Not Signed In" : "已登录 \(n) 个"
+        return n == 0 ? L("未登录") : L("已登录 %1$@ 个", "\(n)")
     }
 
     var body: some View {
@@ -62,7 +62,7 @@ struct AccountsView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     if app.accounts.accounts.isEmpty { loginIntro }
                     VStack(alignment: .leading, spacing: 10) {
-                        SectionLabel(title: "Cloud Drives", trailing: loggedInSummary)
+                        SectionLabel(title: L("网盘"), trailing: loggedInSummary)
                         // 辅助字号下一行一张，网盘名与容量不被截断
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: typeSize.isAccessibilitySize ? 1 : 2),
                                   spacing: 10) {
@@ -73,7 +73,7 @@ struct AccountsView: View {
                     }
                     VStack(alignment: .leading, spacing: 10) {
                         let loggedVideos = videoKinds.filter(hasAccount).count
-                        SectionLabel(title: "Video Platforms", trailing: loggedVideos == 0 ? "Not Signed In" : "已登录 \(loggedVideos) 个")
+                        SectionLabel(title: L("视频平台"), trailing: loggedVideos == 0 ? L("未登录") : L("已登录 %1$@ 个", "\(loggedVideos)"))
                         VStack(spacing: 0) {
                             ForEach(shownVideos) { kind in
                                 videoRow(kind)
@@ -85,19 +85,19 @@ struct AccountsView: View {
                         .animation(.snappy, value: shownVideos)
                     }
                     VStack(spacing: 0) {
-                        NavigationLink { SettingsView() } label: { linkRow(.gear, "Settings") }
+                        NavigationLink { SettingsView() } label: { linkRow(.gear, L("设置")) }
                         RowDivider(leading: 52)
-                        Button { exporting = true } label: { linkRow(.share, "Export Login Credentials (Encrypted Backup)") }
+                        Button { exporting = true } label: { linkRow(.share, L("导出登录凭据（加密备份）")) }
                             .disabled(app.accounts.accounts.isEmpty)
                             .opacity(app.accounts.accounts.isEmpty ? 0.4 : 1)
                         RowDivider(leading: 52)
-                        Button { importing = true } label: { linkRow(.save, "Import from Backup") }
+                        Button { importing = true } label: { linkRow(.save, L("从备份导入")) }
                     }
                     .buttonStyle(.plain)
                     .card()
                     HStack(alignment: .top, spacing: 8) {
                         IconView(.lock, size: 14)
-                        Text("Login credentials remain in the device Keychain and are used only to access the corresponding service.")
+                        Text(L("登录凭据只保存在本机钥匙串，只用于向对应平台发起请求。"))
                     }
                     .font(.caption)
                     .foregroundStyle(Color.ink3)
@@ -116,12 +116,12 @@ struct AccountsView: View {
                 if videoPinnedSet { videoPinned = (PlatformLayout.split(videoPinned) + added.filter { !$0.isDrive }.map(\.rawValue)).joined(separator: ",") }
             }
             .task(id: accountsKey) { await refreshStatus() }
-            .navigationTitle("My")
+            .navigationTitle(L("我的"))
             .toolbar {
                 // 平台多了列表很长：设置放到右上角，不用滑到底
                 ToolbarItem(placement: .primaryAction) {
                     NavigationLink { SettingsView() } label: { IconView(.gear, size: 18).foregroundStyle(Color.ink) }
-                        .accessibilityLabel("Settings")
+                        .accessibilityLabel(L("设置"))
                 }
             }
             .sheet(item: $layoutGroup) { PlatformLayoutView(group: $0) }
@@ -134,7 +134,7 @@ struct AccountsView: View {
                 if let data = try? Data(contentsOf: url) {
                     importData = ImportData(data: data)
                 } else {
-                    app.show("Could Not Read Selected File", error: true)
+                    app.show(L("无法读取所选文件"), error: true)
                 }
             }
             // 登录页没登成就关掉：撤销「添加账号」标记，免得之后别处重新登录被当成附加账号、主账号不更新
@@ -185,15 +185,15 @@ struct AccountsView: View {
                     }
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(kind.displayName).font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink).lineLimit(1)
+                    Text(L(kind.displayName)).font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink).lineLimit(1)
                     if account != nil, expired {
-                        Text("Login Expired. Tap to Sign In Again.").font(.caption).foregroundStyle(Color.clayInk).lineLimit(1)
+                        Text(L("登录已失效，点按重新登录")).font(.caption).foregroundStyle(Color.clayInk).lineLimit(1)
                     } else if let account {
                         let count = app.accounts.count(for: kind)
-                        Text(account.nickname + (count > 1 ? " 等 \(count) 个" : ""))
+                        Text(account.nickname + (count > 1 ? L(" 等 %1$@ 个", "\(count)") : ""))
                             .font(.caption).foregroundStyle(Color.ink2).lineLimit(1)
                     } else {
-                        Text("Not Signed In").font(.caption).foregroundStyle(Color.ink3)
+                        Text(L("未登录")).font(.caption).foregroundStyle(Color.ink3)
                     }
                 }
                 if let quota, quota.total > 0 {
@@ -205,7 +205,7 @@ struct AccountsView: View {
                     }
                     .animation(.snappy, value: quota)
                 } else {
-                    Text(account == nil ? "Tap to Sign In" : " ").font(.caption).foregroundStyle(Color.ink3)
+                    Text(account == nil ? L("点按登录") : " ").font(.caption).foregroundStyle(Color.ink3)
                 }
             }
             .padding(14)
@@ -233,9 +233,9 @@ struct AccountsView: View {
         return HStack(spacing: 12) {
             PlatformTile(mark: .account(kind), size: 32, dimmed: account == nil)
             VStack(alignment: .leading, spacing: 2) {
-                Text(kind.displayName).font(.subheadline.weight(.medium)).foregroundStyle(Color.ink)
+                Text(L(kind.displayName)).font(.subheadline.weight(.medium)).foregroundStyle(Color.ink)
                 let expired = app.accounts.isExpired(kind)
-                Text(account.map { expired ? "登录已失效 · \($0.nickname)" : "已登录 · \($0.nickname)" } ?? kind.benefit)
+                Text(account.map { expired ? L("登录已失效 · %1$@", "\($0.nickname)") : L("已登录 · %1$@", "\($0.nickname)") } ?? kind.benefit)
                     .font(.caption)
                     .foregroundStyle(account == nil ? Color.ink3 : (expired ? Color.clayInk : Color.success))
                     .lineLimit(1)
@@ -243,7 +243,7 @@ struct AccountsView: View {
             Spacer(minLength: 0)
             if account == nil {
                 Menu { loginOptions(kind) } label: {
-                    Text("Login")
+                    Text(L("登录"))
                 } primaryAction: {
                     app.accounts.pendingAdd = nil
                     startLogin(kind)
@@ -254,7 +254,7 @@ struct AccountsView: View {
                 Menu { accountMenu(kind) } label: {
                     IconView(.more, size: 20).foregroundStyle(Color.ink2).frame(width: 44, height: 44).contentShape(Rectangle())
                 }
-                .accessibilityLabel("\(kind.displayName)账号操作")
+                .accessibilityLabel(L("%1$@账号操作", "\(L(kind.displayName))"))
             }
         }
         .padding(.horizontal, 14)
@@ -267,8 +267,8 @@ struct AccountsView: View {
     /// 一个账号都没登录时：说清不登录也能用，登录了能多做什么
     private var loginIntro: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Most Public Links Work Without Signing In").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
-            Text("登录网盘后可下载大文件、转存到自己的网盘；登录视频平台可获取更高清晰度和需要登录才能看的内容。凭据只保存在本机。")
+            Text(L("不登录也能解析大部分公开链接")).font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
+            Text(L("登录网盘后可下载大文件、转存到自己的网盘；登录视频平台可获取更高清晰度和需要登录才能看的内容。凭据只保存在本机。"))
                 .font(.footnote)
                 .foregroundStyle(Color.ink2)
                 .fixedSize(horizontal: false, vertical: true)
@@ -288,9 +288,9 @@ struct AccountsView: View {
                     .foregroundStyle(Color.ink2)
                     .frame(width: 34, height: 34)
                     .background(Color.fillMuted, in: Circle())
-                Text(hidden > 0 ? "More Cloud Drives" : "Sort and Show").font(.subheadline.weight(.medium)).foregroundStyle(Color.ink2)
+                Text(hidden > 0 ? L("更多网盘") : L("排序与显示")).font(.subheadline.weight(.medium)).foregroundStyle(Color.ink2)
                 if hidden > 0 {
-                    Text("\(hidden) 个未显示").font(.caption).foregroundStyle(Color.ink3)
+                    Text(L("%1$@ 个未显示", "\(hidden)")).font(.caption).foregroundStyle(Color.ink3)
                 }
             }
             .padding(14)
@@ -314,9 +314,9 @@ struct AccountsView: View {
                     .foregroundStyle(Color.ink2)
                     .frame(width: 32, height: 32)
                     .background(Color.fillMuted, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                Text(hidden > 0 ? "More Video Platforms" : "Sort and Show").font(.subheadline.weight(.medium)).foregroundStyle(Color.ink2)
+                Text(hidden > 0 ? L("更多视频平台") : L("排序与显示")).font(.subheadline.weight(.medium)).foregroundStyle(Color.ink2)
                 Spacer(minLength: 0)
-                if hidden > 0 { Text("\(hidden) 个未显示").font(.caption).foregroundStyle(Color.ink3) }
+                if hidden > 0 { Text(L("%1$@ 个未显示", "\(hidden)")).font(.caption).foregroundStyle(Color.ink3) }
                 IconView(.chevronRight, size: 12).foregroundStyle(Color.ink3)
             }
             .padding(.horizontal, 14)
@@ -343,16 +343,16 @@ struct AccountsView: View {
         if app.accounts.accounts[kind] == nil {
             loginOptions(kind)
             Divider()
-            Button { layoutGroup = kind.isDrive ? .drives : .videos } label: { Label("Sort and Show…", systemImage: "arrow.up.arrow.down") }
+            Button { layoutGroup = kind.isDrive ? .drives : .videos } label: { Label(L("排序与显示…"), systemImage: "arrow.up.arrow.down") }
         } else {
             if let platform = kind.drivePlatform, app.resolvers.manager(for: platform) != nil {
-                Button { drivePlatform = platform } label: { Label("My Cloud Drives", glyph: .cloud) }
+                Button { drivePlatform = platform } label: { Label(L("我的网盘"), glyph: .cloud) }
             }
-            Button { listKind = kind } label: { Label("Manage / Add Accounts", glyph: .user) }
-            Button { layoutGroup = kind.isDrive ? .drives : .videos } label: { Label("Sort and Show…", systemImage: "arrow.up.arrow.down") }
-            Button { Task { await checkNow(kind) } } label: { Label("Check Login Status", glyph: .check) }
-            Menu { loginOptions(kind) } label: { Label("Sign In Again", glyph: .refresh) }
-            Button(role: .destructive) { logoutKind = kind } label: { Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right") }
+            Button { listKind = kind } label: { Label(L("账号管理 / 添加账号"), glyph: .user) }
+            Button { layoutGroup = kind.isDrive ? .drives : .videos } label: { Label(L("排序与显示…"), systemImage: "arrow.up.arrow.down") }
+            Button { Task { await checkNow(kind) } } label: { Label(L("检查登录状态"), glyph: .check) }
+            Menu { loginOptions(kind) } label: { Label(L("重新登录"), glyph: .refresh) }
+            Button(role: .destructive) { logoutKind = kind } label: { Label(L("退出登录"), systemImage: "rectangle.portrait.and.arrow.right") }
         }
     }
 
@@ -363,7 +363,7 @@ struct AccountsView: View {
         Circle()
             .fill(app.accounts.checking.contains(kind) ? Color.ink3 : (expired ? Color.clayInk : Color.success))
             .frame(width: 7, height: 7)
-            .accessibilityLabel(expired ? "Login Expired" : "Signed In")
+            .accessibilityLabel(expired ? L("登录已失效") : L("已登录"))
     }
 
     /// 进入本页时：取容量（10 分钟内不重复），取到容量的网盘即视为登录有效；
@@ -385,9 +385,9 @@ struct AccountsView: View {
     private func checkNow(_ kind: AccountKind) async {
         let result = await app.accounts.checkHealth([kind], resolvers: app.resolvers, force: true)[kind]
         switch result {
-        case .valid: app.show("\(kind.displayName)登录有效")
-        case .expired: app.show("\(kind.displayName)登录已失效，请重新登录", error: true)
-        case .unreachable: app.show("连不上\(kind.displayName)，请检查网络后再试", error: true)
+        case .valid: app.show(L("%1$@登录有效", "\(L(kind.displayName))"))
+        case .expired: app.show(L("%1$@登录已失效，请重新登录", "\(L(kind.displayName))"), error: true)
+        case .unreachable: app.show(L("连不上%1$@，请检查网络后再试", "\(L(kind.displayName))"), error: true)
         case nil: break
         }
     }
@@ -422,17 +422,17 @@ struct AccountsView: View {
     @ViewBuilder
     private func loginOptions(_ kind: AccountKind) -> some View {
         if kind == .webdav {
-            Button { app.accounts.pendingAdd = nil; manualKind = kind } label: { Label("Connect to Server", glyph: .link) }
+            Button { app.accounts.pendingAdd = nil; manualKind = kind } label: { Label(L("连接服务器"), glyph: .link) }
         } else {
             if let provider = kind.passwordLogin {
                 Button { app.accounts.pendingAdd = nil; passwordKind = kind } label: {
-                    Label(provider.supportsSMS ? "Password / SMS Login" : "Password Login", glyph: .user)
+                    Label(provider.supportsSMS ? L("账号密码 / 短信登录") : L("账号密码登录"), glyph: .user)
                 }
             }
             if kind.supportsWebLogin {
-                Button { app.accounts.pendingAdd = nil; loginKind = kind } label: { Label("Web Login", glyph: .link) }
+                Button { app.accounts.pendingAdd = nil; loginKind = kind } label: { Label(L("网页登录"), glyph: .link) }
             }
-            Button { app.accounts.pendingAdd = nil; manualKind = kind } label: { Label("Paste Credentials Manually", glyph: .paste) }
+            Button { app.accounts.pendingAdd = nil; manualKind = kind } label: { Label(L("手动粘贴凭据"), glyph: .paste) }
         }
     }
 
@@ -480,9 +480,9 @@ private struct LogoutDialog: ViewModifier {
     func body(content: Content) -> some View {
         // 退出会删掉该平台的全部账号（含附加账号），有多个时把数量说清楚
         let count = app.accounts.count(for: kind)
-        return content.rowDialog("退出\(kind.displayName)？", isPresented: presenting($logoutKind) { $0 == kind },
-                                 message: count > 1 ? "将删除本机保存的 \(count) 个\(kind.displayName)账号的登录凭据" : "将删除本机保存的登录凭据") {
-            Button("Sign Out", role: .destructive) { Task { await app.accounts.logout(kind) } }
+        return content.rowDialog(L("退出%1$@？", "\(L(kind.displayName))"), isPresented: presenting($logoutKind) { $0 == kind },
+                                 message: count > 1 ? L("将删除本机保存的 %1$@ 个%2$@账号的登录凭据", "\(count)", "\(L(kind.displayName))") : L("将删除本机保存的登录凭据")) {
+            Button(L("退出登录"), role: .destructive) { Task { await app.accounts.logout(kind) } }
         }
     }
 }
@@ -516,13 +516,13 @@ struct ManualCookieView: View {
                 .listRowBackground(Color.surface)
             }
             .paperList()
-            .navigationTitle("\(kind.displayName)凭据")
+            .navigationTitle(L("%1$@凭据", "\(L(kind.displayName))"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     if saving { Spinner() } else {
-                        Button("Save") {
+                        Button(L("保存")) {
                             guard !saving else { return }
                             saving = true
                             error = nil
@@ -530,10 +530,10 @@ struct ManualCookieView: View {
                             Task {
                                 defer { saving = false }
                                 if let name = await app.accounts.login(kind, cookie: value) {
-                                    app.show("已登录：\(name)")
+                                    app.show(L("已登录：%1$@", "\(name)"))
                                     dismiss()
                                 } else {
-                                    error = "凭据无效或已过期，请重新复制"
+                                    error = L("凭据无效或已过期，请重新复制")
                                 }
                             }
                         }

@@ -79,8 +79,8 @@ struct MediumParser: VideoParser {
         let r = try await OverseasHTTP.send(.postJSON(Self.graphqlURL, [operation], headers: headers), site: "Medium")
         switch r.status {
         case 200..<300: break
-        case 403, 429: throw VideoParseError(.blocked, "Medium 拒绝了请求（HTTP \(r.status)），请稍后重试")
-        default: throw VideoParseError(.unknown, "Medium 接口请求失败（HTTP \(r.status)）")
+        case 403, 429: throw VideoParseError(.blocked, LocalizedMessage("Medium 拒绝了请求（HTTP %1$@），请稍后重试", "\(r.status)"))
+        default: throw VideoParseError(.unknown, LocalizedMessage("Medium 接口请求失败（HTTP %1$@）", "\(r.status)"))
         }
         guard let json = r.json else { throw VideoParseError(.unknown, "Medium 接口返回的不是合法 JSON") }
         return json
@@ -108,7 +108,7 @@ struct MediumParser: VideoParser {
     static func parsePost(_ json: JSON) throws -> Post {
         let result = json.isArray ? json[0] : json
         if let message = result["errors"][0]["message"].string.nilIfBlank {
-            throw VideoParseError(.unknown, "Medium 解析失败：\(message)")
+            throw VideoParseError(.unknown, LocalizedMessage("Medium 解析失败：%1$@", "\(message)"))
         }
         let node = result["data"]["post"]
         guard node.isObject else { throw VideoParseError(.notFound, "Medium 内容不存在或已删除") }

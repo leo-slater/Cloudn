@@ -80,7 +80,7 @@ struct ThreadsParser: VideoParser {
             : VideoParseError(.unknown, "无法获取帖子内容（可能为私人或受限内容，或 Cookie 已失效）")
         if r.status == 429 { throw VideoParseError(.blocked, "Threads 请求过于频繁（HTTP 429），请稍后重试") }
         if (300..<400).contains(r.status) || r.status == 401 || r.status == 403 { throw loginWall }
-        guard r.status == 200 else { throw VideoParseError(.unknown, "Threads GraphQL 请求失败（HTTP \(r.status)）") }
+        guard r.status == 200 else { throw VideoParseError(.unknown, LocalizedMessage("Threads GraphQL 请求失败（HTTP %1$@）", "\(r.status)")) }
         // 未登录被拦时返回的是 HTML 登录页
         guard let payload = r.json, payload.isObject else { throw loginWall }
         if !payload["errors"].array.isEmpty { throw loginWall }

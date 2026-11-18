@@ -87,13 +87,13 @@ final class BatchJob: Identifiable {
     }
 
     private func parse(_ url: String, app: AppModel, folder: String) async -> State {
-        guard let link = VideoLinkParser.parse(url) else { return .failed("链接无法识别") }
+        guard let link = VideoLinkParser.parse(url) else { return .failed(L("链接无法识别")) }
         do {
             let result = try await app.videoService.parse(link)
             if Task.isCancelled { return .waiting }
             let medias = result.defaultDownloads
             guard !medias.isEmpty else {
-                return .failed(result.entries.isEmpty ? "没有可下载的媒体" : "这也是一个合集，请单独打开")
+                return .failed(result.entries.isEmpty ? L("没有可下载的媒体") : L("这也是一个合集，请单独打开"))
             }
             // 已在下载列表里（正在下 / 已下完）的跳过：重复粘贴、停止后继续都不会重复入队
             let existing = Self.queuedKeys(app.downloads.items)
@@ -105,7 +105,7 @@ final class BatchJob: Identifiable {
             return .waiting
         } catch {
             if Task.isCancelled { return .waiting }
-            return .failed(error.localizedDescription)
+            return .failed(displayError(error))
         }
     }
 
@@ -138,15 +138,15 @@ extension AppModel {
         let job = BatchJob(title: title, entries: entries)
         batchJobs.append(job)
         job.start(app: self)
-        show("开始批量解析 \(entries.count) 个")
+        show(L("开始批量解析 %1$@ 个", "\(entries.count)"))
         return job
     }
 
     /// 字幕：取回、统一转成 SRT，作为一条已完成的下载加进下载列表（文件在「文件」App 里与视频同一处）
     func saveSubtitle(_ track: SubtitleTrack, title: String, source: String, page: String) async throws -> String {
         let r = try await HTTPClient.shared.send(.get(track.url, headers: track.headers.map { ($0.key, $0.value) }))
-        guard r.isSuccess else { throw CloudnError("字幕下载失败（HTTP \(r.status)）") }
-        guard let srt = SubtitleConverter.toSRT(r.body, format: track.format) else { throw CloudnError("字幕格式无法识别") }
+        guard r.isSuccess else { throw CloudnError(L("字幕下载失败（HTTP %1$@）", "\(r.status)")) }
+        guard let srt = SubtitleConverter.toSRT(r.body, format: track.format) else { throw CloudnError(L("字幕格式无法识别")) }
         let name = FileNames.base(title, fallback: "subtitle") + "." + (track.language.isEmpty ? "sub" : track.language) + ".srt"
         let temp = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".srt")
         try srt.write(to: temp, options: .atomic)

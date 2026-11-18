@@ -155,7 +155,7 @@ struct FacebookParser: VideoParser {
         }
 
         if !meta.interstitial.isEmpty {
-            throw VideoParseError(.notFound, "Facebook 提示：\(meta.interstitial)")
+            throw VideoParseError(.notFound, LocalizedMessage("Facebook 提示：%1$@", "\(meta.interstitial)"))
         }
         if meta.loginWall {
             throw OverseasHTTP.loginRequired("Facebook", reason: "Facebook 未返回媒体数据")

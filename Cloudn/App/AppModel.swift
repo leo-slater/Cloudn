@@ -130,7 +130,7 @@ final class AppModel {
                 Log.error("自动重新取链失败：\(item.displayName)：\(error.localizedDescription)")
             }
         }
-        if notifiesInBackground { Notifier.downloadFailed(item.displayName, message: message.isEmpty ? "未知错误" : message) }
+        if notifiesInBackground { Notifier.downloadFailed(item.displayName, message: message.isEmpty ? L("未知错误") : message) }
         // 实况照片的另一半下载失败：已下完的这一半不再等，单独存
         await releaseHeldLiveHalves()
     }
@@ -213,7 +213,7 @@ final class AppModel {
             try await MediaTools.saveToPhotosSmart(file)
         } catch {
             // 自动存相册在后台悄悄进行：提示里带上是哪一步出的错
-            show("自动存相册失败：\(error.localizedDescription)", error: true)
+            show(L("自动存相册失败：%1$@", "\(displayError(error))"), error: true)
         }
     }
 
@@ -244,29 +244,29 @@ final class AppModel {
             let location = folder.lastPathComponent + (sub.isEmpty ? "" : "/" + sub) + "/" + target.lastPathComponent
             await downloads.engine.markExported(item.id, to: location)
         } catch {
-            show("移动到所选文件夹失败：\(error.localizedDescription)", error: true)
+            show(L("移动到所选文件夹失败：%1$@", "\(displayError(error))"), error: true)
         }
     }
 
     /// 网盘更新：打开发布说明里的网盘分享，找到最大的 .ipa 直接下载；做不到（要登录、要验证、没有安装包）就打开分享页让用户自己选
     func startUpdateDownload(_ share: ParsedShare) async {
         do {
-            guard let resolver = resolvers.resolver(for: share.platform) else { throw CloudnError("暂不支持\(share.platform.displayName)") }
+            guard let resolver = resolvers.resolver(for: share.platform) else { throw CloudnError(L("暂不支持%1$@", "\(L(share.platform.displayName))")) }
             let session = try await resolver.openSession(share, pwd: share.pwd)
             guard let file = try await UpdatePackage.findPackage(resolver: resolver, session: session) else {
-                throw CloudnError("分享里没有找到 .ipa 安装包")
+                throw CloudnError(L("分享里没有找到 .ipa 安装包"))
             }
             let link = try await resolver.downloadLink(session, file: file)
             downloads.enqueue(link: link, platform: share.platform, folder: "",
                               origin: ShareOrigin(platform: share.platform, shareURL: share.url, pwd: share.pwd ?? "", file: file))
             selectedTab = .downloads
-            show("已开始下载 \(file.name)")
+            show(L("已开始下载 %1$@", "\(file.name)"))
         } catch {
             var text = share.url
-            if let pwd = share.pwd, !pwd.isEmpty, ShareLinkParser.parse(text)?.pwd != pwd { text += " 提取码：\(pwd)" }
+            if let pwd = share.pwd, !pwd.isEmpty, ShareLinkParser.parse(text)?.pwd != pwd { text += L(" 提取码：%1$@", "\(pwd)") }
             pendingInput = text
             selectedTab = .resolve
-            show("自动下载失败，已打开分享页：\(error.localizedDescription)", error: true)
+            show(L("自动下载失败，已打开分享页：%1$@", "\(displayError(error))"), error: true)
         }
     }
 
@@ -318,7 +318,7 @@ final class AppModel {
             pendingTorrent = TorrentTarget(magnet: MagnetLink(infoHash: info.infoHash, displayName: info.name, trackers: trackers))
             selectedTab = .resolve
         } catch {
-            show("无法打开种子文件：\(error.localizedDescription)", error: true)
+            show(L("无法打开种子文件：%1$@", "\(displayError(error))"), error: true)
         }
     }
 

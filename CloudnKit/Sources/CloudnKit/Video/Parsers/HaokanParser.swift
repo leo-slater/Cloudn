@@ -15,7 +15,7 @@ struct HaokanParser: VideoParser {
         let payload = try await VideoHTTP.getJSON("https://haokan.baidu.com/v?_format=json&vid=\(vid)", headers: headers, what: "好看视频")
         if payload["errno"].int != 0 {
             let message = payload["error"].string
-            throw VideoParseError(.notFound, "好看视频返回错误：\(message.isEmpty ? "未知错误" : message)")
+            throw VideoParseError(.notFound, LocalizedMessage("好看视频返回错误：%1$@", "\(message.isEmpty ? "未知错误" : message)"))
         }
         let meta = payload["data"]["apiData"]["curVideoMeta"]
         let variants = meta.isObject ? Self.variants(meta) : []

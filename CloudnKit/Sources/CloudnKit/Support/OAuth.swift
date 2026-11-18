@@ -63,8 +63,8 @@ public struct OAuthProvider: Sendable, Equatable {
             let detail = Self.brief(value("error_description")?.replacingOccurrences(of: "+", with: " ") ?? "").nilIfBlank ?? error
             throw CloudnError(error == "access_denied" ? "已取消授权" : "\(name) 登录失败：\(detail)")
         }
-        guard value("state") == request.state else { throw CloudnError("\(name) 登录失败：回调校验不一致，请重试") }
-        guard let code = value("code"), !code.isEmpty else { throw CloudnError("\(name) 登录失败：没有拿到授权码") }
+        guard value("state") == request.state else { throw CloudnError(LocalizedMessage("%1$@ 登录失败：回调校验不一致，请重试", "\(name)")) }
+        guard let code = value("code"), !code.isEmpty else { throw CloudnError(LocalizedMessage("%1$@ 登录失败：没有拿到授权码", "\(name)")) }
         return code
     }
 
@@ -81,13 +81,13 @@ public struct OAuthProvider: Sendable, Equatable {
     private func token(_ fields: [(String, String)], previous: OAuthCredential?, client: HTTPClient) async throws -> OAuthCredential {
         let r = try await client.send(.postForm(tokenEndpoint, fields))
         // 服务端临时故障 / 限流：不是登录失效，稍后重试即可
-        if r.status == 429 || r.status >= 500 { throw CloudnError("\(name) 登录服务暂时不可用（HTTP \(r.status)），请稍后重试") }
-        guard let json = r.json else { throw CloudnError("\(name) 登录失败（HTTP \(r.status)）") }
+        if r.status == 429 || r.status >= 500 { throw CloudnError(LocalizedMessage("%1$@ 登录服务暂时不可用（HTTP %2$@），请稍后重试", "\(name)", "\(r.status)")) }
+        guard let json = r.json else { throw CloudnError(LocalizedMessage("%1$@ 登录失败（HTTP %2$@）", "\(name)", "\(r.status)")) }
         let access = json["access_token"].string
         guard r.isSuccess, !access.isEmpty else {
             let code = json["error"].string
-            if code == "invalid_grant" { throw CloudnError("\(name) 登录已失效，请到「我的」页重新登录", code: 401) }
-            throw CloudnError("\(name) 登录失败：\(Self.brief(json["error_description"].string).nilIfBlank ?? code.nilIfBlank ?? "HTTP \(r.status)")")
+            if code == "invalid_grant" { throw CloudnError(LocalizedMessage("%1$@ 登录已失效，请到「我的」页重新登录", "\(name)"), code: 401) }
+            throw CloudnError(LocalizedMessage("%1$@ 登录失败：%2$@", "\(name)", "\(Self.brief(json["error_description"].string).nilIfBlank ?? code.nilIfBlank ?? "HTTP \(r.status)")"))
         }
         let lifetime = json["expires_in"].int64 > 0 ? json["expires_in"].int64 : 3600
         return OAuthCredential(refreshToken: json["refresh_token"].string.nilIfBlank ?? previous?.refreshToken ?? "", accessToken: access,

@@ -177,7 +177,7 @@ struct ZhihuParser: VideoParser {
             throw mapError(status: r.status, code: error["code"].int, message: error["message"].string)
         }
         try VideoHTTP.requireSuccess(r, what)
-        guard json.isObject else { throw VideoParseError(.unknown, "\(what) 返回的不是合法 JSON") }
+        guard json.isObject else { throw VideoParseError(.unknown, LocalizedMessage("%1$@ 返回的不是合法 JSON", "\(what)")) }
         return json
     }
 
@@ -185,9 +185,9 @@ struct ZhihuParser: VideoParser {
         if status == 401 || code == 100 || code == 101 {
             return VideoParseError(.unsupported, "知乎登录已失效，请到「我的」页重新登录知乎")
         }
-        if status == 404 || status == 410 { return VideoParseError(.notFound, "知乎内容不存在或已删除（\(message)）") }
-        if status == 403 { return VideoParseError(.blocked, "知乎拒绝了请求（\(code)：\(message)）") }
-        return VideoParseError(.unknown, "知乎接口错误 \(code)：\(message)")
+        if status == 404 || status == 410 { return VideoParseError(.notFound, LocalizedMessage("知乎内容不存在或已删除（%1$@）", "\(message)")) }
+        if status == 403 { return VideoParseError(.blocked, LocalizedMessage("知乎拒绝了请求（%1$@：%2$@）", "\(code)", "\(message)")) }
+        return VideoParseError(.unknown, LocalizedMessage("知乎接口错误 %1$@：%2$@", "\(code)", "\(message)"))
     }
 
     /// 登录态校验：带签名请求 /api/v4/me，返回昵称

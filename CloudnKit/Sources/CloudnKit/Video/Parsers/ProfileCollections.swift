@@ -123,7 +123,7 @@ enum ProfileCollectionJS {
 
     /// 用户提前停止时结果里的说明
     static func stoppedNotice(_ count: Int) -> String {
-        "已停止加载，列出了已获取的 \(count) 个作品"
+        CloudnLocalization.text("已停止加载，列出了已获取的 %1$@ 个作品", "\(count)")
     }
 
     /// JS 字符串字面量（单引号，转义反斜杠 / 引号 / 换行）

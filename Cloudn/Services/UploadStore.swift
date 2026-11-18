@@ -51,7 +51,7 @@ final class UploadStore {
     /// 加入队列；超过平台单文件上限的直接提示
     func enqueue(_ files: [(url: URL, temporary: Bool, scoped: Bool)], platform: SharePlatform, folderId: String) {
         guard let uploader = resolvers.uploader(for: platform) else {
-            onMessage?("\(platform.displayName)暂不支持上传", true)
+            onMessage?(L("%1$@暂不支持上传", "\(L(platform.displayName))"), true)
             // 相册导出的临时文件没人再用，删掉
             for f in files where f.temporary { try? FileManager.default.removeItem(at: f.url) }
             return
@@ -61,7 +61,7 @@ final class UploadStore {
             if f.scoped { _ = f.url.startAccessingSecurityScopedResource() }
             let size = FileChunks.size(of: f.url)
             if let limit = uploader.uploadSizeLimit, size > limit {
-                onMessage?("「\(f.url.lastPathComponent)」超过单文件 \(ByteFormat.string(limit)) 上限", true)
+                onMessage?(L("「%1$@」超过单文件 %2$@ 上限", "\(f.url.lastPathComponent)", "\(ByteFormat.string(limit))"), true)
                 release(f.url, temporary: f.temporary, scoped: f.scoped)
                 continue
             }
@@ -69,7 +69,7 @@ final class UploadStore {
                               temporary: f.temporary, scoped: f.scoped))
             added += 1
         }
-        if added > 0 { onMessage?(added > 1 ? "已加入上传队列 · \(added) 个" : "已开始上传", false) }
+        if added > 0 { onMessage?(added > 1 ? L("已加入上传队列 · %1$@ 个", "\(added)") : L("已开始上传"), false) }
         pump()
     }
 
@@ -115,7 +115,7 @@ final class UploadStore {
         guard let i = items.firstIndex(where: { $0.id == id }) else { return }
         // 没有上传器也要改掉「等待」状态，否则 pump 会一直取到同一条、原地空转
         guard let uploader = resolvers.uploader(for: items[i].platform) else {
-            items[i].status = .failed("暂不支持上传")
+            items[i].status = .failed(L("暂不支持上传"))
             return
         }
         let item = items[i]
@@ -140,8 +140,8 @@ final class UploadStore {
             release(item)
         } catch {
             // 还在列表里却被取消（系统中断）：按失败处理，留着可重试
-            let message = Self.isCancellation(error) ? "上传被中断，请重试"
-                : ((error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+            let message = Self.isCancellation(error) ? L("上传被中断，请重试")
+                : displayError(error)
             Log.error("上传失败：\(item.name)：\(message)")
             set(id, .failed(message))
             // 失败的留着可重试；作用域先放掉，重试时再申请
@@ -153,7 +153,7 @@ final class UploadStore {
     /// 队列跑完：这一批传完的合并成一条提示（失败的在列表里显示，不另弹）
     private func reportUploaded() {
         guard let first = uploadedNames.first else { return }
-        onMessage?(uploadedNames.count > 1 ? "已上传 \(uploadedNames.count) 个文件" : "「\(first)」已上传", false)
+        onMessage?(uploadedNames.count > 1 ? L("已上传 %1$@ 个文件", "\(uploadedNames.count)") : L("「%1$@」已上传", "\(first)"), false)
         uploadedNames = []
     }
 

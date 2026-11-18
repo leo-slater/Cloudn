@@ -201,7 +201,7 @@ struct YouTubeParser: VideoParser {
             switch r.status {
             case 429: throw VideoParseError(.blocked, "YouTube 请求过于频繁（HTTP 429）")
             case 403: throw VideoParseError(.unknown, "YouTube 拒绝了请求（HTTP 403），所在网络的 IP 可能被风控，可更换代理节点后重试")
-            default: throw VideoParseError(.unknown, "YouTube 播放接口请求失败（HTTP \(r.status)）")
+            default: throw VideoParseError(.unknown, LocalizedMessage("YouTube 播放接口请求失败（HTTP %1$@）", "\(r.status)"))
             }
         }
         if s.visitorData.isEmpty { s.visitorData = json["responseContext"]["visitorData"].string }
@@ -231,7 +231,7 @@ struct YouTubeParser: VideoParser {
         let r = try await OverseasHTTP.send(.get("https://www.youtube.com/iframe_api", headers: Self.pageHeaders.sortedPairs),
                                             site: "YouTube")
         guard r.isSuccess, let id = Self.playerID(inIframeAPI: r.text) else {
-            throw VideoParseError(.unknown, "获取 YouTube 播放器版本失败（HTTP \(r.status)）")
+            throw VideoParseError(.unknown, LocalizedMessage("获取 YouTube 播放器版本失败（HTTP %1$@）", "\(r.status)"))
         }
         s.playerID = id
         return id
@@ -255,7 +255,7 @@ struct YouTubeParser: VideoParser {
         if let js = YouTubeSignature.cache.playerJS(for: id) { return js }
         let r = try await OverseasHTTP.send(.get(Self.playerURL(id: id), headers: Self.pageHeaders.sortedPairs), site: "YouTube")
         let js = r.text
-        guard r.isSuccess, !js.isEmpty else { throw VideoParseError(.unknown, "下载 YouTube 播放器脚本失败（HTTP \(r.status)）") }
+        guard r.isSuccess, !js.isEmpty else { throw VideoParseError(.unknown, LocalizedMessage("下载 YouTube 播放器脚本失败（HTTP %1$@）", "\(r.status)")) }
         YouTubeSignature.cache.storePlayer(js, timestamp: Self.signatureTimestamp(in: js), for: id)
         return js
     }
@@ -531,19 +531,19 @@ struct YouTubeParser: VideoParser {
         }
         switch status {
         case "ERROR":
-            return Playability(error: VideoParseError(.notFound, "YouTube 视频不存在或已被删除\(suffix)"),
+            return Playability(error: VideoParseError(.notFound, LocalizedMessage("YouTube 视频不存在或已被删除%1$@", "\(suffix)")),
                                definitive: true, botCheck: false, tryEmbedded: false)
         case "LIVE_STREAM_OFFLINE":
             return Playability(error: VideoParseError(.unsupported, "直播尚未开始或已结束且没有回放，暂时没有可下载的视频"),
                                definitive: true, botCheck: false, tryEmbedded: false)
         case "LOGIN_REQUIRED":
-            return Playability(error: VideoParseError(.unsupported, "该视频需要登录 YouTube 才能观看，暂不支持\(suffix)"),
+            return Playability(error: VideoParseError(.unsupported, LocalizedMessage("该视频需要登录 YouTube 才能观看，暂不支持%1$@", "\(suffix)")),
                                definitive: false, botCheck: false, tryEmbedded: false)
         case "UNPLAYABLE":
-            return Playability(error: VideoParseError(.unsupported, "该视频在 YouTube 上无法播放\(suffix)"),
+            return Playability(error: VideoParseError(.unsupported, LocalizedMessage("该视频在 YouTube 上无法播放%1$@", "\(suffix)")),
                                definitive: false, botCheck: false, tryEmbedded: false)
         default:
-            return Playability(error: VideoParseError(.unknown, "YouTube 无法播放该视频（\(status)）\(suffix)"),
+            return Playability(error: VideoParseError(.unknown, LocalizedMessage("YouTube 无法播放该视频（%1$@）%2$@", "\(status)", "\(suffix)")),
                                definitive: false, botCheck: false, tryEmbedded: false)
         }
     }
@@ -804,7 +804,7 @@ struct YouTubeParser: VideoParser {
         let offered = choices.filter { $0.kind == .video }.map { $0.main.resolution }.max() ?? 0
         let higher = list.contains { !$0.progressive && $0.mime.hasPrefix("video/") && !$0.isMP4Video && !$0.isAV1MP4 && $0.resolution > offered }
         if offered > 0 && higher {
-            return "该视频更高的画质只有 VP9 编码，iOS 无法合并，已提供可用的最高画质（\(offered)p）"
+            return CloudnLocalization.text("该视频更高的画质只有 VP9 编码，iOS 无法合并，已提供可用的最高画质（%1$@p）", "\(offered)")
         }
         return ""
     }

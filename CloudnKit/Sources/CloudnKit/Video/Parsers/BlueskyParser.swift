@@ -80,7 +80,7 @@ struct BlueskyParser: VideoParser {
             }
             if r.status == 429 { throw VideoParseError(.blocked, "Bluesky 请求过于频繁（HTTP 429），请稍后重试") }
             let suffix = error.isEmpty ? "" : "：" + error
-            throw VideoParseError(.unknown, "Bluesky 接口请求失败（HTTP \(r.status)）" + suffix)
+            throw VideoParseError(.unknown, LocalizedMessage("Bluesky 接口请求失败（HTTP %1$@）%2$@", "\(r.status)", suffix))
         }
         return try Self.threadPost(json)
     }

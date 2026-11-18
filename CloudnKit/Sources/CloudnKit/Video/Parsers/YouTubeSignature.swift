@@ -80,7 +80,7 @@ enum YouTubeSignature {
     static func parseOutput(_ text: String, types: [String]) throws -> (solution: Solution, preprocessed: String) {
         guard let json = JSON(text: text) else { throw VideoParseError(.unknown, "YouTube 签名求解脚本输出无法解析") }
         if json["type"].string == "error" {
-            throw VideoParseError(.unknown, "YouTube 签名求解失败：\(String(json["error"].string.prefix(200)))")
+            throw VideoParseError(.unknown, LocalizedMessage("YouTube 签名求解失败：%1$@", "\(String(json["error"].string.prefix(200)))"))
         }
         var solution = Solution()
         let responses = json["responses"].array
@@ -165,7 +165,7 @@ enum YouTubeSignature {
         let setup = YouTubeSolverScripts.lib + "\nObject.assign(globalThis, lib);\n" + YouTubeSolverScripts.core
         _ = context.evaluateScript(setup)
         if let e = context.exception {
-            throw VideoParseError(.unknown, "YouTube 签名求解脚本加载失败：\(e.toString() ?? "")")
+            throw VideoParseError(.unknown, LocalizedMessage("YouTube 签名求解脚本加载失败：%1$@", "\(e.toString() ?? "")"))
         }
         sharedContext = context
         return context
@@ -185,7 +185,7 @@ enum YouTubeSignature {
         if let e = context.exception {
             let message = String((e.toString() ?? "").prefix(200))
             sharedContext = nil
-            throw VideoParseError(.unknown, "YouTube 签名求解失败（播放器结构可能已变化）：\(message)")
+            throw VideoParseError(.unknown, LocalizedMessage("YouTube 签名求解失败（播放器结构可能已变化）：%1$@", "\(message)"))
         }
         guard let value, value.isString, let text = value.toString() else {
             sharedContext = nil

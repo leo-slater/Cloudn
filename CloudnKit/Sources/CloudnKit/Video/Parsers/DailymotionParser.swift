@@ -22,8 +22,8 @@ struct DailymotionParser: VideoParser {
         guard let metadata = r.json, metadata.isObject else {
             switch r.status {
             case 404, 410: throw VideoParseError(.notFound, "Dailymotion 视频不存在或已删除")
-            case 403, 429: throw VideoParseError(.blocked, "Dailymotion 拒绝了请求（HTTP \(r.status)），请稍后重试")
-            default: throw VideoParseError(.unknown, "Dailymotion 元数据获取失败（HTTP \(r.status)）")
+            case 403, 429: throw VideoParseError(.blocked, LocalizedMessage("Dailymotion 拒绝了请求（HTTP %1$@），请稍后重试", "\(r.status)"))
+            default: throw VideoParseError(.unknown, LocalizedMessage("Dailymotion 元数据获取失败（HTTP %1$@）", "\(r.status)"))
             }
         }
         try Self.checkError(metadata)
@@ -63,7 +63,7 @@ struct DailymotionParser: VideoParser {
         let title = error.string("title", "raw_message", "message")
         let code = error["code"].string
         if code == "DM007" {
-            throw VideoParseError(.unsupported, "Dailymotion：该视频在当前地区不可观看（\(title)）")
+            throw VideoParseError(.unsupported, LocalizedMessage("Dailymotion：该视频在当前地区不可观看（%1$@）", "\(title)"))
         }
         let detail = title.isEmpty ? "视频不可用（\(code)）" : title
         throw VideoParseError(.unknown, "Dailymotion：\(detail)")

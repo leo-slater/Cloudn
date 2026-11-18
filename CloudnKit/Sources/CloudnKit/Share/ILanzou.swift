@@ -63,7 +63,7 @@ public final class ILanzouResolver: ShareResolver, @unchecked Sendable {
             params += [("offset", String(page)), ("limit", String(Self.pageSize))]
             let url = shareBase + "/unproved/share/list?" + Self.query(Self.commonParams(uuid: uuid, devModel: "Chrome") + [("extra", "2"), ("shareId", session.shareId)] + params)
             let r = try await client.send(.get(url, headers: Self.headers))
-            guard let json = r.json, json.isObject else { throw CloudnError("蓝奏优享分享请求失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("蓝奏优享分享请求失败（HTTP %1$@）", "\(r.status)")) }
             guard json["code"].int == 200 else {
                 let msg = json["msg"].string
                 throw CloudnError(msg.isEmpty ? "蓝奏优享分享请求失败（\(json["code"].int)）" : msg, code: json["code"].int)
@@ -404,7 +404,7 @@ extension ILanzouResolver: DriveUploader {
             let qiniu = "\(Self.qiniuHost)/buckets/\(Self.qiniuBucket)/objects/\(Self.base64URL(key))/uploads"
             let auth = [("Authorization", "UpToken \(upToken)")]
             let start = try await client.send(HTTPRequest(url: qiniu, method: "POST", headers: auth))
-            guard let uploadId = start.json?["uploadId"].string.nilIfBlank else { throw CloudnError("七牛分片上传初始化失败（HTTP \(start.status)）") }
+            guard let uploadId = start.json?["uploadId"].string.nilIfBlank else { throw CloudnError(LocalizedMessage("七牛分片上传初始化失败（HTTP %1$@）", "\(start.status)")) }
             var etags: [OrderedJSON] = []
             var sent: Int64 = 0
             for (i, part) in UploadUtil.parts(size: size, partSize: Self.qiniuPartSize).enumerated() {
@@ -414,7 +414,7 @@ extension ILanzouResolver: DriveUploader {
                                                 body: .file(file, offset: part.offset, length: part.length)) { done in
                     progress(.uploading, Double(b + done) / Double(size))
                 }
-                guard r.isSuccess, let etag = r.json?["etag"].string.nilIfBlank else { throw CloudnError("七牛分片上传失败（HTTP \(r.status)）") }
+                guard r.isSuccess, let etag = r.json?["etag"].string.nilIfBlank else { throw CloudnError(LocalizedMessage("七牛分片上传失败（HTTP %1$@）", "\(r.status)")) }
                 etags.append(.object([("partNumber", .int(Int64(i + 1))), ("etag", .string(etag))]))
                 sent += part.length
             }

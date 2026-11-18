@@ -37,11 +37,11 @@ extension DouyinParser {
         if CollectionProgress.isStopRequested && posts.hasMore {
             notice = ProfileCollectionJS.stoppedNotice(posts.entries.count)
         } else if posts.entries.count >= ProfileCollectionJS.maxItems {
-            notice = "作品较多，只列出了前 \(posts.entries.count) 个"
+            notice = CloudnLocalization.text("作品较多，只列出了前 %1$@ 个", "\(posts.entries.count)")
         } else if posts.hasMore || (!Self.isLoggedIn(cookie: cookie) && posts.entries.count <= Self.guestPageSize) {
             // 未登录时网页版常常只给第一页（约 18 个），还报「没有更多」
             notice = Self.isLoggedIn(cookie: cookie)
-                ? "只加载到前 \(posts.entries.count) 个作品（抖音要求验证或加载超时），可稍后重试"
+                ? CloudnLocalization.text("只加载到前 %1$@ 个作品（抖音要求验证或加载超时），可稍后重试", "\(posts.entries.count)")
                 : "未登录抖音时网页版通常只给第一页作品，到「我的」页登录抖音后可获取全部"
         }
         return VideoParseResult(platform: platform, title: title, author: nickname, cover: posts.entries.first?.cover ?? "",

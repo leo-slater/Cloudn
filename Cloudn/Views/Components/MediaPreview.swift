@@ -91,7 +91,7 @@ struct MediaPreviewView: View {
         HStack(spacing: 10) {
             Button { dismiss() } label: { IconView(.close, size: 15) }
                 .buttonStyle(PreviewBarButtonStyle(dark: true))
-                .accessibilityLabel("关闭")
+                .accessibilityLabel(L("关闭"))
             Text(title)
                 .font(.subheadline.weight(.semibold).monospacedDigit())
                 .foregroundStyle(.white)
@@ -127,9 +127,9 @@ struct MediaPreviewView: View {
                     // 直链过期、403 等：说清楚，给重试，而不是一块黑屏
                     VStack(spacing: 12) {
                         IconView(.warning, size: 26)
-                        Text("无法播放").font(.cardTitle)
+                        Text(L("无法播放")).font(.cardTitle)
                         Text(failure).font(.footnote).opacity(0.7).multilineTextAlignment(.center)
-                        Button("重试") { startPlayer() }
+                        Button(L("重试")) { startPlayer() }
                             .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                             .padding(.top, 4)
                     }
@@ -177,7 +177,7 @@ struct MediaPreviewView: View {
                 switch playerItem.status {
                 case .readyToPlay: return
                 case .failed:
-                    failure = playerItem.error?.localizedDescription ?? "链接可能已过期，请回到上一页重新获取"
+                    failure = playerItem.error?.localizedDescription ?? L("链接可能已过期，请回到上一页重新获取")
                     return
                 default: continue
                 }

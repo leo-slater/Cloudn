@@ -168,7 +168,7 @@ public final class DropboxResolver: ShareResolver, @unchecked Sendable {
         func has(_ key: String) -> Bool { summary.contains(key) }
         if status == 401 { return expired }
         if status == 429 || has("too_many_requests") || has("too_many_write_operations") { return CloudnError("Dropbox 请求太频繁，请稍后再试") }
-        if status >= 500 { return CloudnError("Dropbox 暂时不可用（HTTP \(status)），请稍后重试") }
+        if status >= 500 { return CloudnError(LocalizedMessage("Dropbox 暂时不可用（HTTP %1$@），请稍后重试", "\(status)")) }
         if has("missing_scope") { return CloudnError("Dropbox 授权缺少所需权限，请重新登录") }
         if has("shared_link_not_found") { return CloudnError("Dropbox 分享不存在或已失效") }
         if has("invalid_password") || has("password_required") { return CloudnError("Dropbox 分享密码错误") }

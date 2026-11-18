@@ -47,9 +47,9 @@ struct WeiboParser: VideoParser {
         let r = try await VideoHTTP.send(.get(url, headers: headers, followRedirects: false))
         guard r.status == 200 else {
             switch r.status {
-            case 403, 418, 429: throw VideoParseError(.blocked, "微博被风控拦截（HTTP \(r.status)）")
+            case 403, 418, 429: throw VideoParseError(.blocked, LocalizedMessage("微博被风控拦截（HTTP %1$@）", "\(r.status)"))
             case 404, 410: throw VideoParseError(.notFound, "微博内容不存在或已删除")
-            default: throw VideoParseError(.blocked, "微博数据获取失败（HTTP \(r.status)），请稍后重试")
+            default: throw VideoParseError(.blocked, LocalizedMessage("微博数据获取失败（HTTP %1$@），请稍后重试", "\(r.status)"))
             }
         }
         guard (r.header("Content-Type") ?? "").contains("json"), let json = r.json else {

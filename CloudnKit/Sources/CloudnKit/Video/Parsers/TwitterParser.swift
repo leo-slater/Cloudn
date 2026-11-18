@@ -43,13 +43,13 @@ struct TwitterParser: VideoParser {
         switch r.status {
         case 200: break
         case 401, 403:
-            if loggedIn { throw VideoParseError(.unknown, "X 拒绝了请求（HTTP \(r.status)），登录可能已失效，请到「我的」页重新登录 X") }
+            if loggedIn { throw VideoParseError(.unknown, LocalizedMessage("X 拒绝了请求（HTTP %1$@），登录可能已失效，请到「我的」页重新登录 X", "\(r.status)")) }
             throw OverseasHTTP.loginRequired("X")
         case 404: throw VideoParseError(.notFound, "推文不存在（HTTP 404）")
         case 429:
             if loggedIn { throw VideoParseError(.blocked, "X 接口请求过于频繁（HTTP 429），请稍后重试") }
             throw VideoParseError(.blocked, "X 游客接口请求过于频繁（HTTP 429），请稍后重试；到「我的」页登录 X 后可避开游客限额")
-        default: throw VideoParseError(.unknown, "X 接口请求失败（HTTP \(r.status)）")
+        default: throw VideoParseError(.unknown, LocalizedMessage("X 接口请求失败（HTTP %1$@）", "\(r.status)"))
         }
         guard let json = r.json else { throw VideoParseError(.unknown, "X 接口返回的不是合法 JSON") }
         let tweet = try Self.parseTweet(json, loggedIn: loggedIn)
@@ -154,7 +154,7 @@ struct TwitterParser: VideoParser {
         let result = json["data"]["tweetResult"]["result"]
         if !result.isObject {
             if let first = json["errors"].array.first {
-                throw VideoParseError(.unknown, "X 接口返回错误：\(first["message"].string)")
+                throw VideoParseError(.unknown, LocalizedMessage("X 接口返回错误：%1$@", "\(first["message"].string)"))
             }
             throw VideoParseError(.notFound, "帖子或用户不存在")
         }
@@ -176,7 +176,7 @@ struct TwitterParser: VideoParser {
             case "Protected":
                 throw VideoParseError(.unknown, "该账号设置了受保护，只有获准的关注者才能查看其帖子")
             default:
-                throw VideoParseError(.unknown, "无法查看这条推文：\(result["reason"].string)")
+                throw VideoParseError(.unknown, LocalizedMessage("无法查看这条推文：%1$@", "\(result["reason"].string)"))
             }
         }
 
@@ -343,7 +343,7 @@ enum OverseasHTTP {
     }
 
     static func unreachable(_ site: String) -> VideoParseError {
-        VideoParseError(.unknown, "所在网络无法访问 \(site)，可在设置里配置网络代理")
+        VideoParseError(.unknown, LocalizedMessage("所在网络无法访问 %1$@，可在设置里配置网络代理", "\(site)"))
     }
 
     /// 支持在「我的」页登录的海外站点（与 OverseasAccount.kinds 的 displayName 对应）
@@ -352,7 +352,7 @@ enum OverseasHTTP {
     static func loginRequired(_ site: String, reason: String = "") -> VideoParseError {
         let prefix = reason.isEmpty ? "" : reason + "。"
         let action = accountSites.contains(site) ? "，请先到「我的」页登录 \(site)" : ""
-        return VideoParseError(.unknown, "\(prefix)该内容需要登录 \(site) 后才能查看\(action)")
+        return VideoParseError(.unknown, LocalizedMessage("%1$@该内容需要登录 %2$@ 后才能查看%3$@", "\(prefix)", "\(site)", "\(action)"))
     }
 
     /// 把响应里的 Set-Cookie 合进 Cookie 串（空值多为删除指令，忽略）

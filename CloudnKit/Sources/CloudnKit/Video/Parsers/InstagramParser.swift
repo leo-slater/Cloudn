@@ -69,7 +69,7 @@ struct InstagramParser: VideoParser {
         do {
             return try await fetch(code, cookie: cookie)
         } catch let again as Restricted {
-            throw VideoParseError(.unknown, "\(again.message)（登录可能已失效，请到「我的」页重新登录 Instagram）")
+            throw VideoParseError(.unknown, LocalizedMessage("%1$@（登录可能已失效，请到「我的」页重新登录 Instagram）", "\(again.message)"))
         } catch is RateLimited {
             throw VideoParseError(.blocked, "Instagram 请求过于频繁（HTTP 429），请稍后重试")
         }
@@ -93,13 +93,13 @@ struct InstagramParser: VideoParser {
             throw Restricted(message: "Instagram 要求登录")
         }
         if r.status == 429 { throw RateLimited() }
-        guard r.status == 200 else { throw VideoParseError(.unknown, "Instagram GraphQL 请求失败（HTTP \(r.status)）") }
+        guard r.status == 200 else { throw VideoParseError(.unknown, LocalizedMessage("Instagram GraphQL 请求失败（HTTP %1$@）", "\(r.status)")) }
         guard let payload = r.json, payload.isObject else {
             throw Restricted(message: "Instagram 返回了非 JSON 响应（多半是登录页）")
         }
         let status = payload["status"].string
         if !status.isEmpty && status != "ok" {
-            throw VideoParseError(.unknown, "Instagram GraphQL 状态异常：\(payload["message"].string)")
+            throw VideoParseError(.unknown, LocalizedMessage("Instagram GraphQL 状态异常：%1$@", "\(payload["message"].string)"))
         }
         if payload["data"].isNull && !payload["errors"].isNull {
             try await checkRuling(code, jar: jar, csrf: csrf)

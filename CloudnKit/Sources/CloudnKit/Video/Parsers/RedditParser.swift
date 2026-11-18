@@ -93,13 +93,13 @@ struct RedditParser: VideoParser {
         }
         guard let json = r.json else {
             switch r.status {
-            case 404, 410: throw VideoParseError(.notFound, "帖子不存在（HTTP \(r.status)）")
+            case 404, 410: throw VideoParseError(.notFound, LocalizedMessage("帖子不存在（HTTP %1$@）", "\(r.status)"))
             case 403, 429:
                 if Self.hasLoginCookie(cookie) {
-                    throw VideoParseError(.blocked, "Reddit 拒绝了请求（HTTP \(r.status)），请稍后重试；若持续失败，请到「我的」页重新登录 Reddit")
+                    throw VideoParseError(.blocked, LocalizedMessage("Reddit 拒绝了请求（HTTP %1$@），请稍后重试；若持续失败，请到「我的」页重新登录 Reddit", "\(r.status)"))
                 }
-                throw VideoParseError(.blocked, "Reddit 拒绝了匿名请求（HTTP \(r.status)），请稍后重试或切换网络；到「我的」页登录 Reddit 后可避开游客限制")
-            default: throw VideoParseError(.unknown, "Reddit 接口请求失败（HTTP \(r.status)）")
+                throw VideoParseError(.blocked, LocalizedMessage("Reddit 拒绝了匿名请求（HTTP %1$@），请稍后重试或切换网络；到「我的」页登录 Reddit 后可避开游客限制", "\(r.status)"))
+            default: throw VideoParseError(.unknown, LocalizedMessage("Reddit 接口请求失败（HTTP %1$@）", "\(r.status)"))
             }
         }
         return try Self.postData(json)
@@ -250,7 +250,7 @@ struct RedditParser: VideoParser {
             case "quarantined": throw VideoParseError(.unknown, "该社区已被隔离，需要已确认进入该社区的 Reddit 账号才能查看，请到「我的」页登录 Reddit")
             case "private": throw VideoParseError(.unknown, "该社区为私密社区，需要已获准加入的 Reddit 账号才能查看，请到「我的」页登录 Reddit")
             case "banned": throw VideoParseError(.notFound, "该社区已被封禁")
-            default: throw VideoParseError(.blocked, "Reddit 拒绝访问（\(json["reason"].string)）")
+            default: throw VideoParseError(.blocked, LocalizedMessage("Reddit 拒绝访问（%1$@）", "\(json["reason"].string)"))
             }
         }
         if json["error"].int == 404 { throw VideoParseError(.notFound, "帖子不存在") }

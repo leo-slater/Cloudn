@@ -63,7 +63,7 @@ struct ShareBrowserView: View {
             }
             .navigationTitle(headerHidden ? (model.crumbs.last?.name ?? model.title) : "")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search in This Folder")
+            .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: L("在当前文件夹中搜索"))
             .onChange(of: model.currentDir) { query = "" }
             .toolbar { toolbar }
             .safeAreaInset(edge: .bottom) {
@@ -107,16 +107,16 @@ struct ShareBrowserView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 PlatformGlyph(mark: .share(model.share.platform), size: 15)
-                Text(model.share.platform.displayName)
+                Text(L(model.share.platform.displayName))
                 if let kind = model.share.platform.accountKind {
                     Text("·")
                     if model.loginExpired {
                         Button { presentLogin() } label: {
-                            Text("Session Expired · Sign In Again").foregroundStyle(Color.clayInk)
+                            Text(L("登录已失效 · 重新登录")).foregroundStyle(Color.clayInk)
                         }
                         .buttonStyle(.plain)
                     } else {
-                        Text(app.accounts.isLoggedIn(kind) ? "Signed In" : "Not Signed In")
+                        Text(app.accounts.isLoggedIn(kind) ? L("已登录") : L("未登录"))
                     }
                 }
             }
@@ -143,9 +143,9 @@ struct ShareBrowserView: View {
     /// 大标题：打开失败时直接说是什么情况，而不是只显示平台名
     private var headline: String {
         guard model.session == nil else { return model.title }
-        if model.errorMessage == nil { return "Opening Share…" }
-        if model.needsPassword { return "Access Code Required" }
-        return model.linkInvalid ? "Share Expired" : "Unable to Open Share"
+        if model.errorMessage == nil { return L("正在打开分享…") }
+        if model.needsPassword { return L("需要提取码") }
+        return model.linkInvalid ? L("分享已失效") : L("无法打开分享")
     }
 
     private var summary: String {
@@ -153,8 +153,8 @@ struct ShareBrowserView: View {
         let count = model.files.count - dirs
         let size = model.files.reduce(Int64(0)) { $0 + ($1.isDirectory ? 0 : $1.size) }
         var parts: [String] = []
-        if dirs > 0 { parts.append("\(dirs) 个文件夹") }
-        if count > 0 { parts.append("\(count) 个文件") }
+        if dirs > 0 { parts.append(L("%1$@ 个文件夹", "\(dirs)")) }
+        if count > 0 { parts.append(L("%1$@ 个文件", "\(count)")) }
         if size > 0 { parts.append(ByteFormat.string(size)) }
         return parts.joined(separator: " · ")
     }
@@ -170,7 +170,7 @@ struct ShareBrowserView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer(minLength: 0)
             }
-            Button(model.loginExpired ? "Sign In Again" : "Login") { presentLogin() }
+            Button(model.loginExpired ? L("重新登录") : L("登录")) { presentLogin() }
                 .buttonStyle(PillButtonStyle(kind: .dark, height: 30))
                 .font(.footnote)
         }
@@ -183,7 +183,7 @@ struct ShareBrowserView: View {
         ScrollViewReader { bar in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
-                    crumbChip("All Files", current: false) { navigate(proxy) { await model.jump(to: nil) } }
+                    crumbChip(L("全部文件"), current: false) { navigate(proxy) { await model.jump(to: nil) } }
                     ForEach(Array(model.crumbs.enumerated()), id: \.offset) { index, crumb in
                         IconView(.chevronRight, size: 12).foregroundStyle(Color.ink3)
                         let current = index == model.crumbs.count - 1
@@ -224,9 +224,9 @@ struct ShareBrowserView: View {
         } else if model.loading && model.files.isEmpty {
             placeholderList
         } else if model.files.isEmpty {
-            EmptyStateCard(icon: .folder, title: "Empty Folder", detail: "No Files Here")
+            EmptyStateCard(icon: .folder, title: L("空文件夹"), detail: L("这里没有文件"))
         } else if visibleFiles.isEmpty {
-            EmptyStateCard(icon: .search, title: "No Matching Files", detail: "当前文件夹里没有名字包含「\(query.trimmingCharacters(in: .whitespaces))」的文件")
+            EmptyStateCard(icon: .search, title: L("没有匹配的文件"), detail: L("当前文件夹里没有名字包含「%1$@」的文件", "\(query.trimmingCharacters(in: .whitespaces))"))
         } else {
             VStack(spacing: 0) {
                 if model.loading { ProgressLine(value: nil).padding(.horizontal, 14).padding(.top, 2) }
@@ -344,7 +344,7 @@ struct ShareBrowserView: View {
         }
         .card()
         .phaseAnimator([0.55, 1]) { view, phase in view.opacity(phase) } animation: { _ in .easeInOut(duration: 0.9) }
-        .accessibilityLabel("Loading…")
+        .accessibilityLabel(L("正在加载"))
     }
 
     /// 出错时直接给下一步：缺提取码就地输入，其他错误给重试
@@ -356,7 +356,7 @@ struct ShareBrowserView: View {
             }
             if model.needsPassword {
                 HStack(spacing: 10) {
-                    TextField("Access Code", text: $retryPwd)
+                    TextField(L("提取码"), text: $retryPwd)
                         .font(.mono)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -368,27 +368,27 @@ struct ShareBrowserView: View {
                         .padding(.horizontal, 14)
                         .frame(height: 40)
                         .background(Color.fillMuted, in: Capsule())
-                    Button("Resolve", action: retry)
+                    Button(L("解析"), action: retry)
                         .buttonStyle(PillButtonStyle(kind: .primary, height: 40))
                         .disabled(retryPwd.trimmingCharacters(in: .whitespaces).isEmpty || model.loading)
                 }
             } else if model.linkInvalid {
                 // 已失效的分享重试也没用：给能做的下一步（大字号下上下排）
                 AdaptiveStack(spacing: 10) {
-                    Button { Clipboard.copy(model.sourceText); app.show("Share Link Copied") } label: {
-                        Label { Text("Copy Link").lineLimit(1) } icon: { Image(icon: .link) }
+                    Button { Clipboard.copy(model.sourceText); app.show(L("已复制分享链接")) } label: {
+                        Label { Text(L("复制链接")).lineLimit(1) } icon: { Image(icon: .link) }
                     }
                     .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                     if let url = URL(string: model.share.url) {
                         Link(destination: url) {
-                            Label { Text("Open in Browser").lineLimit(1) } icon: { Image(icon: .share) }
+                            Label { Text(L("用浏览器打开")).lineLimit(1) } icon: { Image(icon: .share) }
                         }
                         .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                     }
                 }
             } else {
                 Button { Task { await model.reloadCurrent(force: true) } } label: {
-                    Label { Text("Retry") } icon: { Image(icon: .refresh) }
+                    Label { Text(L("重试")) } icon: { Image(icon: .refresh) }
                 }
                 .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                 .disabled(model.loading)
@@ -414,33 +414,33 @@ struct ShareBrowserView: View {
                 // 按搜索过滤后看得见的文件判断（selection 里可能还有过滤掉的）
                 let visible = Set(visibleFiles.map(\.fid))
                 let allOn = !visible.isEmpty && visible.isSubset(of: model.selection)
-                Button(allOn ? "Deselect All" : "Select All") {
+                Button(allOn ? L("全不选") : L("全选")) {
                     if allOn { model.selection.subtract(visible) } else { model.selection.formUnion(visible) }
                 }
                 .disabled(visible.isEmpty)
-                Button("Done") { model.selecting = false; model.selection = [] }
+                Button(L("完成")) { model.selecting = false; model.selection = [] }
                     .fontWeight(.semibold)
             } else {
                 Button { model.toggleBookmark() } label: {
                     Image(icon: .star).foregroundStyle(model.isBookmarked ? AnyShapeStyle(.tint) : AnyShapeStyle(Color.ink))
                 }
-                .accessibilityLabel(model.isBookmarked ? "Remove Bookmark" : "Bookmarks")
+                .accessibilityLabel(model.isBookmarked ? L("取消收藏") : L("收藏"))
                 .disabled(model.session == nil)
                 // 收藏是「成功」，取消收藏只是轻点一下
                 .sensoryFeedback(trigger: model.isBookmarked) { _, now in now ? .success : .selection }
                 Menu {
-                    Button { model.selecting = true } label: { Label { Text("Select Multiple") } icon: { Image(icon: .checkCircle) } }
+                    Button { model.selecting = true } label: { Label { Text(L("多选")) } icon: { Image(icon: .checkCircle) } }
                         .disabled(model.files.isEmpty)
-                    Button { Clipboard.copy(model.sourceText); app.show("Share Link Copied") } label: {
-                        Label { Text("Copy Share Link") } icon: { Image(icon: .link) }
+                    Button { Clipboard.copy(model.sourceText); app.show(L("已复制分享链接")) } label: {
+                        Label { Text(L("复制分享链接")) } icon: { Image(icon: .link) }
                     }
                     if let url = URL(string: model.share.url) {
-                        Link(destination: url) { Label { Text("Open in Browser") } icon: { Image(icon: .share) } }
+                        Link(destination: url) { Label { Text(L("在浏览器中打开")) } icon: { Image(icon: .share) } }
                     }
                 } label: {
                     Image(icon: .more).foregroundStyle(Color.ink)
                 }
-                .accessibilityLabel("More")
+                .accessibilityLabel(L("更多"))
             }
         }
     }
@@ -451,7 +451,7 @@ struct ShareBrowserView: View {
         if let batch = model.batch {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(batch.total == 0 ? "Reading Folder…" : "Getting Direct URL…").font(.footnote.weight(.medium))
+                    Text(batch.total == 0 ? L("正在读取文件夹…") : L("正在获取直链")).font(.footnote.weight(.medium))
                     Spacer()
                     if batch.total > 0 { Text("\(batch.done) / \(batch.total)").font(.figuresSmall) }
                 }
@@ -470,7 +470,7 @@ struct ShareBrowserView: View {
             // 辅助字号下：已选数量在上、两个按钮在下，各占一半宽
             AdaptiveStack(spacing: 10) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(chosen.isEmpty ? "Nothing Selected" : "已选 \(chosen.count) 项").font(.subheadline.weight(.semibold))
+                    Text(chosen.isEmpty ? L("未选择") : L("已选 %1$@ 项", "\(chosen.count)")).font(.subheadline.weight(.semibold))
                     Text(selectionDetail(chosen)).font(.figuresSmall).foregroundStyle(Color.ink3)
                 }
                 .foregroundStyle(Color.ink)
@@ -480,11 +480,11 @@ struct ShareBrowserView: View {
                 AdaptiveStack(spacing: 10) {
                     if model.saver != nil {
                         // 宽度放在标签里：放在按钮外面撑不开胶囊
-                        Button { startSave(chosen) } label: { Text("Save to Drive").frame(maxWidth: large ? .infinity : nil) }
+                        Button { startSave(chosen) } label: { Text(L("转存")).frame(maxWidth: large ? .infinity : nil) }
                             .buttonStyle(PillButtonStyle(kind: .secondary, height: 40))
                     }
                     Button { whenLoggedIn { Task { await model.downloadSelected() } } } label: {
-                        Label { Text("Downloads") } icon: { Image(icon: .download) }
+                        Label { Text(L("下载")) } icon: { Image(icon: .download) }
                             .frame(maxWidth: large ? .infinity : nil)
                     }
                     .buttonStyle(PillButtonStyle(kind: .primary, height: 40))
@@ -507,14 +507,14 @@ struct ShareBrowserView: View {
                         Image(icon: model.downloadNeedsLogin ? .user : .download)
                         if model.downloadNeedsLogin {
                             // 不登录下不了：主按钮直接说清下一步，点了就地登录
-                            Text("Sign In to Download")
+                            Text(L("登录后下载"))
                         } else if typeSize.isAccessibilitySize {
                             // 大字号下合成一段文字，换行时不会拆成两块
-                            Text("全部下载 · \(model.files.count) 项").multilineTextAlignment(.center)
+                            Text(L("全部下载 · %1$@ 项", "\(model.files.count)")).multilineTextAlignment(.center)
                         } else {
-                            Text("全部下载")
+                            Text(L("全部下载"))
                             // 跟随按钮前景色（浅色强调色上是深墨色），只是淡一点
-                            Text("· \(model.files.count) 项").opacity(0.75)
+                            Text(L("· %1$@ 项", "\(model.files.count)")).opacity(0.75)
                         }
                     }
                     .frame(maxWidth: .infinity)
@@ -523,14 +523,14 @@ struct ShareBrowserView: View {
                 HStack(spacing: 8) {
                     if model.saver != nil {
                         Button { startSave(model.files) } label: {
-                            Text("Save to Drive").frame(maxWidth: typeSize.isAccessibilitySize ? .infinity : nil)
+                            Text(L("转存")).frame(maxWidth: typeSize.isAccessibilitySize ? .infinity : nil)
                         }
                         .buttonStyle(PillButtonStyle(kind: .secondary, height: 46))
                     }
                     Button { model.selecting = true } label: { IconView(.checkCircle, size: 19) }
                         .buttonStyle(CircleIconButtonStyle(size: 46))
                         .background(Color.surface, in: Circle())
-                        .accessibilityLabel("Select Multiple")
+                        .accessibilityLabel(L("多选"))
                 }
             }
             .padding(6)
@@ -545,8 +545,8 @@ struct ShareBrowserView: View {
         let size = files.reduce(Int64(0)) { $0 + ($1.isDirectory ? 0 : $1.size) }
         var parts: [String] = []
         if size > 0 { parts.append(ByteFormat.string(size)) }
-        if dirs > 0 { parts.append("含 \(dirs) 个文件夹") }
-        return parts.isEmpty ? "按住左侧上下滑动可连续选择" : parts.joined(separator: " · ")
+        if dirs > 0 { parts.append(L("含 %1$@ 个文件夹", "\(dirs)")) }
+        return parts.isEmpty ? L("按住左侧上下滑动可连续选择") : parts.joined(separator: " · ")
     }
 
     // MARK: 动作
@@ -555,7 +555,7 @@ struct ShareBrowserView: View {
     private func startSave(_ files: [ShareFile]) {
         guard !files.isEmpty else { return }
         if model.saveNeedsLogin {
-            app.show("转存需要先登录\(model.share.platform.displayName)", error: true)
+            app.show(L("转存需要先登录%1$@", "\(L(model.share.platform.displayName))"), error: true)
             presentLogin()
             return
         }
@@ -591,10 +591,10 @@ struct ShareBrowserView: View {
     @ViewBuilder
     private func menu(for file: ShareFile, proxy: ScrollViewProxy) -> some View {
         if file.isDirectory {
-            Button { navigate(proxy) { await model.enter(file) } } label: { Label { Text("Open") } icon: { Image(icon: .folder) } }
-            Button { whenLoggedIn { Task { await model.downloadFolder(file) } } } label: { Label { Text("下载整个文件夹") } icon: { Image(icon: .download) } }
+            Button { navigate(proxy) { await model.enter(file) } } label: { Label { Text(L("打开")) } icon: { Image(icon: .folder) } }
+            Button { whenLoggedIn { Task { await model.downloadFolder(file) } } } label: { Label { Text(L("下载整个文件夹")) } icon: { Image(icon: .download) } }
             if model.saver != nil {
-                Button { startSave([file]) } label: { Label { Text("转存到我的网盘") } icon: { Image(icon: .save) } }
+                Button { startSave([file]) } label: { Label { Text(L("转存到我的网盘")) } icon: { Image(icon: .save) } }
             }
         } else {
             fileActions(file)
@@ -604,7 +604,7 @@ struct ShareBrowserView: View {
     @ViewBuilder
     private func fileActions(_ file: ShareFile) -> some View {
         Button { download(file) } label: {
-            Label { Text("Downloads") } icon: { Image(icon: .download) }
+            Label { Text(L("下载")) } icon: { Image(icon: .download) }
         }
         let kind = FileNames.kind(of: file.name)
         if kind == .video || kind == .audio || kind == .image {
@@ -617,7 +617,7 @@ struct ShareBrowserView: View {
                                                kind: kind == .image ? .image : (kind == .audio ? .audio : .video))
                 }
             } label: {
-                Label { Text(kind == .image ? "Preview" : "Stream Online") } icon: { Image(icon: kind == .image ? .eye : .play) }
+                Label { Text(kind == .image ? L("预览") : L("在线播放")) } icon: { Image(icon: kind == .image ? .eye : .play) }
             }
         }
         if kind == .document {
@@ -629,7 +629,7 @@ struct ShareBrowserView: View {
                     filePreview = RemoteFileItem(url: link.url, headers: link.headers, name: file.name, size: file.size)
                 }
             } label: {
-                Label { Text("Preview") } icon: { Image(icon: .eye) }
+                Label { Text(L("预览")) } icon: { Image(icon: .eye) }
             }
         }
         if kind == .text {
@@ -641,7 +641,7 @@ struct ShareBrowserView: View {
                     textPreview = TextPreviewItem(url: link.url, headers: link.headers, title: file.name)
                 }
             } label: {
-                Label { Text("在线查看") } icon: { Image(icon: .text) }
+                Label { Text(L("在线查看")) } icon: { Image(icon: .text) }
             }
         }
         Button {
@@ -650,13 +650,13 @@ struct ShareBrowserView: View {
                 Clipboard.copy(link.url)
                 // 临时转存取到的直链：留一分钟给别的应用开始下载，之后清理网盘里的临时文件
                 model.releaseTemporary(link, after: 60)
-                app.show(link.cleanupToken == nil ? "Direct URL Copied (May Require Request Headers)" : "已复制直链（临时转存约 1 分钟后清理）")
+                app.show(link.cleanupToken == nil ? L("已复制直链（下载可能需带请求头）") : L("已复制直链（临时转存约 1 分钟后清理）"))
             }
         } label: {
-            Label { Text("Copy Direct URL") } icon: { Image(icon: .link) }
+            Label { Text(L("复制直链")) } icon: { Image(icon: .link) }
         }
         if model.saver != nil {
-            Button { startSave([file]) } label: { Label { Text("转存到我的网盘") } icon: { Image(icon: .save) } }
+            Button { startSave([file]) } label: { Label { Text(L("转存到我的网盘")) } icon: { Image(icon: .save) } }
         }
     }
 
@@ -673,7 +673,7 @@ struct ShareBrowserView: View {
             // 两次点按都排进来时，第二个在这里看到第一个已占住（取链开始前同步记下）
             guard !model.busyFileIds.contains(file.fid) else { return }
             try await model.download(file)
-            app.show("Added to Downloads")
+            app.show(L("已加入下载"))
         }
     }
 
@@ -684,7 +684,7 @@ struct ShareBrowserView: View {
 
     private func run(_ work: @escaping () async throws -> Void) {
         Task {
-            do { try await work() } catch { app.show(error.localizedDescription, error: true) }
+            do { try await work() } catch { app.show(displayError(error), error: true) }
         }
     }
 }

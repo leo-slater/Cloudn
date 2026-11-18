@@ -55,7 +55,7 @@ struct PixivParser: VideoParser {
         if !hasCookie {
             return VideoParseError(.unsupported, "该作品需要登录后才能解析（多为 R18 或受限作品），请到「我的」页登录 Pixiv")
         }
-        return VideoParseError(.blocked, "Pixiv 返回错误：\(message)")
+        return VideoParseError(.blocked, LocalizedMessage("Pixiv 返回错误：%1$@", "\(message)"))
     }
 
     /// 原图扩展名（jpg / png / gif）

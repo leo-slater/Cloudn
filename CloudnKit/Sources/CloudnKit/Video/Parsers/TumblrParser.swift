@@ -61,7 +61,7 @@ struct TumblrParser: VideoParser {
         if Rx(#"(?:tumblr\.com|^)/(?:safe-mode|login_required|blog/view)"#).matches(r.url) {
             throw VideoParseError(.unknown, "该帖子仅登录后可见（敏感内容或仅限仪表盘），暂不支持登录 Tumblr")
         }
-        guard r.isSuccess else { throw VideoParseError(.unknown, "Tumblr 页面请求失败（HTTP \(r.status)）") }
+        guard r.isSuccess else { throw VideoParseError(.unknown, LocalizedMessage("Tumblr 页面请求失败（HTTP %1$@）", "\(r.status)")) }
         return (Self.pageItems(r.text), Self.pageTitle(r.text))
     }
 

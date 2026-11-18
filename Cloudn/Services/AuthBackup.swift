@@ -37,9 +37,9 @@ enum AuthBackup {
 
         var errorDescription: String? {
             switch self {
-            case .emptyPassphrase: return "请输入口令"
-            case .badFile: return "不是有效的 Cloudn 认证备份文件"
-            case .wrongPassphrase: return "口令错误，或备份文件已损坏"
+            case .emptyPassphrase: return L("请输入口令")
+            case .badFile: return L("不是有效的 Cloudn 认证备份文件")
+            case .wrongPassphrase: return L("口令错误，或备份文件已损坏")
             }
         }
     }

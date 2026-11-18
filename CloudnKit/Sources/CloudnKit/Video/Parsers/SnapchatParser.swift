@@ -35,7 +35,7 @@ struct SnapchatParser: VideoParser {
         let headers: [(String, String)] = [("Accept-Language", "en-US,en;q=0.9"), ("User-Agent", VideoHTTP.uaChrome)]
         let r = try await OverseasHTTP.send(.get(pageURL, headers: headers), site: "Snapchat")
         if r.status == 404 { throw VideoParseError(.notFound, "内容不存在或已删除（HTTP 404）") }
-        guard r.isSuccess else { throw VideoParseError(.unknown, "Snapchat 页面请求失败（HTTP \(r.status)）") }
+        guard r.isSuccess else { throw VideoParseError(.unknown, LocalizedMessage("Snapchat 页面请求失败（HTTP %1$@）", "\(r.status)")) }
         let snap = Self.parsePage(r.text, id: id)
         if snap.items.isEmpty { throw VideoParseError(.unsupported, "这条内容没有可下载的图片或视频") }
 

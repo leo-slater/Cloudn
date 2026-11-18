@@ -142,7 +142,7 @@ public final class OneDriveResolver: ShareResolver, @unchecked Sendable {
     private func personalContext() async throws -> Context {
         let r = try await client.send(.postJSON(Self.badgerURL, ["appId": Self.badgerAppId], headers: [("User-Agent", Self.ua)]))
         guard let json = r.json, !json["token"].string.isEmpty else {
-            throw CloudnError("OneDrive 匿名访问令牌获取失败（HTTP \(r.status)）")
+            throw CloudnError(LocalizedMessage("OneDrive 匿名访问令牌获取失败（HTTP %1$@）", "\(r.status)"))
         }
         let scheme = json["authScheme"].string.nilIfBlank ?? "Badger"
         return Context(api: Self.personalAPI, auth: [("Authorization", "\(scheme) \(json["token"].string)"), ("Prefer", "autoredeem")],
@@ -164,7 +164,7 @@ public final class OneDriveResolver: ShareResolver, @unchecked Sendable {
             let fed = try await submitPassword(page: r, url: link, password: password)
             return Context(api: api, auth: [("Cookie", "FedAuth=\(fed)")], expiresAt: Date().addingTimeInterval(45 * 60), root: nil)
         }
-        throw CloudnError("OneDrive 分享无法访问（HTTP \(r.status)），可能需要登录组织账号")
+        throw CloudnError(LocalizedMessage("OneDrive 分享无法访问（HTTP %1$@），可能需要登录组织账号", "\(r.status)"))
     }
 
     /// 分享根条目；个人版遇到密码时改用访客页表单换 FedAuth 再访问
@@ -214,7 +214,7 @@ public final class OneDriveResolver: ShareResolver, @unchecked Sendable {
         var headers: [(String, String)] = [("User-Agent", Self.ua), ("Accept", "application/json;odata.metadata=minimal")]
         headers += context.auth
         let r = try await client.send(HTTPRequest(url: url, headers: headers))
-        guard let json = r.json else { throw CloudnError("OneDrive 响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json else { throw CloudnError(LocalizedMessage("OneDrive 响应解析失败（HTTP %1$@）", "\(r.status)")) }
         if r.isSuccess { return json }
         let error = json["error"]
         let inner = error["innerError"]["code"].string.nilIfBlank ?? error["innererror"]["code"].string

@@ -5,7 +5,7 @@ import SwiftUI
 /// 「我的」页平台的顺序与显示，存在 UserDefaults（逗号分隔的 rawValue）
 enum PlatformLayout {
     enum Group: String, CaseIterable, Identifiable {
-        case drives = "Cloud Drives", videos = "Video Platforms"
+        case drives = "网盘", videos = "视频平台"
         var id: Self { self }
     }
 
@@ -60,15 +60,15 @@ struct PlatformLayoutView: View {
                         .onMove { from, to in items.wrappedValue.move(fromOffsets: from, toOffset: to) }
                 } header: {
                     HStack {
-                        Text("已显示 \(items.wrappedValue.filter(pinned.contains).count) / \(items.wrappedValue.count)")
+                        Text(L("已显示 %1$@ / %2$@", "\(items.wrappedValue.filter(pinned.contains).count)", "\(items.wrappedValue.count)"))
                             .contentTransition(.numericText())
                         Spacer()
-                        Text("拖动右侧把手排序")
+                        Text(L("拖动右侧把手排序"))
                     }
                 } footer: {
                     Text(group == .drives
-                         ? "关掉的网盘不在「我的」页显示，登录状态保留，解析与下载照常。蓝奏云、蓝奏优享、光鸭的公开分享无需登录；其余网盘未登录也能浏览分享。"
-                         : "小红书、知乎需要登录；抖音登录后可获取主页全部作品；X、Instagram、TikTok、Reddit、Facebook 登录可选，登录后可解析受限内容；其余平台无需登录。")
+                         ? L("关掉的网盘不在「我的」页显示，登录状态保留，解析与下载照常。蓝奏云、蓝奏优享、光鸭的公开分享无需登录；其余网盘未登录也能浏览分享。")
+                         : L("小红书、知乎需要登录；抖音登录后可获取主页全部作品；X、Instagram、TikTok、Reddit、Facebook 登录可选，登录后可解析受限内容；其余平台无需登录。"))
                 }
                 .listRowBackground(Color.surface)
             }
@@ -76,29 +76,29 @@ struct PlatformLayoutView: View {
             .paperList()
             .animation(.snappy, value: group)
             .safeAreaInset(edge: .top, spacing: 0) {
-                Picker("Category", selection: $group) {
-                    ForEach(PlatformLayout.Group.allCases) { Text($0.rawValue).tag($0) }
+                Picker(L("类别"), selection: $group) {
+                    ForEach(PlatformLayout.Group.allCases) { Text(L($0.rawValue)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(Color.paper)
             }
-            .navigationTitle("Sort and Show")
+            .navigationTitle(L("排序与显示"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Menu {
-                        Button { setAll(true) } label: { Label("Show All", systemImage: "eye") }
-                        Button { setLoggedInOnly() } label: { Label("Only Signed-In", systemImage: "person.crop.circle.badge.checkmark") }
+                        Button { setAll(true) } label: { Label(L("全部显示"), systemImage: "eye") }
+                        Button { setLoggedInOnly() } label: { Label(L("只显示已登录"), systemImage: "person.crop.circle.badge.checkmark") }
                         Divider()
-                        Button { resetOrder() } label: { Label("Restore Default Order", systemImage: "arrow.counterclockwise") }
+                        Button { resetOrder() } label: { Label(L("恢复默认顺序"), systemImage: "arrow.counterclockwise") }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
-                    .accessibilityLabel("More")
+                    .accessibilityLabel(L("更多"))
                 }
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { Button(L("完成")) { dismiss() } }
             }
             .sensoryFeedback(.selection, trigger: pinned)
             .onAppear(perform: load)
@@ -114,22 +114,22 @@ struct PlatformLayoutView: View {
         return HStack(spacing: 12) {
             PlatformTile(mark: .account(kind), size: 32, dimmed: !on)
             VStack(alignment: .leading, spacing: 2) {
-                Text(kind.displayName)
+                Text(L(kind.displayName))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(on ? Color.ink : Color.ink2)
                 Group {
                     if let account {
-                        Text(app.accounts.isExpired(kind) ? "Login Expired" : "已登录 · \(account.nickname)")
+                        Text(app.accounts.isExpired(kind) ? L("登录已失效") : L("已登录 · %1$@", "\(account.nickname)"))
                             .foregroundStyle(app.accounts.isExpired(kind) ? Color.clayInk : Color.success)
                     } else {
-                        Text("Not Signed In").foregroundStyle(Color.ink3)
+                        Text(L("未登录")).foregroundStyle(Color.ink3)
                     }
                 }
                 .font(.caption)
                 .lineLimit(1)
             }
             Spacer(minLength: 8)
-            Toggle("在「我的」页显示\(kind.displayName)", isOn: Binding(
+            Toggle(L("在「我的」页显示%1$@", "\(L(kind.displayName))"), isOn: Binding(
                 get: { on },
                 set: { show in
                     withAnimation(.snappy) { if show { pinned.insert(kind) } else { pinned.remove(kind) } }

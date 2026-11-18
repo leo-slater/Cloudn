@@ -1,0 +1,11 @@
+/* Cloudn UI strings. For formatted text, keep the positional placeholders such as %1$@. */
+
+"完成" = "Done";
+"打开 Cloudn" = "Open Cloudn";
+"正在打开 Cloudn…" = "Opening Cloudn...";
+"没有识别到链接" = "No Link Recognized";
+"没能自动跳转" = "Could not autoject";
+"点「打开 Cloudn」继续；如果仍没有跳转，手动打开 Cloudn 即可粘贴解析。" = "Dot \"Open Cloudn\" continues; if it still does not jump, manually open Cloudn to paste the resolution.";
+"这条分享里没有可解析的链接或口令。" = "There are no decryptionable links or passwords in this sharing.";
+"链接已在剪贴板里，手动打开 Cloudn 即可粘贴解析。" = "The link is already in the clipboard, which will be manually enabled to paste the resolution by opening Cloudn manually.";
+"链接已复制" = "Link copied";

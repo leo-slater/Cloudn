@@ -69,7 +69,7 @@ struct PipigaoxiaoParser: VideoParser {
     static func post(_ payload: JSON) throws -> JSON {
         let msg = payload["msg"].string
         if payload.has("msg") && !msg.isEmpty {
-            throw VideoParseError(.notFound, "皮皮搞笑：\(msg)")
+            throw VideoParseError(.notFound, LocalizedMessage("皮皮搞笑：%1$@", "\(msg)"))
         }
         let post = payload["data"]["post"]
         guard post.isObject else { throw VideoParseError(.notFound, "皮皮搞笑作品不存在或已删除") }

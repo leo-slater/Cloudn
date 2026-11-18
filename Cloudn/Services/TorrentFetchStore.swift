@@ -52,7 +52,7 @@ final class TorrentFetchStore {
             } catch is CancellationError {
                 self?.update(key, token) { $0.error = nil }
             } catch {
-                self?.update(key, token) { $0.error = error.localizedDescription }
+                self?.update(key, token) { $0.error = displayError(error) }
             }
             // 取消后又重新开始的：tasks 里已是新的那次，不能清掉
             if self?.tokens[key] == token {

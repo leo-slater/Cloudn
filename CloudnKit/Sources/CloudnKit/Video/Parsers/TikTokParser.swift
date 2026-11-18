@@ -172,7 +172,7 @@ struct TikTokParser: VideoParser {
         if status == 10216 || status == 10222 { throw OverseasHTTP.loginRequired("TikTok", reason: "这个 TikTok 内容需要登录或无权访问") }
         if status == 10204 { throw VideoParseError(.notFound, "TikTok 作品不存在或不可见") }
         let msg = detail.string("statusMsg", "statusMessage")
-        throw VideoParseError(.unknown, "TikTok 页面中没有作品详情（status=\(msg.isEmpty ? String(status) : msg)）")
+        throw VideoParseError(.unknown, LocalizedMessage("TikTok 页面中没有作品详情（status=%1$@）", "\(msg.isEmpty ? String(status) : msg)"))
     }
 
     /// 作品 → 媒体：图文取每张 displayImage，视频在各码率里取 (分辨率, 码率, 体积) 最大的

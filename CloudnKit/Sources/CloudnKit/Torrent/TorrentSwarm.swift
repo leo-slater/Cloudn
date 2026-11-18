@@ -367,10 +367,10 @@ actor TorrentSwarm {
     /// 「Tracker 2/9 有响应 · DHT 35 个节点回应 · 已发现 120 · 已握手 8」
     var statusNote: String {
         var parts: [String] = []
-        if trackerOK + trackerFailed > 0 { parts.append("Tracker \(trackerOK)/\(trackerOK + trackerFailed) 有响应") }
-        parts.append("DHT \(dhtResponded) 个节点回应")
-        parts.append("已发现 \(seen.count)")
-        parts.append("已握手 \(handshakes)")
+        if trackerOK + trackerFailed > 0 { parts.append(CloudnLocalization.text("Tracker %1$@/%2$@ 有响应", "\(trackerOK)", "\(trackerOK + trackerFailed)")) }
+        parts.append(CloudnLocalization.text("DHT %1$@ 个节点回应", "\(dhtResponded)"))
+        parts.append(CloudnLocalization.text("已发现 %1$@", "\(seen.count)"))
+        parts.append(CloudnLocalization.text("已握手 %1$@", "\(handshakes)"))
         var note = parts.joined(separator: " · ")
         // 引导节点也一个都没回：多半是所在网络或代理（VPN）不转发 UDP
         if dhtLookups > 0 && dhtResponded == 0 { note += "。DHT 无回应，可能是网络或代理不转发 UDP，可关闭代理后重试" }

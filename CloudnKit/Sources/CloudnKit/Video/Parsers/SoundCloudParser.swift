@@ -108,7 +108,7 @@ struct SoundCloudParser: VideoParser {
                                 author: user["username"].string, avatar: user["avatar_url"].string,
                                 cover: Self.artwork(info), text: info["description"].string,
                                 timestamp: Self.parseTime(info["created_at"].string), url: info["permalink_url"].string,
-                                notice: stopped ? "已停止加载，列出了已获取的 \(entries.count) 首曲目" : "", entries: entries)
+                                notice: stopped ? CloudnLocalization.text("已停止加载，列出了已获取的 %1$@ 首曲目", "\(entries.count)") : "", entries: entries)
     }
 
     private func api(_ url: String, clientID: String, extra: [(String, String)]) async throws -> HTTPResponse {
@@ -325,10 +325,10 @@ struct SoundCloudParser: VideoParser {
     static func check(_ r: HTTPResponse, what: String) throws {
         if r.isSuccess { return }
         switch r.status {
-        case 404, 410: throw VideoParseError(.notFound, "\(what)不存在或已删除（HTTP \(r.status)）")
-        case 401, 403: throw VideoParseError(.unknown, "\(what)拒绝访问（HTTP \(r.status)），可能是私密曲目或地区限制")
+        case 404, 410: throw VideoParseError(.notFound, LocalizedMessage("%1$@不存在或已删除（HTTP %2$@）", "\(what)", "\(r.status)"))
+        case 401, 403: throw VideoParseError(.unknown, LocalizedMessage("%1$@拒绝访问（HTTP %2$@），可能是私密曲目或地区限制", "\(what)", "\(r.status)"))
         case 429: throw VideoParseError(.blocked, "SoundCloud 请求过于频繁（HTTP 429），请稍后重试")
-        default: throw VideoParseError(.unknown, "\(what)请求失败（HTTP \(r.status)）")
+        default: throw VideoParseError(.unknown, LocalizedMessage("%1$@请求失败（HTTP %2$@）", "\(what)", "\(r.status)"))
         }
     }
 }

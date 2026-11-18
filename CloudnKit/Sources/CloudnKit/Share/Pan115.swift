@@ -132,7 +132,7 @@ public final class Pan115Resolver: ShareResolver, @unchecked Sendable {
         if !code.isEmpty { url += "&receive_code=\(code.formEncoded)" }
         let ua = await clientUA()
         let r = try await client.send(.get(url, headers: headers(cookie: cookie, referer: Self.shareReferer(shareCode, code), ua: ua)))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "获取下载链接失败")
         let data = json["data"]
         let link = data["file_url_302"].string.nilIfBlank ?? data["file_url"].string.nilIfBlank ?? data["url"]["url"].string
@@ -229,7 +229,7 @@ public final class Pan115Resolver: ShareResolver, @unchecked Sendable {
         let url = "https://proapi.115.com/app/chrome/downurl?t=\(Int64(Date().timeIntervalSince1970))"
         let r = try await client.send(.postForm(url, [("data", Pan115Crypto.encode(payload, key: key))],
                                                 headers: headers(cookie: cookie, referer: Self.referer, ua: ua)))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "获取下载链接失败")
         guard let plain = Pan115Crypto.decode(json["data"].string, key: key), let decoded = JSON(text: plain),
               let info = decoded.keys.map({ decoded[$0] }).first(where: { $0["url"].isObject }) else {
@@ -273,13 +273,13 @@ public final class Pan115Resolver: ShareResolver, @unchecked Sendable {
 
     private func get(_ url: String, cookie: String, referer: String = Pan115Resolver.referer) async throws -> JSON {
         let r = try await client.send(.get(url, headers: headers(cookie: cookie, referer: referer)))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 
     private func post(_ url: String, _ fields: [(String, String)], cookie: String) async throws -> JSON {
         let r = try await client.send(.postForm(url, fields, headers: headers(cookie: cookie, referer: Self.referer)))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 
@@ -585,7 +585,7 @@ extension Pan115Resolver: DriveManager {
         let ua = await clientUA()
         let url = apiBase + "/files/download?pickcode=\(file.token.formEncoded)"
         let r = try await client.send(.get(url, headers: headers(cookie: cookie, referer: Self.referer, ua: ua)))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "获取下载链接失败")
         let data = json["data"]
         let link = data["file_url"].string
@@ -675,7 +675,7 @@ extension Pan115Resolver: DriveUploader {
         let ua = "Mozilla/5.0 115Browser/\(version)"
         let account = try await uploadAccount(cookie: cookie, ua: ua)
         if account.sizeLimit > 0 && size > account.sizeLimit {
-            throw CloudnError("文件超过 115 单文件上传上限（\(Self.sizeText(account.sizeLimit))）")
+            throw CloudnError(LocalizedMessage("文件超过 115 单文件上传上限（%1$@）", "\(Self.sizeText(account.sizeLimit))"))
         }
 
         let target = "U_1_" + (folderId.nilIfBlank ?? "0")
@@ -693,7 +693,7 @@ extension Pan115Resolver: DriveUploader {
             }
             // 服务端抽查文件中的一段：回传该区间的 SHA-1，换新的 t / token / k_ec 立即重发
             guard let range = Self.parseSignCheck(result.signCheck), !result.signKey.isEmpty else {
-                throw CloudnError("115 上传校验参数异常（\(result.signCheck)）")
+                throw CloudnError(LocalizedMessage("115 上传校验参数异常（%1$@）", "\(result.signCheck)"))
             }
             signKey = result.signKey
             signVal = try Self.rangeSHA1(file, start: range.start, end: range.end)
@@ -800,7 +800,7 @@ extension Pan115Resolver: DriveUploader {
         var h = headers(cookie: cookie, referer: Self.referer, ua: ua)
         h.append(("Content-Type", "application/x-www-form-urlencoded"))
         let r = try await client.send(HTTPRequest(url: Self.uploadInfoURL, method: "POST", headers: h, body: Data()))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return try Self.parseUploadInfo(json)
     }
 
@@ -815,14 +815,14 @@ extension Pan115Resolver: DriveUploader {
         var decoded: JSON?
         if let plain = EC115.decrypt([UInt8](r.body)) { decoded = JSON(data: Data(plain)) }
         if decoded?.isObject != true { decoded = r.json }
-        guard let json = decoded, json.isObject else { throw CloudnError("115 上传初始化响应解析失败（HTTP \(r.status)）") }
+        guard let json = decoded, json.isObject else { throw CloudnError(LocalizedMessage("115 上传初始化响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return try Self.parseInitUpload(json)
     }
 
     /// GET uplb.115.com/3.0/gettoken.php：OSS STS 临时凭证
     private func ossSigner(cookie: String, ua: String) async throws -> OSSSigner {
         let r = try await client.send(.get(Self.ossTokenURL, headers: headers(cookie: cookie, referer: Self.referer, ua: ua)))
-        guard let json = r.json, json.isObject else { throw CloudnError("获取 115 上传凭证失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("获取 115 上传凭证失败（HTTP %1$@）", "\(r.status)")) }
         return try Self.parseOSSToken(json)
     }
 

@@ -75,7 +75,7 @@ struct XiaohongshuParser: VideoParser {
                     medias.append(VideoMedia(url: lives[i], kind: .video, fileName: "\(base)_\(i + 1)_live.mp4", headers: headers, quality: "实况"))
                 }
             }
-            if resolved.fallbacks > 0 { notice = "\(resolved.fallbacks) 张图片没有可用的去水印原图，已改用平台地址（可能带水印）" }
+            if resolved.fallbacks > 0 { notice = CloudnLocalization.text("%1$@ 张图片没有可用的去水印原图，已改用平台地址（可能带水印）", "\(resolved.fallbacks)") }
             cover = resolved.urls.first ?? ""
         }
         guard !medias.isEmpty else { throw VideoParseError(.notFound, "小红书笔记里没有可下载的内容") }

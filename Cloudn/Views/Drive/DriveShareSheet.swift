@@ -21,24 +21,24 @@ struct DriveShareSheet: View {
                 Group {
                     Section {
                         if manager.shareAudienceOptions.count > 1 {
-                            Picker("谁能访问", selection: $options.audience) {
+                            Picker(L("谁能访问"), selection: $options.audience) {
                                 ForEach(manager.shareAudienceOptions) { Text($0.label).tag($0) }
                             }
                         }
                         if manager.shareRoleOptions.count > 1 {
-                            Picker("权限", selection: $options.role) {
+                            Picker(L("权限"), selection: $options.role) {
                                 ForEach(manager.shareRoleOptions) { Text($0.label).tag($0) }
                             }
                         }
                         if manager.shareExpiryOptions.count > 1 {
-                            Picker("有效期", selection: $options.expiry) {
+                            Picker(L("有效期"), selection: $options.expiry) {
                                 ForEach(manager.shareExpiryOptions) { Text($0.label).tag($0) }
                             }
                         }
                         if manager.supportsSharePassword {
-                            Toggle("设置密码", isOn: $usePassword.animation())
+                            Toggle(L("设置密码"), isOn: $usePassword.animation())
                             if usePassword {
-                                SecureField("访问密码", text: $options.password)
+                                SecureField(L("访问密码"), text: $options.password)
                                     .textContentType(.newPassword)
                             }
                         }
@@ -51,7 +51,7 @@ struct DriveShareSheet: View {
                     Section {
                         Button(action: create) {
                             HStack {
-                                Label("创建链接并复制", glyph: .link)
+                                Label(L("创建链接并复制"), glyph: .link)
                                 Spacer()
                                 if creating { Spinner(size: 16) }
                             }
@@ -62,15 +62,15 @@ struct DriveShareSheet: View {
                     if manager.supportsShareManagement {
                         Section {
                             if loadingExisting && existing.isEmpty {
-                                HStack { Spinner(size: 16); Text("正在读取…").foregroundStyle(Color.ink3) }
+                                HStack { Spinner(size: 16); Text(L("正在读取…")).foregroundStyle(Color.ink3) }
                             } else if existing.isEmpty {
-                                Text("还没有分享链接").foregroundStyle(Color.ink3)
+                                Text(L("还没有分享链接")).foregroundStyle(Color.ink3)
                             }
                             ForEach(existing) { share in row(share) }
                         } header: {
-                            Text("已有的分享")
+                            Text(L("已有的分享"))
                         } footer: {
-                            Text("取消后，拿到这个链接的人就打不开了。")
+                            Text(L("取消后，拿到这个链接的人就打不开了。"))
                         }
                     }
                 }
@@ -78,22 +78,22 @@ struct DriveShareSheet: View {
             }
             .scrollContentBackground(.hidden)
             .background(Color.paper)
-            .navigationTitle("分享")
+            .navigationTitle(L("分享"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("完成")) { dismiss() } }
             }
             .task { await loadExisting() }
             // 用居中的提示框：确认菜单在表单页里会以气泡形式弹在顶部工具栏旁边
-            .alert("取消这个分享链接？", isPresented: Binding(get: { revoking != nil }, set: { if !$0 { revoking = nil } }),
+            .alert(L("取消这个分享链接？"), isPresented: Binding(get: { revoking != nil }, set: { if !$0 { revoking = nil } }),
                    presenting: revoking) { share in
-                Button("取消分享", role: .destructive) { revoke(share) }
-                Button("保留", role: .cancel) {}
+                Button(L("取消分享"), role: .destructive) { revoke(share) }
+                Button(L("保留"), role: .cancel) {}
             } message: { share in
                 if let folder = share.inheritedFrom {
-                    Text("这个分享来自上级文件夹「\(folder)」，取消后该文件夹及其中所有文件都不再通过链接公开。")
+                    Text(L("这个分享来自上级文件夹「%1$@」，取消后该文件夹及其中所有文件都不再通过链接公开。", "\(folder)"))
                 } else {
-                    Text("取消后，拿到这个链接的人就打不开了。")
+                    Text(L("取消后，拿到这个链接的人就打不开了。"))
                 }
             }
             .onAppear {
@@ -105,21 +105,21 @@ struct DriveShareSheet: View {
     private func row(_ share: DriveShareInfo) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(share.url).font(.footnote).foregroundStyle(Color.ink).lineLimit(1).truncationMode(.middle)
-            let details = [share.audience, share.role, share.expires.isEmpty ? "永久" : "\(share.expires) 到期",
-                           share.hasPassword ? "有密码" : nil].compactMap { $0 }
+            let details = [share.audience, share.role, share.expires.isEmpty ? L("永久") : L("%1$@ 到期", "\(share.expires)"),
+                           share.hasPassword ? L("有密码") : nil].compactMap { $0 }
             Text(details.joined(separator: " · ")).font(.caption).foregroundStyle(Color.ink3)
             if let folder = share.inheritedFrom {
-                Text("来自上级文件夹「\(folder)」").font(.caption).foregroundStyle(Color.clayInk)
+                Text(L("来自上级文件夹「%1$@」", "\(folder)")).font(.caption).foregroundStyle(Color.clayInk)
             }
         }
         .contentShape(Rectangle())
         .contextMenu {
-            Button { Clipboard.copy(share.url); app.show("链接已复制") } label: { Label("复制链接", glyph: .link) }
-            Button(role: .destructive) { revoking = share } label: { Label("取消分享", glyph: .trash) }
+            Button { Clipboard.copy(share.url); app.show(L("链接已复制")) } label: { Label(L("复制链接"), glyph: .link) }
+            Button(role: .destructive) { revoking = share } label: { Label(L("取消分享"), glyph: .trash) }
         }
         .swipeActions {
-            Button { revoking = share } label: { Label("取消", glyph: .trash) }.tint(Color.swipeDestructive)
-            Button { Clipboard.copy(share.url); app.show("链接已复制") } label: { Label("复制", glyph: .link) }.tint(Color.swipeNeutral)
+            Button { revoking = share } label: { Label(L("取消"), glyph: .trash) }.tint(Color.swipeDestructive)
+            Button { Clipboard.copy(share.url); app.show(L("链接已复制")) } label: { Label(L("复制"), glyph: .link) }.tint(Color.swipeNeutral)
         }
     }
 
@@ -130,7 +130,7 @@ struct DriveShareSheet: View {
         do {
             existing = try await manager.existingShares(file)
         } catch {
-            app.show(error.localizedDescription, error: true)
+            app.show(displayError(error), error: true)
         }
     }
 
@@ -144,10 +144,10 @@ struct DriveShareSheet: View {
             do {
                 let link = try await manager.createShare([file], options: chosen)
                 Clipboard.copy(link.text)
-                app.show(chosen.password.isEmpty ? "分享链接已复制" : "分享链接和密码已复制")
+                app.show(chosen.password.isEmpty ? L("分享链接已复制") : L("分享链接和密码已复制"))
                 await loadExisting()
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
             }
         }
     }
@@ -157,9 +157,9 @@ struct DriveShareSheet: View {
             do {
                 try await manager.revokeShare(file, id: share.id)
                 existing.removeAll { $0.id == share.id }
-                app.show("已取消分享")
+                app.show(L("已取消分享"))
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
             }
         }
     }

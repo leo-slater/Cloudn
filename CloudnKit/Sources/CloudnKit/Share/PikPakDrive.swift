@@ -321,6 +321,6 @@ extension PikPakResolver: DriveUploader {
             last = r
         }
         let code = last.flatMap { UploadUtil.xmlValue("Code", in: $0.text) } ?? ""
-        throw CloudnError("PikPak 上传失败（HTTP \(last?.status ?? 0)\(code.isEmpty ? "" : " " + code)）")
+        throw CloudnError(LocalizedMessage("PikPak 上传失败（HTTP %1$@%2$@）", "\(last?.status ?? 0)", "\(code.isEmpty ? "" : " " + code)"))
     }
 }

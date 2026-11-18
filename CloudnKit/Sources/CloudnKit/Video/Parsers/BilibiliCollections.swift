@@ -23,14 +23,14 @@ extension BilibiliParser {
         if pages.count > 1 && !explicitPage {
             let title = data["title"].string
             return BiliCollection(title: title.isEmpty ? nil : title,
-                                  notice: "该视频共 \(pages.count) 个分 P，可在列表里选择要下载的分 P；直接下载的是 P1",
+                                  notice: CloudnLocalization.text("该视频共 %1$@ 个分 P，可在列表里选择要下载的分 P；直接下载的是 P1", "\(pages.count)"),
                                   entries: pages)
         }
         let season = seasonEntries(data)
         if season.count > 1 {
             let name = data["ugc_season"]["title"].string
-            let label = name.isEmpty ? "合集" : "合集「\(name)」"
-            return BiliCollection(title: nil, notice: "该视频属于\(label)，共 \(season.count) 个视频，可在列表里选择下载",
+            let label = name.isEmpty ? "合集" : CloudnLocalization.text("合集「%1$@」", "\(name)")
+            return BiliCollection(title: nil, notice: CloudnLocalization.text("该视频属于%1$@，共 %2$@ 个视频，可在列表里选择下载", "\(label)", "\(season.count)"),
                                   entries: season)
         }
         return .empty

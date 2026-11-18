@@ -86,7 +86,7 @@ struct Pan123Login: PasswordLogin {
                                                 headers: [("platform", "web"), ("app-version", "132"), ("loginuuid", PasswordLogins.randomHex(32)),
                                                           ("Origin", "https://user.123pan.cn"), ("Referer", "https://user.123pan.cn/"),
                                                           ("User-Agent", Pan123Resolver.webUA)]))
-        guard let json = r.json, json.isObject else { throw CloudnError("123 云盘登录失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("123 云盘登录失败（HTTP %1$@）", "\(r.status)")) }
         // 登录接口成功码是 200（其它接口是 0）
         guard json["code"].int == 200, case let token = json["data"]["token"].string, !token.isEmpty else {
             let msg = json["message"].string
@@ -473,7 +473,7 @@ struct XunleiLogin: PasswordLogin {
         let r = try await client.send(HTTPRequest(url: Self.authBase + path, method: "POST",
                                                   headers: [("User-Agent", ua), ("Content-Type", "application/json")],
                                                   body: Data(OrderedJSON.object(body).text.utf8)))
-        guard let json = r.json, json.isObject else { throw CloudnError("迅雷登录响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("迅雷登录响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 

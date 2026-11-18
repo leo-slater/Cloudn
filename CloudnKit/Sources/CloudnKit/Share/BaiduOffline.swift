@@ -61,7 +61,7 @@ extension BaiduResolver: DriveOfflineDownloader {
             ("Cookie", cookie), ("User-Agent", Self.netdiskUA), ("Referer", "https://pan.baidu.com/"),
             ("Content-Type", "application/x-www-form-urlencoded")
         ], body: Data()))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.checkCloudDl(json)
         return json
     }

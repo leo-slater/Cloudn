@@ -1,0 +1,19 @@
+/* Cloudn UI strings. For formatted text, keep the positional placeholders such as %1$@. */
+
+"%1$@ 个" = "%1$@";
+"下载失败" = "Download Failed";
+"下载完成" = "Download Complete";
+"下载已暂停" = "Download paused";
+"不到 1 分钟" = "Less than 1 min left";
+"失败" = "Failed";
+"完成" = "Done";
+"已完成 %1$@ 个" = "Completed: %1$@";
+"已暂停" = "Paused";
+"暂停" = "Pause";
+"正在下载 %1$@ 个文件" = "Downloading %1$@ file(s)";
+"还剩约 %1$@ 分钟" = "About %1$@ min left";
+"还剩约 %1$@ 小时" = "About %1$@ hr left";
+"还剩约 %1$@ 小时 %2$@ 分" = "About %1$@ hr %2$@ min left";
+"还要很久" = "A Long Time Left";
+"进度未更新，打开应用查看" = "Progress not updated, open application view";
+"马上就好" = "Almost Done";

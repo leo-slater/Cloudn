@@ -117,7 +117,7 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
     private func verify(_ surl: String, pwd: String, cookie: String) async throws -> String {
         let r = try await client.send(.postForm("https://pan.baidu.com/share/verify?surl=\(surl)", [("pwd", pwd), ("vcode_str", ""), ("vcode", "")],
                                                 headers: [("Cookie", cookie), ("User-Agent", Self.webUA), ("Referer", "https://pan.baidu.com/s/1\(surl)")]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         if json["errno"].int == -12 || json["errno"].int == -9 { throw CloudnError("提取码错误，请检查后重新解析", code: json["errno"].int) }
         try Self.check(json, fallback: "验证提取码失败")
         // randsk 已是 URL 编码形式，直接作为 sekey / BDCLND 使用
@@ -141,7 +141,7 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
         if !sekey.isEmpty { url += "&sekey=\(sekey)" }
         let r = try await client.send(.get(url, headers: [("Cookie", Self.withBDCLND(cookie, sekey)), ("User-Agent", Self.webUA),
                                                           ("Referer", "https://pan.baidu.com/s/1\(surl)")]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         let errno = json["errno"].int
         if errno != 0 && sekey.isEmpty {
             throw CloudnError(errno == -6 ? "该分享需要提取码，或需要先登录百度网盘" : "该分享需要提取码", code: errno)
@@ -205,7 +205,7 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
         let r = try await client.send(.postForm(url, [("fsidlist", Self.fsidList(fsIds)), ("path", toDir)],
                                                 headers: [("Cookie", Self.withBDCLND(cookie, sekey)), ("User-Agent", Self.webUA),
                                                           ("Origin", "https://pan.baidu.com"), ("Referer", "https://pan.baidu.com/s/")]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "转存失败")
         return json["extra"]["list"].array.map { $0["to"].string }.filter { !$0.isEmpty }
     }
@@ -222,7 +222,7 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
             let url = "https://pan.baidu.com/api/list?clienttype=0&app_id=\(Self.appId)&web=1&order=name&desc=0" +
                 "&dir=\(dir.formEncoded)&num=1000&page=\(page)"
             let r = try await client.send(.get(url, headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA)]))
-            guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
             try Self.check(json, fallback: "获取文件夹失败")
             let items = json["list"].array
             all += items.filter { $0["isdir"].int == 1 }.map {
@@ -245,7 +245,7 @@ public final class BaiduResolver: ShareResolver, @unchecked Sendable {
         let r = try await client.send(HTTPRequest(url: url, method: "POST",
                                                   headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA), ("Content-Type", "application/x-www-form-urlencoded")],
                                                   body: Data("0".utf8)))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "获取下载链接失败")
         guard let link = Self.pickURL(json["urls"].array) else { throw CloudnError("百度网盘未返回下载链接") }
         return link
@@ -316,7 +316,7 @@ extension BaiduResolver: DriveManager {
                 "&dir=\(dir.formEncoded)&num=100&page=\(page)"
             let r = try await client.send(.get(listURL, headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA),
                                                                   ("X-Requested-With", "XMLHttpRequest"), ("Referer", Self.diskReferer)]))
-            guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
             try Self.check(json, fallback: "获取文件列表失败")
             let items = Self.parseDriveList(json, dir: dir)
             all += items
@@ -342,7 +342,7 @@ extension BaiduResolver: DriveManager {
         let r = try await client.send(.postForm(create, [("path", Self.childPath(parentId, name)), ("isdir", "1"), ("block_list", "[]"),
                                                          ("method", "post"), ("dataType", "json")],
                                                 headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA), ("Referer", Self.diskReferer)]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "新建文件夹失败")
     }
 
@@ -375,7 +375,7 @@ extension BaiduResolver: DriveManager {
         let r = try await client.send(.postForm(setURL, [("fid_list", Self.shareFidList(fsIds)), ("schannel", "4"), ("channel_list", "[]"),
                                                          ("period", String(expiry.days)), ("pwd", pwd)],
                                                 headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA), ("Referer", Self.diskReferer)]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "创建分享失败")
         guard let link = Self.parseShareLink(json) else { throw CloudnError("未返回分享链接") }
         return DriveShareLink(url: link, pwd: pwd)
@@ -401,7 +401,7 @@ extension BaiduResolver: DriveManager {
             (newVerify ? "&newVerify=1" : "") + "&clienttype=0&app_id=\(Self.appId)&web=1"
         let r = try await client.send(.postForm(target, [("filelist", filelist)],
                                                 headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA), ("Referer", Self.diskReferer)]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: "操作失败")
     }
 
@@ -652,7 +652,7 @@ extension BaiduResolver: DriveUploader {
             throw CloudnError("百度网盘上传 ID 已过期", code: uploadIdExpiredCode)
         }
         guard (200..<300).contains(status), let json = JSON(text: text), json.isObject else {
-            throw CloudnError("百度网盘分片上传失败（HTTP \(status)）")
+            throw CloudnError(LocalizedMessage("百度网盘分片上传失败（HTTP %1$@）", "\(status)"))
         }
         let errorCode = json["error_code"].int
         let errno = json["errno"].int
@@ -680,7 +680,7 @@ extension BaiduResolver: DriveUploader {
     private func uploadForm(_ url: String, _ form: [(String, String)], cookie: String, fallback: String) async throws -> JSON {
         let r = try await client.send(.postForm(url, form, headers: [("Cookie", cookie), ("User-Agent", Self.netdiskUA),
                                                                      ("Referer", Self.diskReferer)]))
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         let errno = json["errno"].int
         if errno == -6 || errno == 111 { throw CloudnError("百度网盘登录已失效，请到「我的」页重新登录", code: errno) }
         try Self.check(json, fallback: fallback)

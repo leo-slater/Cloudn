@@ -38,7 +38,7 @@ struct PinterestParser: VideoParser {
         }
         if let pin {
             if Self.isExternalEmbed(pin) {
-                throw VideoParseError(.unsupported, "该 Pin 的视频来自外部网站（\(pin["domain"].string)），请到原站解析")
+                throw VideoParseError(.unsupported, LocalizedMessage("该 Pin 的视频来自外部网站（%1$@），请到原站解析", "\(pin["domain"].string)"))
             }
             let items = Self.items(pin)
             if !items.isEmpty { return build(pin: pin, id: id, items: items) }
@@ -72,7 +72,7 @@ struct PinterestParser: VideoParser {
         let headers: [(String, String)] = [("Accept-Language", "en-US,en;q=0.9"), ("User-Agent", VideoHTTP.uaChrome)]
         let r = try await OverseasHTTP.send(.get(url, headers: headers), site: "Pinterest")
         if r.status == 404 { throw VideoParseError(.notFound, "Pin 不存在或已删除（HTTP 404）") }
-        guard r.isSuccess else { throw VideoParseError(.unknown, "Pinterest 页面请求失败（HTTP \(r.status)）") }
+        guard r.isSuccess else { throw VideoParseError(.unknown, LocalizedMessage("Pinterest 页面请求失败（HTTP %1$@）", "\(r.status)")) }
         let html = r.text
         return (Self.pinFromPage(html, id: id), OverseasHTTP.metaContent("og:image", in: html))
     }

@@ -35,7 +35,7 @@ struct RemoteFilePreview: View {
                     .lineLimit(3)
                 if let failure {
                     Text(failure).font(.footnote).foregroundStyle(Color.clayInk).multilineTextAlignment(.center)
-                    Button("重试") { self.failure = nil; Task { await fetch() } }
+                    Button(L("重试")) { self.failure = nil; Task { await fetch() } }
                         .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                 } else {
                     if item.size > 0 {
@@ -48,9 +48,9 @@ struct RemoteFilePreview: View {
                     } else {
                         Spinner(size: 22)
                     }
-                    Text("正在载入预览…").font(.footnote).foregroundStyle(Color.ink2)
+                    Text(L("正在载入预览…")).font(.footnote).foregroundStyle(Color.ink2)
                 }
-                Button("取消") { dismiss() }
+                Button(L("取消")) { dismiss() }
                     .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                     .padding(.top, 8)
             }
@@ -62,7 +62,7 @@ struct RemoteFilePreview: View {
     }
 
     private func fetch() async {
-        guard let url = URL(string: item.url) else { failure = "链接无效"; return }
+        guard let url = URL(string: item.url) else { failure = L("链接无效"); return }
         var request = URLRequest(url: url)
         for (k, v) in item.headers { request.setValue(v, forHTTPHeaderField: k) }
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("preview/\(item.id.uuidString)", isDirectory: true)
@@ -75,7 +75,7 @@ struct RemoteFilePreview: View {
             defer { session.finishTasksAndInvalidate() }
             let (bytes, response) = try await session.bytes(for: request)
             if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                failure = "载入失败（HTTP \(http.statusCode)），链接可能已过期"
+                failure = L("载入失败（HTTP %1$@），链接可能已过期", "\(http.statusCode)")
                 return
             }
             FileManager.default.createFile(atPath: target.path, contents: nil)
@@ -98,7 +98,7 @@ struct RemoteFilePreview: View {
             local = target
         } catch {
             guard !Task.isCancelled else { return }
-            failure = error.localizedDescription
+            failure = displayError(error)
         }
     }
 }

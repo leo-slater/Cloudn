@@ -195,7 +195,7 @@ public final class GuangYaResolver: ShareResolver, @unchecked Sendable {
         ]
         if let cred { headers.append(("Authorization", "Bearer " + cred.accessToken)) }
         let r = try await client.send(HTTPRequest(url: apiBase + prefix + name, method: "POST", headers: headers, body: Data(body.text.utf8)))
-        guard let json = r.json, json.isObject else { throw CloudnError("光鸭响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("光鸭响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.check(json, fallback: fallback)
         return json["data"]
     }
@@ -433,7 +433,7 @@ extension GuangYaResolver: DriveUploader {
         guard rapid || isUploadSuccessMsg(msg) else { throw CloudnError(msg, code: code) }
         let data = json["data"]
         let taskId = data["taskId"].string.trimmed
-        guard !taskId.isEmpty else { throw CloudnError("光鸭未返回上传任务（code=\(code)）") }
+        guard !taskId.isEmpty else { throw CloudnError(LocalizedMessage("光鸭未返回上传任务（code=%1$@）", "\(code)")) }
         let creds = data["creds"]
         let bucket = data["bucketName"].string.trimmed
         let ticket = UploadTicket(
@@ -512,7 +512,7 @@ extension GuangYaResolver: DriveUploader {
         let r = try await client.send(HTTPRequest(url: apiBase + "/userres/v1/" + name, method: "POST", headers: headers,
                                                   body: Data(body.text.utf8)))
         if r.status == 401 { throw SharePlatform.guangya.loginRequired }
-        guard let json = r.json, json.isObject else { throw CloudnError("光鸭响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("光鸭响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 
@@ -563,7 +563,7 @@ extension GuangYaResolver: DriveUploader {
             last = r
         }
         let code = last.flatMap { UploadUtil.xmlValue("Code", in: $0.text) } ?? ""
-        throw CloudnError("光鸭 OSS 上传失败（HTTP \(last?.status ?? 0)\(code.isEmpty ? "" : " " + code)）")
+        throw CloudnError(LocalizedMessage("光鸭 OSS 上传失败（HTTP %1$@%2$@）", "\(last?.status ?? 0)", "\(code.isEmpty ? "" : " " + code)"))
     }
 
     /// 每秒查一次，最多 300 次

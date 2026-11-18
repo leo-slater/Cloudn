@@ -16,16 +16,16 @@ public enum VideoHTTP {
             throw error
         } catch {
             if Task.isCancelled { throw CancellationError() }
-            throw VideoParseError(.network, "请求失败：\(request.url)（\(error.localizedDescription)）")
+            throw VideoParseError(.network, LocalizedMessage("请求失败：%1$@（%2$@）", "\(request.url)", "\(error.localizedDescription)"))
         }
     }
 
     static func requireSuccess(_ r: HTTPResponse, _ what: String) throws {
         if r.isSuccess { return }
         switch r.status {
-        case 403, 418, 429: throw VideoParseError(.blocked, "\(what) 被风控拦截（HTTP \(r.status)）")
-        case 404, 410: throw VideoParseError(.notFound, "\(what) 不存在（HTTP \(r.status)）")
-        default: throw VideoParseError(.unknown, "\(what) 请求失败（HTTP \(r.status)）")
+        case 403, 418, 429: throw VideoParseError(.blocked, LocalizedMessage("%1$@ 被风控拦截（HTTP %2$@）", "\(what)", "\(r.status)"))
+        case 404, 410: throw VideoParseError(.notFound, LocalizedMessage("%1$@ 不存在（HTTP %2$@）", "\(what)", "\(r.status)"))
+        default: throw VideoParseError(.unknown, LocalizedMessage("%1$@ 请求失败（HTTP %2$@）", "\(what)", "\(r.status)"))
         }
     }
 
@@ -37,7 +37,7 @@ public enum VideoHTTP {
 
     static func getJSON(_ url: String, headers: [String: String], what: String) async throws -> JSON {
         let text = try await getText(url, headers: headers, what: what)
-        guard let json = JSON(text: text) else { throw VideoParseError(.unknown, "\(what) 返回的不是合法 JSON") }
+        guard let json = JSON(text: text) else { throw VideoParseError(.unknown, LocalizedMessage("%1$@ 返回的不是合法 JSON", "\(what)")) }
         return json
     }
 

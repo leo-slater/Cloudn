@@ -78,8 +78,8 @@ extension GoogleDriveResolver {
             return CloudnError("没有权限进行这个操作")
         default:
             if message.lowercased().contains("inherited") { return inheritedShareError }
-            if r.status >= 500 { return CloudnError("Google 云端硬盘暂时不可用（HTTP \(r.status)），请稍后重试") }
-            return CloudnError("Google 云端硬盘：\(message.nilIfBlank ?? "请求失败（HTTP \(r.status)）")")
+            if r.status >= 500 { return CloudnError(LocalizedMessage("Google 云端硬盘暂时不可用（HTTP %1$@），请稍后重试", "\(r.status)")) }
+            return CloudnError(LocalizedMessage("Google 云端硬盘：%1$@", "\(message.nilIfBlank ?? "请求失败（HTTP \(r.status)）")"))
         }
     }
 
@@ -268,7 +268,7 @@ extension GoogleDriveResolver: DriveManager {
         let audience: String
         switch p["type"].string {
         case "anyone": audience = ShareAudience.anyone.label
-        case "domain": audience = "\(p["domain"].string) 内的人"
+        case "domain": audience = CloudnLocalization.text("%1$@ 内的人", "\(p["domain"].string)")
         default: audience = p["emailAddress"].string.nilIfBlank ?? p["displayName"].string.nilIfBlank ?? "指定的人"
         }
         let roleText: String

@@ -122,7 +122,7 @@ extension AliyunResolver {
                                    "refreshToken": cred.refreshToken]
         let json = try await rawDriveCall("/users/v1/users/device/create_session", body, access: access, account: account)
         if json.has("success"), !json["success"].bool {
-            throw CloudnError("阿里云盘设备会话创建失败：\(json["errorMessage"].string.nilIfBlank ?? json["message"].string)")
+            throw CloudnError(LocalizedMessage("阿里云盘设备会话创建失败：%1$@", "\(json["errorMessage"].string.nilIfBlank ?? json["message"].string)"))
         }
     }
 
@@ -136,7 +136,7 @@ extension AliyunResolver {
         let r = try await client.send(.postJSON(host + path, body, headers: headers))
         // 删除 / 改名等成功时可能是 204 空响应
         if r.isSuccess && r.body.isEmpty { return JSON([String: Any]()) }
-        guard let json = r.json else { throw CloudnError("阿里云盘响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json else { throw CloudnError(LocalizedMessage("阿里云盘响应解析失败（HTTP %1$@）", "\(r.status)")) }
         let code = json["code"].string
         if r.isSuccess && code.isEmpty { return json }
         if ["DeviceSessionSignatureInvalid", "UserDeviceOffline", "UserDeviceIllegality"].contains(code) {
@@ -177,7 +177,7 @@ extension AliyunResolver: ShareSaver {
         let failed = json["responses"].array.filter { $0["status"].int >= 400 || $0["status"].int == 0 }
         guard let first = failed.first else { return }
         let message = first["body"]["message"].string.nilIfBlank ?? first["body"]["code"].string
-        throw CloudnError("阿里云盘\(action)失败\(failed.count > 1 ? "（\(failed.count) 项）" : "")\(message.isEmpty ? "" : "：\(message)")")
+        throw CloudnError(LocalizedMessage("阿里云盘%1$@失败%2$@%3$@", "\(action)", "\(failed.count > 1 ? "（\(failed.count) 项）" : "")", "\(message.isEmpty ? "" : "：\(message)")"))
     }
 }
 
@@ -250,7 +250,7 @@ extension AliyunResolver: DriveManager {
 
     private func batch(_ files: [ShareFile], url: String, action: String, body: (String, String) -> [String: Any]) async throws {
         let items = files.compactMap { Self.split($0.fid) }
-        guard !items.contains(where: { $0.file == "root" }) else { throw CloudnError("资源库和备份盘本身不能\(action)") }
+        guard !items.contains(where: { $0.file == "root" }) else { throw CloudnError(LocalizedMessage("资源库和备份盘本身不能%1$@", "\(action)")) }
         guard !items.isEmpty else { return }
         for start in stride(from: 0, to: items.count, by: 100) {
             let chunk = items[start..<min(start + 100, items.count)]
@@ -347,7 +347,7 @@ extension AliyunResolver: DriveUploader {
                 attempt += 1
                 // 上传地址约 1 小时过期：换新地址再传这一片
                 guard attempt < 3, r.status == 403 || r.status == 400 else {
-                    throw CloudnError("阿里云盘上传分片失败（HTTP \(r.status)）\(Self.ossError(r.text))")
+                    throw CloudnError(LocalizedMessage("阿里云盘上传分片失败（HTTP %1$@）%2$@", "\(r.status)", "\(Self.ossError(r.text))"))
                 }
                 urls[number] = ""
             }

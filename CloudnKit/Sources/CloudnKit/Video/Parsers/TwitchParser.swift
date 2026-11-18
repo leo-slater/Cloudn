@@ -52,7 +52,7 @@ struct TwitchParser: VideoParser {
             clip = json["data"]["clip"]
             if !clip.isObject {
                 if let message = json["errors"][0]["message"].string.nilIfBlank {
-                    throw VideoParseError(.unknown, "Twitch 接口返回错误：\(message)")
+                    throw VideoParseError(.unknown, LocalizedMessage("Twitch 接口返回错误：%1$@", "\(message)"))
                 }
                 throw VideoParseError(.notFound, "Twitch 剪辑不存在或已删除")
             }
@@ -87,7 +87,7 @@ struct TwitchParser: VideoParser {
                 throw VideoParseError(.notFound, "Twitch 回放不存在或已删除")
             }
             if let message = json["errors"][0]["message"].string.nilIfBlank {
-                throw VideoParseError(.unknown, "Twitch 接口返回错误：\(message)")
+                throw VideoParseError(.unknown, LocalizedMessage("Twitch 接口返回错误：%1$@", "\(message)"))
             }
             throw VideoParseError(.unknown, "Twitch 回放播放令牌获取失败")
         }
@@ -121,7 +121,7 @@ struct TwitchParser: VideoParser {
         switch r.status {
         case 200..<300: break
         case 429: throw VideoParseError(.blocked, "Twitch 接口请求过于频繁（HTTP 429），请稍后重试")
-        default: throw VideoParseError(.unknown, "Twitch 接口请求失败（HTTP \(r.status)）")
+        default: throw VideoParseError(.unknown, LocalizedMessage("Twitch 接口请求失败（HTTP %1$@）", "\(r.status)"))
         }
         guard let json = r.json else { throw VideoParseError(.unknown, "Twitch 接口返回的不是合法 JSON") }
         return json
@@ -203,7 +203,7 @@ struct TwitchParser: VideoParser {
         let message = info["error"].string
         if status == 404 { return VideoParseError(.notFound, "Twitch 回放不存在或已删除") }
         if !message.isEmpty { return VideoParseError(.unknown, "Twitch：\(message)（\(code)）") }
-        return VideoParseError(.unknown, "Twitch 回放播放列表获取失败（HTTP \(status)）")
+        return VideoParseError(.unknown, LocalizedMessage("Twitch 回放播放列表获取失败（HTTP %1$@）", "\(status)"))
     }
 
     /// 回放封面：处理中的 404 占位图不要

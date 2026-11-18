@@ -16,19 +16,19 @@ struct AccountListView: View {
             List {
                 Section {
                         if list.isEmpty {
-                            Text("No Accounts Signed In").font(.subheadline).foregroundStyle(Color.ink3)
+                            Text(L("还没有登录的账号")).font(.subheadline).foregroundStyle(Color.ink3)
                                 .listRowBackground(Color.surface)
                         }
                         ForEach(Array(list.enumerated()), id: \.offset) { index, account in
                             HStack {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(account.nickname).foregroundStyle(Color.ink)
-                                    Text("更新于 \(account.updatedAt.formatted(date: .numeric, time: .shortened))")
+                                    Text(L("更新于 %1$@", "\(account.updatedAt.formatted(date: .numeric, time: .shortened))"))
                                         .font(.caption).foregroundStyle(Color.ink3)
                                 }
                                 Spacer()
                                 if index == 0 {
-                                    Text("Primary Account").font(.caption.weight(.medium)).foregroundStyle(.tint)
+                                    Text(L("主账号")).font(.caption.weight(.medium)).foregroundStyle(.tint)
                                 }
                             }
                             // 每个账号自成一张圆角卡片：左滑时整张卡一起移动，右边不会露出直角的行底
@@ -42,35 +42,35 @@ struct AccountListView: View {
                             .listRowSeparator(.hidden)
                             // 不用 destructive 角色：它会触发列表删除动画，确认框刚弹出就被收回
                             .swipeActions(allowsFullSwipe: false) {
-                                Button { removing = index } label: { Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right") }
+                                Button { removing = index } label: { Label(L("退出"), systemImage: "rectangle.portrait.and.arrow.right") }
                                     .tint(Color.swipeDestructive)
                                 if index > 0 {
-                                    Button { Task { await app.accounts.makePrimary(index, for: kind) } } label: { Label("Set as Primary", glyph: .star) }
+                                    Button { Task { await app.accounts.makePrimary(index, for: kind) } } label: { Label(L("设为主账号"), glyph: .star) }
                                         .tint(Color.swipeNeutral)
                                 }
                             }
                             .contextMenu {
                                 if index > 0 {
-                                    Button { Task { await app.accounts.makePrimary(index, for: kind) } } label: { Label("Set as Primary", glyph: .star) }
+                                    Button { Task { await app.accounts.makePrimary(index, for: kind) } } label: { Label(L("设为主账号"), glyph: .star) }
                                 }
-                                Button(role: .destructive) { removing = index } label: { Label("Sign Out of This Account", systemImage: "rectangle.portrait.and.arrow.right") }
+                                Button(role: .destructive) { removing = index } label: { Label(L("退出该账号"), systemImage: "rectangle.portrait.and.arrow.right") }
                             }
-                            .rowDialog("Sign out of this account?", isPresented: presenting($removing) { $0 == index }, message: "Locally stored credentials for this account will be deleted.") {
-                                Button("Sign Out", role: .destructive) { Task { await app.accounts.remove(index, for: kind) } }
+                            .rowDialog(L("退出该账号？"), isPresented: presenting($removing) { $0 == index }, message: L("将删除本机保存的该账号登录凭据")) {
+                                Button(L("退出"), role: .destructive) { Task { await app.accounts.remove(index, for: kind) } }
                             }
                         }
                     } footer: {
-                        Text("解析、转存和网盘管理使用主账号；开启「多账号下载」后，批量下载会轮换使用全部账号。")
+                        Text(L("解析、转存和网盘管理使用主账号；开启「多账号下载」后，批量下载会轮换使用全部账号。"))
                     }
                 Section {
-                    Button { onAdd(kind) } label: { Label("Add Account", glyph: .user) }
+                    Button { onAdd(kind) } label: { Label(L("添加账号"), glyph: .user) }
                         .listRowBackground(Color.surface)
                 }
             }
             .paperList()
-            .navigationTitle("\(kind.displayName)账号")
+            .navigationTitle(L("%1$@账号", "\(L(kind.displayName))"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(L("完成")) { dismiss() } } }
         }
     }
 }

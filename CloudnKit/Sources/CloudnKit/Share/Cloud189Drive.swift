@@ -238,7 +238,7 @@ extension Cloud189Resolver: DriveUploader {
                 let r = try await client.upload(req, body: .file(file, offset: offset, length: length)) { sent in
                     progress(.uploading, size > 0 ? Double(base + sent) / Double(size) : 1)
                 }
-                guard r.isSuccess else { throw CloudnError("天翼云盘分片上传失败（HTTP \(r.status)）") }
+                guard r.isSuccess else { throw CloudnError(LocalizedMessage("天翼云盘分片上传失败（HTTP %1$@）", "\(r.status)")) }
                 done += length
             }
         }
@@ -286,7 +286,7 @@ extension Cloud189Resolver: DriveUploader {
         let r = try await client.send(Self.webRequest("/api/security/generateRsaKey.action", params: [], sessionKey: auth.sessionKey, cookie: auth.cred.cookie))
         guard let json = r.json, let pub = json["pubKey"].string.nilIfBlank, let pkId = json["pkId"].string.nilIfBlank else {
             if Self.isSessionError(r.text) { throw Self.expired }
-            throw CloudnError("天翼云盘上传准备失败（HTTP \(r.status)）")
+            throw CloudnError(LocalizedMessage("天翼云盘上传准备失败（HTTP %1$@）", "\(r.status)"))
         }
         let key = Cloud189UploadKey(pubKey: pub, pkId: pkId)
         // expire 为毫秒时间戳；拿不到就缓存 5 分钟
@@ -317,7 +317,7 @@ extension Cloud189Resolver: DriveUploader {
                 auth = try await renewSession(auth)
                 continue
             }
-            guard let json = r.json, json.isObject else { throw CloudnError("天翼云盘上传失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("天翼云盘上传失败（HTTP %1$@）", "\(r.status)")) }
             if let err = Self.uploadError(json, status: r.status) { throw err }
             return json
         }

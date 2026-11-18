@@ -1092,7 +1092,7 @@ extension DownloadEngine {
     /// 实际大小远小于分享列表里的大小（不到一半）时的错误说明；大小未知或很小的文件不检查
     static func sizeMismatch(expected: Int64, actual: Int64) -> String? {
         guard expected > 64 * 1024, actual < expected / 2 else { return nil }
-        return "下载不完整：只收到 \(ByteFormat.string(actual))，应为 \(ByteFormat.string(expected))，请重试"
+        return CloudnLocalization.text("下载不完整：只收到 %1$@，应为 %2$@，请重试", "\(ByteFormat.string(actual))", "\(ByteFormat.string(expected))")
     }
 
     /// 把应用里已经生成好的本地文件（如网页嗅探录制的视频流）登记为一条已完成的下载：

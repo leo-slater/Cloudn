@@ -15,7 +15,7 @@ extension AppModel {
         }
         downloads.enqueue(DownloadRequest(url: mirrored, headers: headers, fileName: name, folder: folder,
                                           expectedSize: size, source: "GitHub", group: group))
-        show("Added to Downloads")
+        show(L("已加入下载"))
     }
 
     /// Release 附件：私有仓库带 Token 走 API 地址（浏览器下载地址对私有仓库是 404），公开仓库照常（可走镜像）
@@ -26,7 +26,7 @@ extension AppModel {
         }
         downloads.enqueue(DownloadRequest(url: asset.apiURL, headers: asset.privateDownloadHeaders(token: token), fileName: asset.name,
                                           folder: folder, expectedSize: asset.size, source: "GitHub"))
-        show("Added to Downloads")
+        show(L("已加入下载"))
     }
 
     /// GitHub 文件最近一次的下载任务（按文件名与目录对上）
@@ -48,14 +48,14 @@ struct GitHubAccountView: View {
         let shown = query.isEmpty ? repos : repos.filter { $0.name.localizedCaseInsensitiveContains(query) }
         List {
             if let error {
-                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: error, actionTitle: "Retry") {
+                EmptyStateCard(icon: .warning, title: L("加载失败"), detail: error, actionTitle: L("重试")) {
                     Task { await load() }
                 }
                 .inList()
             } else if !loading && repos.isEmpty {
-                EmptyStateCard(icon: .folder, title: "还没有仓库").inList()
+                EmptyStateCard(icon: .folder, title: L("还没有仓库")).inList()
             } else if !query.isEmpty && shown.isEmpty {
-                EmptyStateCard(icon: .search, title: "没有匹配的仓库", detail: "没有名字包含「\(query)」的仓库").inList()
+                EmptyStateCard(icon: .search, title: L("没有匹配的仓库"), detail: L("没有名字包含「%1$@」的仓库", "\(query)")).inList()
             }
             ForEach(shown) { repo in
                 NavigationLink {
@@ -82,7 +82,7 @@ struct GitHubAccountView: View {
         .readableWidth()
         .background(Color.paper)
         .overlay { if loading { Spinner(size: 28) } }
-        .searchable(text: $query, prompt: "Search Repositories")
+        .searchable(text: $query, prompt: L("搜索仓库"))
         .navigationTitle(owner)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -96,7 +96,7 @@ struct GitHubAccountView: View {
         loading = true
         error = nil
         defer { loading = false }
-        do { repos = try await app.github.repositories(of: owner) } catch { self.error = error.localizedDescription }
+        do { repos = try await app.github.repositories(of: owner) } catch { self.error = displayError(error) }
     }
 }
 
@@ -111,7 +111,7 @@ struct GitHubRepoView: View {
     @State private var error: String?
 
     enum Tab: String, CaseIterable, Identifiable {
-        case files = "Files", releases = "Releases"
+        case files = "文件", releases = "Releases"
         var id: String { rawValue }
     }
 
@@ -130,7 +130,7 @@ struct GitHubRepoView: View {
             if let info {
                 VStack(spacing: 0) {
                     Picker("", selection: $tab) {
-                        ForEach(Tab.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(Tab.allCases) { Text(L($0.rawValue)).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal)
@@ -146,14 +146,14 @@ struct GitHubRepoView: View {
             } else if let error {
                 ScrollView {
                     VStack(spacing: 12) {
-                        EmptyStateCard(icon: .warning, title: "Unable to Open Repository", detail: error, actionTitle: "Retry") {
+                        EmptyStateCard(icon: .warning, title: L("无法打开仓库"), detail: error, actionTitle: L("重试")) {
                             self.error = nil
                             Task { await loadInfo() }
                         }
                         // 提示要填 Token 的（接口限额、私有仓库）：直接给入口
                         if error.contains("Token") {
                             NavigationLink { GitHubSettingsView() } label: {
-                                Label { Text("Enter GitHub Token") } icon: { Image(icon: .gear) }
+                                Label { Text(L("填写 GitHub Token")) } icon: { Image(icon: .gear) }
                             }
                             .buttonStyle(PillButtonStyle(kind: .secondary, height: 38))
                         }
@@ -177,7 +177,7 @@ struct GitHubRepoView: View {
     }
 
     private func loadInfo() async {
-        do { info = try await app.github.repository(owner, repo) } catch { self.error = error.localizedDescription }
+        do { info = try await app.github.repository(owner, repo) } catch { self.error = displayError(error) }
     }
 }
 
@@ -201,7 +201,7 @@ struct GitHubDirectoryView: View {
                     .listRowBackground(Color.clear)
             }
             if let error {
-                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: error, actionTitle: "Retry") {
+                EmptyStateCard(icon: .warning, title: L("加载失败"), detail: error, actionTitle: L("重试")) {
                     Task { await load() }
                 }
                 .inList()
@@ -265,12 +265,12 @@ struct GitHubDirectoryView: View {
             error = nil
             loaded = true
         } catch {
-            self.error = error.localizedDescription
+            self.error = displayError(error)
         }
     }
 
     private func download(_ entry: GitHubEntry) {
-        guard !entry.downloadURL.isEmpty else { return app.show("该文件没有下载地址（可能是子模块或符号链接）", error: true) }
+        guard !entry.downloadURL.isEmpty else { return app.show(L("该文件没有下载地址（可能是子模块或符号链接）"), error: true) }
         app.downloadGitHubFile(url: entry.downloadURL, name: entry.name, size: entry.size, folder: repo)
     }
 }
@@ -289,24 +289,24 @@ struct GitHubReleasesView: View {
     var body: some View {
         List {
             if let error {
-                EmptyStateCard(icon: .warning, title: "Failed to Load", detail: error, actionTitle: "Retry") {
+                EmptyStateCard(icon: .warning, title: L("加载失败"), detail: error, actionTitle: L("重试")) {
                     Task { await load() }
                 }
                 .inList()
             } else if releases.isEmpty && !loading {
-                EmptyStateCard(icon: .tag, title: "No Releases").inList()
+                EmptyStateCard(icon: .tag, title: L("没有发布版本")).inList()
             }
             ForEach(releases) { release in
                 Section {
                     if release.assets.isEmpty {
-                        Text("No Assets").foregroundStyle(Color.ink3).paperRow()
+                        Text(L("没有附件")).foregroundStyle(Color.ink3).paperRow()
                     }
                     ForEach(release.assets) { asset in
                         HStack(spacing: 12) {
                             FileIcon(name: asset.name)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(asset.name).lineLimit(2).truncationMode(.middle).foregroundStyle(Color.ink)
-                                Text("\(ByteFormat.string(asset.size)) · 下载 \(asset.downloads) 次").font(.caption).foregroundStyle(Color.ink3)
+                                Text(L("%1$@ · 下载 %2$@ 次", "\(ByteFormat.string(asset.size))", "\(asset.downloads)")).font(.caption).foregroundStyle(Color.ink3)
                             }
                             Spacer(minLength: 0)
                             DownloadStateControl(item: app.gitHubDownload(name: asset.name, folder: repo)) {
@@ -316,7 +316,7 @@ struct GitHubReleasesView: View {
                         .paperRow()
                     }
                     if !release.notes.isEmpty {
-                        DisclosureGroup("Release Notes") {
+                        DisclosureGroup(L("更新说明")) {
                             Text(release.notes).font(.callout).foregroundStyle(Color.ink2).textSelection(.enabled)
                         }
                         .paperRow()
@@ -325,7 +325,7 @@ struct GitHubReleasesView: View {
                     HStack(spacing: 8) {
                         Text(release.name).font(.serif(16, relativeTo: .headline)).foregroundStyle(Color.ink).textCase(nil)
                         if release.isPrerelease {
-                            Text("Prerelease").font(.caption2.weight(.medium)).foregroundStyle(Color.clayInk)
+                            Text(L("预发布")).font(.caption2.weight(.medium)).foregroundStyle(Color.clayInk)
                                 .padding(.horizontal, 6).padding(.vertical, 2)
                                 .background(Color.claySoft, in: Capsule())
                         }
@@ -355,7 +355,7 @@ struct GitHubReleasesView: View {
             releases = try await app.github.releases(owner, repo)
             loaded = true
         } catch {
-            self.error = error.localizedDescription
+            self.error = displayError(error)
         }
     }
 }
@@ -377,40 +377,40 @@ struct GitHubSettingsView: View {
                     SecureField("ghp_… / github_pat_…", text: $token)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    Button(checking ? "Verifying…" : "Save and Verify") { save() }
+                    Button(checking ? L("正在校验…") : L("保存并校验")) { save() }
                         .disabled(checking || token == app.settings.githubToken)
                     if !app.settings.githubToken.isEmpty {
-                        Button("Clear Token") {
+                        Button(L("清除 Token")) {
                             app.settings.githubToken = ""
                             token = ""
-                            app.show("Token Cleared")
+                            app.show(L("已清除 Token"))
                         }
                         .foregroundStyle(Color.clayInk)
                     }
                 } header: {
-                    Text("GitHub Token (Optional)")
+                    Text(L("GitHub Token（可选）"))
                 } footer: {
-                    Text("不填每小时只能调用 60 次接口，填写后为 5000 次，并可浏览私有仓库。Token 只存在本机钥匙串，建议只给只读权限。")
+                    Text(L("不填每小时只能调用 60 次接口，填写后为 5000 次，并可浏览私有仓库。Token 只存在本机钥匙串，建议只给只读权限。"))
                 }
                 Section {
-                    mirrorRow(name: "Connect Directly to GitHub", prefix: "")
+                    mirrorRow(name: L("直连 GitHub"), prefix: "")
                     ForEach(GitHubMirrorPresets.all, id: \.prefix) { mirrorRow(name: $0.name, prefix: $0.prefix) }
-                    TextField("自定义前缀，如 https://example.com/", text: $settings.githubMirror)
+                    TextField(L("自定义前缀，如 https://example.com/"), text: $settings.githubMirror)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
                         .font(.mono)
                 } header: {
                     HStack {
-                        Text("Download Mirror")
+                        Text(L("下载镜像"))
                         Spacer()
-                        Button(probing ? "Testing Speed…" : "Test Speed") { Task { await probe() } }
+                        Button(probing ? L("测速中…") : L("测速")) { Task { await probe() } }
                             .font(.footnote)
                             .disabled(probing)
                             .textCase(nil)
                     }
                 } footer: {
-                    Text("选中后，GitHub 文件与 Release 附件经「前缀 + 原始地址」下载。镜像由第三方运营，可能失效或限速；私有仓库不要用镜像。")
+                    Text(L("选中后，GitHub 文件与 Release 附件经「前缀 + 原始地址」下载。镜像由第三方运营，可能失效或限速；私有仓库不要用镜像。"))
                 }
             }
             .listRowBackground(Color.surface)
@@ -439,7 +439,7 @@ struct GitHubSettingsView: View {
                 }
                 Spacer()
                 if let result = latency[prefix] {
-                    Text(result.map { "\($0) ms" } ?? "Unavailable")
+                    Text(result.map { "\($0) ms" } ?? L("不可用"))
                         .font(.monoSmall)
                         .foregroundStyle(result == nil ? Color.clayInk : (result! < 800 ? Color.success : Color.ink2))
                 }
@@ -484,9 +484,9 @@ struct GitHubSettingsView: View {
             do {
                 let login = try await GitHubClient(token: value).validate()
                 app.settings.githubToken = value
-                app.show("已保存，GitHub 账号：\(login)")
+                app.show(L("已保存，GitHub 账号：%1$@", "\(login)"))
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
             }
         }
     }

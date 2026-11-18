@@ -81,7 +81,7 @@ public final class VideoParseService: Sendable {
     private func parse(_ link: DetectedVideoLink, steps: inout ParseSteps) async throws -> VideoParseResult {
         let resolved = link.isShortLink ? try await steps.measure("展开短链") { try await expand(link) } : link
         guard let parser = parsers[resolved.platform] else {
-            throw VideoParseError(.unsupported, "暂不支持解析\(resolved.platform.displayName)")
+            throw VideoParseError(.unsupported, LocalizedMessage("暂不支持解析%1$@", "\(resolved.platform.displayName)"))
         }
         if let error = Self.unexpandedError(original: link, resolved: resolved) { throw error }
         var cookie = ""
@@ -106,7 +106,7 @@ public final class VideoParseService: Sendable {
     static func unexpandedError(original: DetectedVideoLink, resolved: DetectedVideoLink) -> VideoParseError? {
         guard resolved.isShortLink, resolved.platform != .kuaishou else { return nil }
         if resolved.url != original.url {
-            return VideoParseError(.unsupported, "暂不支持这类链接：短链指向的页面不是可解析的\(resolved.platform.displayName)作品，可以用网页嗅探试试",
+            return VideoParseError(.unsupported, LocalizedMessage("暂不支持这类链接：短链指向的页面不是可解析的%1$@作品，可以用网页嗅探试试", "\(resolved.platform.displayName)"),
                                    sniffURL: resolved.url)
         }
         return VideoParseError(.unsupported, "短链展开失败，请复制完整链接后重试")
@@ -115,7 +115,7 @@ public final class VideoParseService: Sendable {
     /// 短链展开出终址后，若具体解析器抛出的错误未携带 sniffURL，补上展开后的地址以免网页嗅探重新跳回短链落地页
     static func attachExpandedSniffURL(_ error: VideoParseError, original: DetectedVideoLink, resolved: DetectedVideoLink) -> VideoParseError {
         guard error.sniffURL == nil, resolved.url != original.url else { return error }
-        return VideoParseError(error.kind, error.detail, sniffURL: resolved.url)
+        return error.withSniffURL(resolved.url)
     }
 
     /// 展开短链（最多 5 跳），终址能重新识别就用新的识别结果

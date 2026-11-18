@@ -209,7 +209,7 @@ enum PikPakAuth {
         let req = HTTPRequest(url: userBase + "/v1/shield/captcha/init?client_id=" + client.id, method: "POST",
                               headers: headers(client, deviceId: deviceId, userId: userId, access: access), body: Data(body.text.utf8))
         let r = try await http.send(req)
-        guard let json = r.json, json.isObject else { throw CloudnError("PikPak 验证初始化失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("PikPak 验证初始化失败（HTTP %1$@）", "\(r.status)")) }
         if isError(json) { throw error(json, status: r.status) }
         let token = json["captcha_token"].string
         if !json["url"].string.isEmpty && (strict || token.isEmpty) {
@@ -232,8 +232,8 @@ enum PikPakAuth {
                                                               ("Accept-Language", "zh-CN")],
                                                     body: Data(body.text.utf8)))
             // 限流 / 服务端故障不是登录失效
-            if r.status == 429 || r.status >= 500 { throw CloudnError("PikPak 登录续期失败（HTTP \(r.status)），请稍后重试") }
-            guard let json = r.json, json.isObject else { throw CloudnError("PikPak 登录续期失败（HTTP \(r.status)）") }
+            if r.status == 429 || r.status >= 500 { throw CloudnError(LocalizedMessage("PikPak 登录续期失败（HTTP %1$@），请稍后重试", "\(r.status)")) }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("PikPak 登录续期失败（HTTP %1$@）", "\(r.status)")) }
             if let renewed = applyToken(json, to: cred, client: info, deviceId: device) { return renewed }
             lastError = isAuthError(json) || json["error_code"].int == expiredCode || json["error"].string == "invalid_grant"
                 ? expired : error(json, status: r.status)
@@ -549,12 +549,12 @@ public final class PikPakResolver: ShareResolver, @unchecked Sendable {
             let r = try await client.send(req)
             let json: JSON
             if r.body.isEmpty || r.text.trimmed.isEmpty {
-                guard r.isSuccess else { throw CloudnError("PikPak 请求失败（HTTP \(r.status)）") }
+                guard r.isSuccess else { throw CloudnError(LocalizedMessage("PikPak 请求失败（HTTP %1$@）", "\(r.status)")) }
                 return JSON([String: Any]())
             } else if let parsed = r.json, parsed.isObject {
                 json = parsed
             } else {
-                throw CloudnError("PikPak 响应解析失败（HTTP \(r.status)）")
+                throw CloudnError(LocalizedMessage("PikPak 响应解析失败（HTTP %1$@）", "\(r.status)"))
             }
             if !PikPakAuth.isError(json) && r.isSuccess { return json }
             if (PikPakAuth.isAuthError(json) || r.status == 401) && !renewed {
@@ -568,7 +568,7 @@ public final class PikPakResolver: ShareResolver, @unchecked Sendable {
                 try await refreshCaptcha(action, identity: &id)
                 continue
             }
-            if !PikPakAuth.isError(json) { throw CloudnError("PikPak 请求失败（HTTP \(r.status)）") }
+            if !PikPakAuth.isError(json) { throw CloudnError(LocalizedMessage("PikPak 请求失败（HTTP %1$@）", "\(r.status)")) }
             throw PikPakAuth.error(json, status: r.status)
         }
         throw CloudnError("PikPak 验证刷新后仍失败，请稍后重试")
@@ -604,7 +604,7 @@ struct PikPakLogin: PasswordLogin {
         let r = try await client.send(HTTPRequest(url: url + "?client_id=" + info.id, method: "POST",
                                                   headers: PikPakAuth.headers(info, deviceId: device, userId: "", captcha: captcha),
                                                   body: Data(body.text.utf8)))
-        guard let json = r.json, json.isObject else { throw CloudnError("PikPak 登录失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("PikPak 登录失败（HTTP %1$@）", "\(r.status)")) }
         guard var cred = PikPakAuth.applyToken(json, to: PikPakCredential(refreshToken: ""), client: info, deviceId: device),
               !cred.refreshToken.isEmpty else {
             throw PikPakAuth.isError(json) ? PikPakAuth.error(json, status: r.status) : CloudnError("PikPak 登录失败，请稍后重试")

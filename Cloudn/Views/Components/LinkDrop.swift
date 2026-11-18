@@ -28,7 +28,7 @@ struct LinkDropModifier: ViewModifier {
             .strokeBorder(.tint, style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
             .background(Color.paper.opacity(0.6), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay {
-                Label { Text("松开即可解析") } icon: { Image(icon: .link) }
+                Label { Text(L("松开即可解析")) } icon: { Image(icon: .link) }
                     .font(.headline)
                     .foregroundStyle(Color.ink)
                     .padding(.horizontal, 20)

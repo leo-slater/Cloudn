@@ -506,7 +506,7 @@ struct ProgressLine: View {
         }
         .frame(height: 3)
         .accessibilityElement()
-        .accessibilityValue(value.map { "\(Int($0 * 100))%" } ?? "进行中")
+        .accessibilityValue(value.map { "\(Int($0 * 100))%" } ?? L("进行中"))
     }
 }
 

@@ -8,7 +8,7 @@ enum SpeedLimitOption: Int, CaseIterable, Identifiable {
     case unlimited = 0, k512 = 512, m1 = 1024, m2 = 2048, m5 = 5120, m10 = 10240, m20 = 20480
 
     var id: Int { rawValue }
-    var title: String { rawValue == 0 ? "Unlimited" : ByteFormat.speed(Double(rawValue) * 1024) }
+    var title: String { rawValue == 0 ? L("不限速") : ByteFormat.speed(Double(rawValue) * 1024) }
 }
 
 /// 按平台覆盖单任务连接数（键是下载来源，即平台显示名）
@@ -16,7 +16,7 @@ struct PlatformConnectionsView: View {
     @Environment(AppModel.self) private var app
 
     private var sources: [String] {
-        SharePlatform.allCases.map(\.displayName) + VideoPlatform.allCases.map(\.displayName) + ["GitHub", "Direct Link"]
+        SharePlatform.allCases.map(\.displayName) + VideoPlatform.allCases.map(\.displayName) + ["GitHub", "直链"]
     }
 
     var body: some View {
@@ -24,19 +24,19 @@ struct PlatformConnectionsView: View {
             Group {
                 Section {
                     ForEach(sources, id: \.self) { source in
-                        Picker(source, selection: binding(source)) {
-                            Text("默认（\(DownloadSettings().connections(for: source))）").tag(0)
+                        Picker(L(source), selection: binding(source)) {
+                            Text(L("默认（%1$@）", "\(DownloadSettings().connections(for: source))")).tag(0)
                             ForEach(1...16, id: \.self) { Text("\($0)").tag($0) }
                         }
                     }
                 } footer: {
-                    Text("每个任务同时开几条连接，越多越快。默认 \(DownloadSettings().connectionsPerTask) 条；百度、115 对并发敏感，默认最多 2 条。遇到 403 或频繁失败时可调低。")
+                    Text(L("每个任务同时开几条连接，越多越快。默认 %1$@ 条；百度、115 对并发敏感，默认最多 2 条。遇到 403 或频繁失败时可调低。", "\(DownloadSettings().connectionsPerTask)"))
                 }
             }
             .listRowBackground(Color.surface)
         }
         .paperList()
-        .navigationTitle("Connections by Platform")
+        .navigationTitle(L("按平台设置连接数"))
         .navigationBarTitleDisplayMode(.inline)
     }
 

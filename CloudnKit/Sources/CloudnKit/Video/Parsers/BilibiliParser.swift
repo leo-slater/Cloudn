@@ -43,7 +43,7 @@ struct BilibiliParser: VideoParser {
         let query = link.id.lowercased().hasPrefix("bv") ? "bvid=\(link.id)" : "aid=\(link.id.dropFirst(2))"
         let view = try await VideoHTTP.getJSON("\(Self.viewURL)?\(query)", headers: Self.headers(requestCookie), what: "B站视频信息")
         guard view["code"].int == 0 else {
-            throw VideoParseError(.notFound, "B站视频信息接口返回 code=\(view["code"].int) \(view["message"].string)")
+            throw VideoParseError(.notFound, LocalizedMessage("B站视频信息接口返回 code=%1$@ %2$@", "\(view["code"].int)", "\(view["message"].string)"))
         }
         let data = view["data"]
         let bvid = data["bvid"].string
@@ -267,9 +267,9 @@ extension BilibiliParser {
     static func dynamicError(code: Int, message: String) -> VideoParseError {
         switch code {
         case -352: return VideoParseError(.blocked, "B站动态接口触发风控（-352），请稍后重试")
-        case 4101152, 4101131, 4101105: return VideoParseError(.notFound, "B站动态不存在或不可见（\(code)）")
+        case 4101152, 4101131, 4101105: return VideoParseError(.notFound, LocalizedMessage("B站动态不存在或不可见（%1$@）", "\(code)"))
         case -101: return VideoParseError(.unsupported, "该动态需要登录后查看，请先到「我的」页登录哔哩哔哩")
-        default: return VideoParseError(.unknown, "B站动态接口返回 code=\(code) \(message)")
+        default: return VideoParseError(.unknown, LocalizedMessage("B站动态接口返回 code=%1$@ %2$@", "\(code)", "\(message)"))
         }
     }
 

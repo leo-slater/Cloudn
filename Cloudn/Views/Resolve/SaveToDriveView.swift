@@ -35,7 +35,7 @@ struct SaveToDriveView: View {
 
     private var root: String { model.saver?.rootFolderId ?? "" }
     private var current: String { path.last?.id ?? root }
-    private var platformName: String { model.share.platform.displayName }
+    private var platformName: String { L(model.share.platform.displayName) }
 
     var body: some View {
         NavigationStack {
@@ -45,9 +45,9 @@ struct SaveToDriveView: View {
                         QuotaBar(quota: quota).paperRow()
                     } footer: {
                         if notEnoughSpace {
-                            Text("剩余空间不足：所选文件约 \(ByteFormat.string(knownSize))").foregroundStyle(Color.clayInk)
+                            Text(L("剩余空间不足：所选文件约 %1$@", "\(ByteFormat.string(knownSize))")).foregroundStyle(Color.clayInk)
                         } else if knownSize > 0 {
-                            Text("所选文件约 \(ByteFormat.string(knownSize))")
+                            Text(L("所选文件约 %1$@", "\(ByteFormat.string(knownSize))"))
                         }
                     }
                 }
@@ -55,7 +55,7 @@ struct SaveToDriveView: View {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
                             Button { path = [] } label: {
-                                HStack(spacing: 5) { IconView(.cloud, size: 14); Text("我的网盘") }
+                                HStack(spacing: 5) { IconView(.cloud, size: 14); Text(L("我的网盘")) }
                             }
                             .foregroundStyle(path.isEmpty ? Color.ink : Color.ink2)
                             .disabled(path.isEmpty)
@@ -75,11 +75,11 @@ struct SaveToDriveView: View {
                 if let errorMessage {
                     Section {
                         Label(errorMessage, glyph: .warning).foregroundStyle(Color.clayInk)
-                        Button("重试") { Task { await load() } }
+                        Button(L("重试")) { Task { await load() } }
                     }
                     .paperRow()
                 } else if folders.isEmpty && !loading {
-                    Section { Text("这里没有子文件夹").foregroundStyle(Color.ink3) }.paperRow()
+                    Section { Text(L("这里没有子文件夹")).foregroundStyle(Color.ink3) }.paperRow()
                 } else {
                     Section {
                         ForEach(folders) { folder in
@@ -101,15 +101,15 @@ struct SaveToDriveView: View {
             .paperList()
             .listStyle(.insetGrouped)
             .overlay { if loading && folders.isEmpty { Spinner(size: 28) } }
-            .navigationTitle("转存到\(platformName)")
+            .navigationTitle(L("转存到%1$@", "\(platformName)"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() }.disabled(saving) }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() }.disabled(saving) }
                 if manager != nil {
                     ToolbarItem(placement: .primaryAction) {
                         Button { newName = ""; naming = true } label: { Image(icon: .folderPlus).foregroundStyle(Color.ink) }
                             .disabled(saving || creating || errorMessage != nil)
-                            .accessibilityLabel("新建文件夹")
+                            .accessibilityLabel(L("新建文件夹"))
                     }
                 }
             }
@@ -122,7 +122,7 @@ struct SaveToDriveView: View {
                 } label: {
                     HStack(spacing: 8) {
                         if saving { Spinner(size: 18, usesForeground: true) } else { Image(icon: .save) }
-                        Text(saving ? "正在转存…" : (notEnoughSpace ? "空间可能不足，仍要转存" : "转存 \(files.count) 项到「\(path.last?.name ?? "我的网盘")」")).lineLimit(1)
+                        Text(saving ? L("正在转存…") : (notEnoughSpace ? L("空间可能不足，仍要转存") : L("转存 %1$@ 项到「%2$@」", "\(files.count)", "\(path.last?.name ?? L("我的网盘"))"))).lineLimit(1)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -134,13 +134,13 @@ struct SaveToDriveView: View {
                 .padding(.bottom, 8)
                 .bottomBarBackdrop()
             }
-            .alert("新建文件夹", isPresented: $naming) {
-                TextField("文件夹名称", text: $newName)
-                Button("取消", role: .cancel) {}
-                Button("新建") { Task { await createFolder() } }
+            .alert(L("新建文件夹"), isPresented: $naming) {
+                TextField(L("文件夹名称"), text: $newName)
+                Button(L("取消"), role: .cancel) {}
+                Button(L("新建")) { Task { await createFolder() } }
                     .disabled(newName.trimmingCharacters(in: .whitespaces).isEmpty)
             } message: {
-                Text("建在「\(path.last?.name ?? "我的网盘")」里，建好后可直接转存进去")
+                Text(L("建在「%1$@」里，建好后可直接转存进去", "\(path.last?.name ?? L("我的网盘"))"))
             }
             .task(id: current) { await load() }
             .task { quota = await app.resolvers.manager(for: model.share.platform)?.quota() }
@@ -164,7 +164,7 @@ struct SaveToDriveView: View {
         } catch {
             guard target == current else { return }
             folders = []
-            errorMessage = error.localizedDescription
+            errorMessage = displayError(error)
         }
     }
 
@@ -181,7 +181,7 @@ struct SaveToDriveView: View {
                 path.append(Crumb(id: made.fid, name: made.name))
             }
         } catch {
-            app.show("新建文件夹失败：\(error.localizedDescription)", error: true)
+            app.show(L("新建文件夹失败：%1$@", "\(displayError(error))"), error: true)
         }
     }
 
@@ -190,10 +190,10 @@ struct SaveToDriveView: View {
         defer { saving = false }
         do {
             try await model.save(files, to: current)
-            app.show("已转存 \(files.count) 项到\(platformName)「\(path.last?.name ?? "我的网盘")」")
+            app.show(L("已转存 %1$@ 项到%2$@「%3$@」", "\(files.count)", "\(platformName)", "\(path.last?.name ?? L("我的网盘"))"))
             dismiss()
         } catch {
-            app.show("转存失败：\(error.localizedDescription)", error: true)
+            app.show(L("转存失败：%1$@", "\(displayError(error))"), error: true)
         }
     }
 }

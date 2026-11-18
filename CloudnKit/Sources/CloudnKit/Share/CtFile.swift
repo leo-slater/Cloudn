@@ -80,7 +80,7 @@ public final class CtFileResolver: ShareResolver, @unchecked Sendable {
         for _ in 0..<50 {
             let pageURL = base + (base.contains("?") ? "&" : "?") + Self.pageParams(start: start, length: Self.pageSize) + "&_=\(Self.millis())"
             let r = try await client.send(.get(pageURL, headers: Self.ajaxHeaders(url)))
-            guard let json = r.json, json.isObject else { throw CloudnError("城通网盘列表请求失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("城通网盘列表请求失败（HTTP %1$@）", "\(r.status)")) }
             let rows = json["aaData"].array
             for row in rows {
                 guard let f = Self.parseRow(row, parent: dirId), seen.insert(f.fid).inserted else { continue }
@@ -106,7 +106,7 @@ public final class CtFileResolver: ShareResolver, @unchecked Sendable {
         let query = [("uid", uid), ("fid", fid), ("file_chk", chk), ("start_time", info["start_time"].string),
                      ("wait_seconds", info["wait_seconds"].string), ("rd", Self.random())]
         let r = try await client.send(.get(Self.apiBase + "/get_down_url.php?" + Self.query(query), headers: Self.ajaxHeaders(url)))
-        guard let json = r.json, json.isObject else { throw CloudnError("城通网盘下载接口请求失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("城通网盘下载接口请求失败（HTTP %1$@）", "\(r.status)")) }
         let link = json["downurl"].string
         guard !link.isEmpty else {
             throw CloudnError(json["message"].string.nilIfBlank.map { "城通网盘：\($0)" } ?? "城通网盘没有返回下载地址，分享可能已失效")
@@ -121,7 +121,7 @@ public final class CtFileResolver: ShareResolver, @unchecked Sendable {
     private func getFile(shareKey: String, url: String, pwd: String) async throws -> JSON {
         let query = [("path", Self.pathKind(url)), ("f", shareKey), ("passcode", pwd), ("r", Self.random()), ("ref", ""), ("url", url)]
         let r = try await client.send(.get(Self.apiBase + "/getfile.php?" + Self.query(query), headers: Self.ajaxHeaders(url)))
-        guard let json = r.json, json.isObject else { throw CloudnError("城通网盘请求失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("城通网盘请求失败（HTTP %1$@）", "\(r.status)")) }
         let file = json["file"]
         guard file.isObject, !file["file_chk"].string.isEmpty || !file["file_name"].string.isEmpty else {
             throw Self.fileError(json)
@@ -135,7 +135,7 @@ public final class CtFileResolver: ShareResolver, @unchecked Sendable {
         let query = [("path", Self.pathKind(url)), ("d", shareKey), ("folder_id", ctx.folderId), ("fk", ctx.folderKey), ("passcode", pwd),
                      ("r", Self.random()), ("ref", ""), ("url", url)]
         let r = try await client.send(.get(Self.apiBase + "/getdir.php?" + Self.query(query), headers: Self.ajaxHeaders(url)))
-        guard let json = r.json, json.isObject else { throw CloudnError("城通网盘请求失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("城通网盘请求失败（HTTP %1$@）", "\(r.status)")) }
         let dir = json["file"]
         guard dir.isObject, !dir["url"].string.trimmed.isEmpty else { throw Self.fileError(json) }
         return dir

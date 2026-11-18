@@ -145,7 +145,7 @@ struct FilePreviewView: View {
         HStack(spacing: 10) {
             Button { dismiss() } label: { IconView(.close, size: 15) }
                 .buttonStyle(PreviewBarButtonStyle(dark: immersive))
-                .accessibilityLabel("关闭")
+                .accessibilityLabel(L("关闭"))
             VStack(spacing: 2) {
                 Text(url.lastPathComponent)
                     .font(.subheadline.weight(.semibold))
@@ -164,21 +164,21 @@ struct FilePreviewView: View {
             if MediaTools.canSaveToPhotos(url) {
                 Button { saveToPhotos() } label: { IconView(.download, size: 16) }
                     .buttonStyle(PreviewBarButtonStyle(dark: immersive))
-                    .accessibilityLabel("保存到相册")
+                    .accessibilityLabel(L("保存到相册"))
             }
             ShareLink(item: url) { IconView(.share, size: 16) }
                 .buttonStyle(PreviewBarButtonStyle(dark: immersive))
-                .accessibilityLabel("分享")
+                .accessibilityLabel(L("分享"))
             Menu {
                 if converted != nil {
-                    Button { saveConverted() } label: { Label("转换后的 MP4 加入下载", glyph: .download) }
+                    Button { saveConverted() } label: { Label(L("转换后的 MP4 加入下载"), glyph: .download) }
                         .disabled(savingConverted)
                 }
-                Button { DownloadsView.revealInFiles(url.deletingLastPathComponent()) } label: { Label("在「文件」中查看", glyph: .folder) }
-                Button { Clipboard.copy(url.lastPathComponent); app.show("已复制文件名") } label: { Label("复制文件名", glyph: .paste) }
+                Button { DownloadsView.revealInFiles(url.deletingLastPathComponent()) } label: { Label(L("在「文件」中查看"), glyph: .folder) }
+                Button { Clipboard.copy(url.lastPathComponent); app.show(L("已复制文件名")) } label: { Label(L("复制文件名"), glyph: .paste) }
             } label: { IconView(.more, size: 16) }
                 .buttonStyle(PreviewBarButtonStyle(dark: immersive))
-                .accessibilityLabel("更多")
+                .accessibilityLabel(L("更多"))
         }
         .padding(.horizontal, 12)
         .padding(.top, 6)
@@ -195,7 +195,7 @@ struct FilePreviewView: View {
 
     private func saveToPhotos() {
         Task {
-            do { app.show(try await MediaTools.saveToPhotosSmart(url)) } catch { app.show(error.localizedDescription, error: true) }
+            do { app.show(try await MediaTools.saveToPhotosSmart(url)) } catch { app.show(displayError(error), error: true) }
         }
     }
 
@@ -210,14 +210,14 @@ struct FilePreviewView: View {
         let size = fileSize ?? 0
         let tooSmall = (kind == .video || kind == .audio) && fileSize != nil && size < 1024
         let hint: String = switch kind {
-        case _ where tooSmall: "文件只有 \(ByteFormat.string(size))，可能没有下载完整，请重新下载"
-        case .image where imageFailed: "图片无法解码，可能已损坏或格式不受支持"
+        case _ where tooSmall: L("文件只有 %1$@，可能没有下载完整，请重新下载", "\(ByteFormat.string(size))")
+        case .image where imageFailed: L("图片无法解码，可能已损坏或格式不受支持")
         case _ where !(remuxIssue ?? "").isEmpty: remuxIssue ?? ""
-        case _ where canRemux: "正在把 \(url.pathExtension.uppercased()) 转为 MP4 封装播放，不重新编码、画质不变，通常几秒钟"
-        case .video, .audio: "系统播放器不支持此格式，可用 VLC、Infuse 等应用打开"
-        case .archive: "压缩包可在「文件」App 中轻点解压"
-        case .apk: "安装包请用「分享」发送到对应的安装工具"
-        default: "可以用其他应用打开，或在「文件」App 中查看"
+        case _ where canRemux: L("正在把 %1$@ 转为 MP4 封装播放，不重新编码、画质不变，通常几秒钟", "\(url.pathExtension.uppercased())")
+        case .video, .audio: L("系统播放器不支持此格式，可用 VLC、Infuse 等应用打开")
+        case .archive: L("压缩包可在「文件」App 中轻点解压")
+        case .apk: L("安装包请用「分享」发送到对应的安装工具")
+        default: L("可以用其他应用打开，或在「文件」App 中查看")
         }
         return VStack(spacing: 18) {
             Spacer()
@@ -239,22 +239,22 @@ struct FilePreviewView: View {
                     if let converting {
                         VStack(spacing: 8) {
                             ProgressLine(value: converting)
-                            Text("正在准备播放 \(Int(converting * 100))%").font(.footnote.monospacedDigit()).foregroundStyle(Color.ink3)
+                            Text(L("正在准备播放 %1$@%%", "\(Int(converting * 100))")).font(.footnote.monospacedDigit()).foregroundStyle(Color.ink3)
                         }
                         .padding(.vertical, 6)
                     } else {
                         Button { startRemux() } label: {
-                            Label("转换为 MP4 播放", glyph: .play).frame(maxWidth: .infinity)
+                            Label(L("转换为 MP4 播放"), glyph: .play).frame(maxWidth: .infinity)
                         }
                         .buttonStyle(PillButtonStyle(kind: .primary))
                     }
                 }
                 ShareLink(item: url) {
-                    Label("用其他应用打开", glyph: .share).frame(maxWidth: .infinity)
+                    Label(L("用其他应用打开"), glyph: .share).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle(kind: canRemux && convertError == nil ? .secondary : .primary))
                 Button { DownloadsView.revealInFiles(url.deletingLastPathComponent()) } label: {
-                    Label("在「文件」中查看", glyph: .folder).frame(maxWidth: .infinity)
+                    Label(L("在「文件」中查看"), glyph: .folder).frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PillButtonStyle(kind: .secondary))
             }
@@ -297,13 +297,13 @@ struct FilePreviewView: View {
                 convertSubtitles = meta.subtitles
                 player = nil
                 converted = output
-                var message = "已转换为 MP4"
+                var message = L("已转换为 MP4")
                 if !meta.skipped.isEmpty { message += "；" + meta.skipped.joined(separator: "；") }
                 app.show(message)
             } catch {
                 guard !Task.isCancelled else { return }
                 converting = nil
-                convertError = error.localizedDescription
+                convertError = displayError(error)
             }
         }
     }
@@ -319,16 +319,16 @@ struct FilePreviewView: View {
             do {
                 let copy = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".mp4")
                 try FileManager.default.copyItem(at: converted, to: copy)
-                try await app.downloads.importLocalFile(copy, name: base + ".mp4", source: "格式转换")
+                try await app.downloads.importLocalFile(copy, name: base + ".mp4", source: L("格式转换"))
                 for (i, sub) in subtitles.enumerated() {
                     let tag = [sub.language, sub.name].filter { !$0.isEmpty }.first ?? "\(i + 1)"
                     let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".srt")
                     try Data(sub.srt.utf8).write(to: file)
-                    try await app.downloads.importLocalFile(file, name: "\(base).\(tag).srt", source: "格式转换")
+                    try await app.downloads.importLocalFile(file, name: "\(base).\(tag).srt", source: L("格式转换"))
                 }
-                app.show(subtitles.isEmpty ? "MP4 已加入下载" : "MP4 和 \(subtitles.count) 个字幕已加入下载")
+                app.show(subtitles.isEmpty ? L("MP4 已加入下载") : L("MP4 和 %1$@ 个字幕已加入下载", "\(subtitles.count)"))
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
             }
         }
     }
@@ -570,7 +570,7 @@ struct LocalTextView: View {
             if let text {
                 VStack(alignment: .leading, spacing: 0) {
                     if truncated {
-                        Label("文件较大，只显示前 2MB", glyph: .warning)
+                        Label(L("文件较大，只显示前 2MB"), glyph: .warning)
                             .font(.footnote)
                             .foregroundStyle(Color.ink3)
                             .padding(.horizontal, 16)
@@ -648,7 +648,7 @@ struct RotateButton: View {
                 .font(.system(size: 15, weight: .medium))
         }
         .buttonStyle(PreviewBarButtonStyle(dark: dark))
-        .accessibilityLabel(landscape ? "竖屏" : "横屏")
+        .accessibilityLabel(landscape ? L("竖屏") : L("横屏"))
         .onAppear { landscape = ScreenRotation.isLandscape }
         .onDisappear { if landscape { ScreenRotation.set(landscape: false) } }
     }
@@ -778,7 +778,7 @@ enum ConvertedCache {
     static func convert(_ source: URL, progress: @escaping @Sendable (Double) -> Void) throws -> (URL, Meta) {
         let fm = FileManager.default
         try fm.createDirectory(at: directory, withIntermediateDirectories: true)
-        guard let key = key(for: source) else { throw CloudnError("无法读取文件") }
+        guard let key = key(for: source) else { throw CloudnError(L("无法读取文件")) }
         if let hit = cached(key) { return hit }
         let partial = directory.appendingPathComponent("\(key)-\(UUID().uuidString).partial")
         let result: MKVRemuxer.Result

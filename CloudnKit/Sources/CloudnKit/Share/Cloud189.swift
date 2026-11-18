@@ -397,7 +397,7 @@ public final class Cloud189Resolver: ShareResolver, @unchecked Sendable {
                               headers: [("Accept", "application/json;charset=UTF-8"), ("User-Agent", userAgent),
                                         ("X-Request-ID", UUID().uuidString.lowercased())])
         let r = try await client.send(req)
-        guard let json = r.json, json.isObject else { throw CloudnError("天翼云盘登录失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("天翼云盘登录失败（HTTP %1$@）", "\(r.status)")) }
         let key = json["sessionKey"].string
         guard !key.isEmpty else {
             let msg = json.string("res_message", "errorMsg", "message", "msg")
@@ -740,7 +740,7 @@ struct Cloud189Login: PasswordLogin {
         let req = Self.sendSMSRequest(auth, cookie: jar.header(for: Self.sendSMSURL))
         let r = try await client.send(req)
         jar.merge(r.cookies)
-        guard let json = r.json, json.isObject else { throw CloudnError("天翼云盘发送验证码失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("天翼云盘发送验证码失败（HTTP %1$@）", "\(r.status)")) }
         if let err = Self.smsError(json, action: "发送验证码") { throw err }
         var next = auth
         next.cookie = jar.header
@@ -760,7 +760,7 @@ struct Cloud189Login: PasswordLogin {
         jar.merge(r.cookies)
         // 校验通过后下发 DEVICEID：存下来，下次密码登录就不再要求短信
         Self.saveDeviceId(jar.deviceId, account: auth.account)
-        guard let json = r.json, json.isObject else { throw CloudnError("天翼云盘验证失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("天翼云盘验证失败（HTTP %1$@）", "\(r.status)")) }
         if let err = Self.smsError(json, action: "验证") { throw err }
         guard let toUrl = json["toUrl"].string.nilIfBlank else {
             let msg = json.string("msg", "message")
@@ -827,7 +827,7 @@ struct Cloud189Login: PasswordLogin {
     private func postJSON(_ url: String, _ form: [(String, String)], params: LoginParams?, jar: Jar, finger: String) async throws -> JSON {
         let r = try await client.send(.postForm(url, form, headers: headers(params, jar: jar, finger: finger, url: url)))
         jar.merge(r.cookies)
-        guard let json = r.json, json.isObject else { throw CloudnError("天翼云盘登录失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("天翼云盘登录失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 

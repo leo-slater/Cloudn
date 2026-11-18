@@ -20,8 +20,8 @@ struct OAuthLoginView: View {
                 Spacer()
                 PlatformTile(mark: .account(kind), size: 64)
                 VStack(spacing: 8) {
-                    Text("登录\(kind.displayName)").font(.cardTitle).foregroundStyle(Color.ink)
-                    Text("会打开\(provider.name)官方登录页，Cloudn 只拿到访问文件的授权，看不到你的密码。")
+                    Text(L("登录%1$@", "\(L(kind.displayName))")).font(.cardTitle).foregroundStyle(Color.ink)
+                    Text(L("会打开%1$@官方登录页，Cloudn 只拿到访问文件的授权，看不到你的密码。", "\(provider.name)"))
                         .font(.subheadline)
                         .multilineTextAlignment(.center)
                         .foregroundStyle(Color.ink2)
@@ -37,7 +37,7 @@ struct OAuthLoginView: View {
                 } label: {
                     HStack(spacing: 8) {
                         if working { Spinner(size: 16) }
-                        Text(working ? "正在登录…" : "使用\(provider.name)账号登录")
+                        Text(working ? L("正在登录…") : L("使用%1$@账号登录", "\(provider.name)"))
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -50,7 +50,7 @@ struct OAuthLoginView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.paper)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } }
             }
             .task {
                 // 打开就直接弹系统登录页，少点一次
@@ -72,14 +72,14 @@ struct OAuthLoginView: View {
             let code = try provider.code(from: callback, request: request)
             let credential = try await provider.exchange(code: code, request: request)
             guard let name = await app.accounts.login(kind, cookie: credential.serialized) else {
-                errorText = "登录成功但账号校验失败，请重试"
+                errorText = L("登录成功但账号校验失败，请重试")
                 return
             }
-            app.show("已登录\(kind.displayName) · \(name)")
+            app.show(L("已登录%1$@ · %2$@", "\(L(kind.displayName))", "\(name)"))
             dismiss()
         } catch is CancellationError {
         } catch {
-            errorText = error.localizedDescription
+            errorText = displayError(error)
         }
     }
 }
@@ -107,7 +107,7 @@ enum OAuthWebSession {
                 } else if let error = error as? ASWebAuthenticationSessionError, error.code == .canceledLogin {
                     cont.resume(throwing: CancellationError())
                 } else {
-                    cont.resume(throwing: CloudnError("无法打开登录页：\(error?.localizedDescription ?? "未知错误")"))
+                    cont.resume(throwing: CloudnError(L("无法打开登录页：%1$@", "\(error?.localizedDescription ?? L("未知错误"))")))
                 }
             }
             session.presentationContextProvider = anchor
@@ -116,7 +116,7 @@ enum OAuthWebSession {
             current = session
             if !session.start() {
                 current = nil
-                cont.resume(throwing: CloudnError("无法打开登录页"))
+                cont.resume(throwing: CloudnError(L("无法打开登录页")))
             }
         }
     }

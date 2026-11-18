@@ -32,7 +32,7 @@ public enum UpdateChecker {
         let path = includePrerelease ? "releases?per_page=20" : "releases/latest"
         let r = try await client.send(.get("\(apiBase)/repos/\(repository)/\(path)", headers: headers))
         if r.status == 404 { return nil }   // 还没有发布过正式版
-        guard r.isSuccess, let json = r.json else { throw CloudnError("检查更新失败（HTTP \(r.status)）") }
+        guard r.isSuccess, let json = r.json else { throw CloudnError(LocalizedMessage("检查更新失败（HTTP %1$@）", "\(r.status)")) }
         let release: AppRelease?
         if json.isArray {
             release = newest(json.array.filter { !$0["draft"].bool }.map(parse), includePrerelease: includePrerelease)

@@ -217,14 +217,14 @@ public final class WebDAVResolver: ShareResolver, @unchecked Sendable {
     static func statusError(_ status: Int, action: String) -> CloudnError {
         switch status {
         case 401: return CloudnError("WebDAV 账号或密码错误，请重新登录")
-        case 403: return CloudnError("没有权限\(action)")
+        case 403: return CloudnError(LocalizedMessage("没有权限%1$@", "\(action)"))
         case 404: return CloudnError("文件不存在或已被删除")
-        case 405: return CloudnError("服务器不允许\(action)（可能已存在同名文件）")
+        case 405: return CloudnError(LocalizedMessage("服务器不允许%1$@（可能已存在同名文件）", "\(action)"))
         case 409: return CloudnError("目标文件夹不存在")
         case 412: return CloudnError("目标位置已有同名文件")
         case 423: return CloudnError("文件已被锁定")
         case 507: return CloudnError("WebDAV 空间不足")
-        default: return CloudnError("\(action)失败（HTTP \(status)）")
+        default: return CloudnError(LocalizedMessage("%1$@失败（HTTP %2$@）", "\(action)", "\(status)"))
         }
     }
 

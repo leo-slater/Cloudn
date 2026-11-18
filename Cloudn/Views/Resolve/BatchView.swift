@@ -27,7 +27,7 @@ struct BatchView: View {
                             Spacer(minLength: 0)
                             // 解析失败的：直接在网页里播放后抓取
                             if case .failed = item.state {
-                                Button("网页嗅探") { sniffing = SniffLink(url: item.url) }
+                                Button(L("网页嗅探")) { sniffing = SniffLink(url: item.url) }
                                     .font(.footnote)
                                     .buttonStyle(TextLinkButtonStyle())
                             }
@@ -45,7 +45,7 @@ struct BatchView: View {
                     .textCase(nil)
                     .padding(.bottom, 4)
                 } footer: {
-                    Text("逐条按最高画质加入下载，离开此页也会继续。")
+                    Text(L("逐条按最高画质加入下载，离开此页也会继续。"))
                 }
             }
             .paperList()
@@ -56,7 +56,7 @@ struct BatchView: View {
                         app.selectedTab = .downloads
                         dismiss()
                     } label: {
-                        Label { Text("查看下载") } icon: { Image(icon: .download) }.frame(maxWidth: .infinity)
+                        Label { Text(L("查看下载")) } icon: { Image(icon: .download) }.frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PillButtonStyle(kind: .primary))
                     .floatingShadow()
@@ -71,15 +71,15 @@ struct BatchView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { dismiss() }
+                    Button(L("关闭")) { dismiss() }
                 }
                 ToolbarItem(placement: .primaryAction) {
                     if job.running {
-                        Button("停止") { job.cancel() }
+                        Button(L("停止")) { job.cancel() }
                     } else if job.failedCount > 0 {
-                        Button("重试失败的") { job.retryFailed(app: app) }
+                        Button(L("重试失败的")) { job.retryFailed(app: app) }
                     } else if !job.finished {
-                        Button("继续") { job.start(app: app) }
+                        Button(L("继续")) { job.start(app: app) }
                     }
                 }
             }
@@ -88,9 +88,9 @@ struct BatchView: View {
 
     private var summary: String {
         let total = job.items.count
-        var text = "\(job.doneCount) / \(total) 已加入下载"
-        if job.failedCount > 0 { text += " · \(job.failedCount) 个失败" }
-        if job.running { text += " · 解析中…" }
+        var text = L("%1$@ / %2$@ 已加入下载", "\(job.doneCount)", "\(total)")
+        if job.failedCount > 0 { text += L(" · %1$@ 个失败", "\(job.failedCount)") }
+        if job.running { text += L(" · 解析中…") }
         return text
     }
 
@@ -107,8 +107,8 @@ struct BatchView: View {
     private func detail(_ state: BatchJob.State) -> String? {
         switch state {
         case .waiting: return nil
-        case .parsing: return "解析中…"
-        case .added(let n): return n > 1 ? "已加入下载 · \(n) 个文件" : "已加入下载"
+        case .parsing: return L("解析中…")
+        case .added(let n): return n > 1 ? L("已加入下载 · %1$@ 个文件", "\(n)") : L("已加入下载")
         case .failed(let message): return message
         }
     }

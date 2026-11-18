@@ -22,6 +22,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
     private(set) var files: [ShareFile] = []
     private(set) var loading = false
     private(set) var errorMessage: String?
+    private var openFailureDescription: String?
     private(set) var needsPassword = false
     var selecting = false
     var selection = Set<String>()
@@ -51,7 +52,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
         #endif
         return app.resolvers.resolver(for: share.platform)
     }
-    var title: String { session?.title ?? share.platform.displayName }
+    var title: String { session?.title ?? L(share.platform.displayName) }
     var currentDir: String { crumbs.last?.id ?? session?.rootId ?? "0" }
 
     /// 对应平台的主账号登录已失效（「我的」页检测出来的）
@@ -69,15 +70,15 @@ final class ShareBrowserModel: Hashable, Identifiable {
     /// 未登录 / 登录已失效时给用户的能力说明（nil 表示不需要提示）
     var guestNotice: String? {
         guard let kind = share.platform.accountKind else { return nil }
-        if app.accounts.isExpired(kind) { return "\(kind.displayName)登录已失效，下载、转存可能失败" }
+        if app.accounts.isExpired(kind) { return L("%1$@登录已失效，下载、转存可能失败", "\(L(kind.displayName))") }
         guard !app.accounts.isLoggedIn(kind) else { return nil }
         switch share.platform {
-        case .quark: return "未登录夸克：只能下载约 50MB 以内的文件"
-        case .uc: return "未登录 UC：可直接下载，登录后视频取原画"
-        case .pan115: return "未登录 115：只能下载小文件"
+        case .quark: return L("未登录夸克：只能下载约 50MB 以内的文件")
+        case .uc: return L("未登录 UC：可直接下载，登录后视频取原画")
+        case .pan115: return L("未登录 115：只能下载小文件")
         default:
             guard resolver?.supportsGuestDownload == false else { return nil }
-            return "未登录\(kind.displayName)：可浏览，下载需先登录"
+            return L("未登录%1$@：可浏览，下载需先登录", "\(L(kind.displayName))")
         }
     }
 
@@ -88,6 +89,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
         opening = true
         loading = true
         errorMessage = nil
+        openFailureDescription = nil
         needsPassword = false
         defer {
             opening = false
@@ -102,13 +104,14 @@ final class ShareBrowserModel: Hashable, Identifiable {
         } catch {
             let message = error.localizedDescription
             needsPassword = message.contains("提取码") || message.contains("密码") || message.contains("访问码") || message.contains("passcode")
-            errorMessage = message
+            openFailureDescription = message
+            errorMessage = displayError(error)
         }
     }
 
     /// 分享本身已失效（过期、被取消、不存在、被删除）：打开时就失败，重试没有意义。网络之类的错误不算
     var linkInvalid: Bool {
-        guard session == nil, !needsPassword, let message = errorMessage else { return false }
+        guard session == nil, !needsPassword, let message = openFailureDescription else { return false }
         return ["过期", "失效", "取消", "不存在", "删除", "违规", "封禁"].contains { message.contains($0) }
     }
 
@@ -161,7 +164,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
             try await load(dir, force: force)
         } catch {
             // 已切到别的目录：旧目录的错误不显示
-            if dir == currentDir { errorMessage = error.localizedDescription }
+            if dir == currentDir { errorMessage = displayError(error) }
         }
         // 已切到别的目录：加载状态交给新目录那次去收
         if dir == currentDir { loading = false }
@@ -170,7 +173,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
     // MARK: 下载
 
     func link(for file: ShareFile, slot: Int = 0) async throws -> DownloadLink {
-        guard let session, let resolver else { throw CloudnError("分享会话已失效，请重新解析") }
+        guard let session, let resolver else { throw CloudnError(L("分享会话已失效，请重新解析")) }
         busyFileIds.insert(file.fid)
         defer { busyFileIds.remove(file.fid) }
         return try await AccountSlot.$current.withValue(slot) {
@@ -260,7 +263,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
         guard let session, let resolver else { return }
         // 上一批还在取链（连点「全部下载」、或又点了「下载整个文件夹」）：不再并行开一批，免得重复入队
         guard batch == nil else {
-            app.show("上一批还在获取直链，请稍候")
+            app.show(L("上一批还在获取直链，请稍候"))
             return
         }
         // 先占住进度条：展开文件夹要逐层请求，期间底部就显示进行中
@@ -277,11 +280,11 @@ final class ShareBrowserModel: Hashable, Identifiable {
                 if queue.count > 2000 { break }
             }
         } catch {
-            app.show("读取文件夹失败：\(error.localizedDescription)", error: true)
+            app.show(L("读取文件夹失败：%1$@", "\(displayError(error))"), error: true)
             return
         }
         guard !queue.isEmpty else {
-            app.show("没有可下载的文件", error: true)
+            app.show(L("没有可下载的文件"), error: true)
             return
         }
         // 已下完或正在下载的文件跳过，重复点「全部下载」不会重复入队
@@ -294,7 +297,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
         queue.removeAll { existing.contains($0.0.fid) }
         let skipped = total - queue.count
         guard !queue.isEmpty else {
-            app.show("这些文件都已在下载列表中")
+            app.show(L("这些文件都已在下载列表中"))
             return
         }
         batch = (0, queue.count)
@@ -309,15 +312,15 @@ final class ShareBrowserModel: Hashable, Identifiable {
                 try await download(entry.0, folder: entry.1, group: group, slot: index % rotation)
             } catch {
                 failures += 1
-                lastError = error.localizedDescription
+                lastError = displayError(error)
             }
             batch = (index + 1, queue.count)
         }
-        let skipNote = skipped > 0 ? " · 跳过 \(skipped) 个已下载" : ""
+        let skipNote = skipped > 0 ? L(" · 跳过 %1$@ 个已下载", "\(skipped)") : ""
         if failures == 0 {
-            app.show("已加入下载 \(queue.count) 个\(skipNote)")
+            app.show(L("已加入下载 %1$@ 个%2$@", "\(queue.count)", "\(skipNote)"))
         } else {
-            app.show("\(queue.count - failures) 个已加入下载，\(failures) 个失败：\(lastError)", error: true)
+            app.show(L("%1$@ 个已加入下载，%2$@ 个失败：%3$@", "\(queue.count - failures)", "\(failures)", "\(lastError)"), error: true)
         }
     }
 
@@ -355,7 +358,7 @@ final class ShareBrowserModel: Hashable, Identifiable {
     }
 
     func save(_ items: [ShareFile], to folderId: String) async throws {
-        guard let session, let saver else { throw CloudnError("分享会话已失效，请重新解析") }
+        guard let session, let saver else { throw CloudnError(L("分享会话已失效，请重新解析")) }
         try await saver.save(session, files: items, to: folderId)
     }
 

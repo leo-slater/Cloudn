@@ -32,13 +32,13 @@ struct OfflineTasksView: View {
     var body: some View {
         List {
             if let errorMessage, tasks.isEmpty {
-                EmptyStateCard(icon: .warning, title: "加载失败", detail: errorMessage, actionTitle: "重试") {
+                EmptyStateCard(icon: .warning, title: L("加载失败"), detail: errorMessage, actionTitle: L("重试")) {
                     Task { await load() }
                 }
                 .inList()
             } else if !loading && tasks.isEmpty {
-                EmptyStateCard(icon: .magnet, title: "还没有离线任务", detail: "添加磁力或网址链接，由网盘服务器下载，不占手机流量",
-                               actionTitle: "添加任务") { adding = true }
+                EmptyStateCard(icon: .magnet, title: L("还没有离线任务"), detail: L("添加磁力或网址链接，由网盘服务器下载，不占手机流量"),
+                               actionTitle: L("添加任务")) { adding = true }
                     .inList()
             }
             if !tasks.isEmpty {
@@ -47,7 +47,7 @@ struct OfflineTasksView: View {
                         row(task)
                             .paperRow()
                             .swipeActions {
-                                Button { remove(task) } label: { Label("删除", glyph: .trash) }.tint(Color.swipeDestructive)
+                                Button { remove(task) } label: { Label(L("删除"), glyph: .trash) }.tint(Color.swipeDestructive)
                             }
                     }
                 } footer: {
@@ -59,12 +59,12 @@ struct OfflineTasksView: View {
         .readableWidth()
         .overlay { if loading && tasks.isEmpty { Spinner(size: 28) } }
         .refreshable { await load() }
-        .navigationTitle("离线下载")
+        .navigationTitle(L("离线下载"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { adding = true } label: { Image(icon: .plus) }
-                    .accessibilityLabel("添加离线任务")
+                    .accessibilityLabel(L("添加离线任务"))
             }
         }
         .sheet(isPresented: $adding, onDismiss: { Task { await load() } }) {
@@ -110,10 +110,10 @@ struct OfflineTasksView: View {
         let size = task.size > 0 ? ByteFormat.string(task.size) : nil
         let state: String
         switch task.state {
-        case .waiting: state = "排队中"
-        case .running: state = task.progress.map { "下载中 \(Int(($0 * 100).rounded()))%" } ?? "下载中"
-        case .done: state = "已完成，存在网盘里"
-        case .failed(let reason): state = reason.isEmpty ? "失败" : "失败：\(reason)"
+        case .waiting: state = L("排队中")
+        case .running: state = task.progress.map { L("下载中 %1$@%%", "\(Int(($0 * 100).rounded()))") } ?? L("下载中")
+        case .done: state = L("已完成，存在网盘里")
+        case .failed(let reason): state = reason.isEmpty ? L("失败") : L("失败：%1$@", L(reason))
         }
         return [state, size].compactMap { $0 }.joined(separator: " · ")
     }
@@ -135,7 +135,7 @@ struct OfflineTasksView: View {
             errorMessage = nil
         } catch {
             guard !Task.isCancelled else { return }
-            errorMessage = error.localizedDescription
+            errorMessage = displayError(error)
         }
     }
 
@@ -146,7 +146,7 @@ struct OfflineTasksView: View {
             do {
                 try await downloader.removeOfflineTasks([task.id])
             } catch {
-                app.show(error.localizedDescription, error: true)
+                app.show(displayError(error), error: true)
                 await load()
             }
         }
@@ -193,7 +193,7 @@ struct AddOfflineTaskView: View {
             Form {
                 Group {
                     Section {
-                        TextField("磁力链接或网址，每行一个", text: $links, axis: .vertical)
+                        TextField(L("磁力链接或网址，每行一个"), text: $links, axis: .vertical)
                             .lineLimit(3...8)
                             .font(.mono)
                             .textInputAutocapitalization(.never)
@@ -201,23 +201,23 @@ struct AddOfflineTaskView: View {
                             .focused($editing)
                     } footer: {
                         if !unsupported.isEmpty {
-                            Text("有 \(unsupported.count) 个链接\(platform?.displayName ?? "")不支持离线，将跳过")
+                            Text(L("有 %1$@ 个链接%2$@不支持离线，将跳过", "\(unsupported.count)", "\(L(platform?.displayName ?? ""))"))
                                 .foregroundStyle(Color.clayInk)
                         }
                     }
 
                     Section {
                         if !fixedPlatform {
-                            Picker("网盘", selection: $platform) {
+                            Picker(L("网盘"), selection: $platform) {
                                 ForEach(app.offlineDrives) { p in
-                                    Text(p.displayName).tag(Optional(p))
+                                    Text(L(p.displayName)).tag(Optional(p))
                                 }
                             }
                         }
                         Button { picking = true } label: {
-                            LabeledContent("保存到") {
+                            LabeledContent(L("保存到")) {
                                 HStack(spacing: 4) {
-                                    Text(folderTitle.isEmpty ? "根目录" : folderTitle).lineLimit(1)
+                                    Text(folderTitle.isEmpty ? L("根目录") : folderTitle).lineLimit(1)
                                     IconView(.chevronRight, size: 12)
                                 }
                                 .foregroundStyle(Color.ink2)
@@ -232,20 +232,20 @@ struct AddOfflineTaskView: View {
                 .listRowBackground(Color.surface)
             }
             .paperList()
-            .navigationTitle("离线下载")
+            .navigationTitle(L("离线下载"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     if submitting { Spinner() } else {
-                        Button("添加") { submit() }
+                        Button(L("添加")) { submit() }
                             .disabled(downloader == nil || lines.count == unsupported.count)
                     }
                 }
             }
             .sheet(isPresented: $picking) {
                 if let platform, let manager {
-                    DriveFolderPicker(platform: platform, manager: manager, excluding: "", actionVerb: "保存到") { id, title in
+                    DriveFolderPicker(platform: platform, manager: manager, excluding: "", actionVerb: L("保存到")) { id, title in
                         folderId = id
                         folderTitle = title
                     }
@@ -281,15 +281,15 @@ struct AddOfflineTaskView: View {
                     let name = try await downloader.addOfflineTask(link, to: folder)
                     added.append(name ?? link)
                 } catch {
-                    failure = error.localizedDescription
+                    failure = displayError(error)
                 }
             }
             if added.isEmpty {
-                app.show(failure ?? "添加失败", error: true)
+                app.show(failure ?? L("添加失败"), error: true)
                 return
             }
-            let summary = added.count == 1 ? "已添加离线任务：\(added[0])" : "已添加 \(added.count) 个离线任务"
-            app.show(failure.map { "\(summary)，\(targets.count - added.count) 个失败：\($0)" } ?? "\(summary)，可在\(platform.displayName)「离线下载」里查看",
+            let summary = added.count == 1 ? L("已添加离线任务：%1$@", "\(added[0])") : L("已添加 %1$@ 个离线任务", "\(added.count)")
+            app.show(failure.map { L("%1$@，%2$@ 个失败：%3$@", "\(summary)", "\(targets.count - added.count)", "\($0)") } ?? L("%1$@，可在%2$@「离线下载」里查看", "\(summary)", "\(L(platform.displayName))"),
                      error: failure != nil)
             dismiss()
         }

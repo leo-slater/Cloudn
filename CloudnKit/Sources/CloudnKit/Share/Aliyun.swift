@@ -119,7 +119,7 @@ public final class AliyunResolver: ShareResolver, @unchecked Sendable {
         if let shareToken { headers.append(("x-share-token", shareToken)) }
         if let access { headers.append(("Authorization", "Bearer " + access)) }
         let r = try await client.send(.postJSON(Self.api + path, body, headers: headers))
-        guard let json = r.json else { throw CloudnError("阿里云盘响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json else { throw CloudnError(LocalizedMessage("阿里云盘响应解析失败（HTTP %1$@）", "\(r.status)")) }
         if r.isSuccess, json["code"].string.isEmpty { return json }
         throw Self.error(json, status: r.status, fallback: fallback)
     }
@@ -137,7 +137,7 @@ public final class AliyunResolver: ShareResolver, @unchecked Sendable {
         case "NotFound.ShareLink": return CloudnError("阿里云盘分享不存在")
         case "TooManyRequests": return CloudnError("阿里云盘请求过于频繁，请稍后再试")
         default:
-            return CloudnError("阿里云盘：\(message.nilIfBlank ?? "\(fallback)（HTTP \(status)）")")
+            return CloudnError(LocalizedMessage("阿里云盘：%1$@", "\(message.nilIfBlank ?? "\(fallback)（HTTP \(status)）")"))
         }
     }
 
@@ -231,8 +231,8 @@ public struct AliyunCredential: Equatable, Sendable {
         let r = try await client.send(.postJSON(AliyunResolver.authAPI, ["refresh_token": cred.refreshToken, "grant_type": "refresh_token"],
                                                 headers: [("User-Agent", AliyunResolver.ua)]))
         // 限流 / 服务端故障不是登录失效
-        if r.status == 429 || r.status >= 500 { throw CloudnError("阿里云盘登录续期失败（HTTP \(r.status)），请稍后重试") }
-        guard let json = r.json else { throw CloudnError("阿里云盘登录续期失败（HTTP \(r.status)）") }
+        if r.status == 429 || r.status >= 500 { throw CloudnError(LocalizedMessage("阿里云盘登录续期失败（HTTP %1$@），请稍后重试", "\(r.status)")) }
+        guard let json = r.json else { throw CloudnError(LocalizedMessage("阿里云盘登录续期失败（HTTP %1$@）", "\(r.status)")) }
         let access = json["access_token"].string
         guard r.isSuccess, !access.isEmpty else {
             throw CloudnError("阿里云盘登录已失效，请到「我的」页重新登录", code: AliyunResolver.accessExpired)

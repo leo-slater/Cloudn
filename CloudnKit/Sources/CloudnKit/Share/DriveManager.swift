@@ -35,7 +35,7 @@ public struct ShareExpiry: Hashable, Sendable, Identifiable {
 
     public var id: Int { days }
     public var isForever: Bool { days == 0 }
-    public var label: String { isForever ? "永久有效" : "\(days) 天" }
+    public var label: String { isForever ? "永久有效" : CloudnLocalization.text("%1$@ 天", "\(days)") }
 
     public static let forever = ShareExpiry(days: 0)
     /// 夸克 / UC / 百度 / 迅雷 / 123 / 139 / 光鸭
@@ -45,7 +45,7 @@ public struct ShareExpiry: Hashable, Sendable, Identifiable {
 
     /// 不在平台档位里的有效期直接报错，不悄悄换成别的档位
     func require(in options: [ShareExpiry]) throws {
-        guard options.contains(self) else { throw CloudnError("该网盘不支持「\(label)」的分享有效期") }
+        guard options.contains(self) else { throw CloudnError(LocalizedMessage("该网盘不支持「%1$@」的分享有效期", "\(label)")) }
     }
 }
 

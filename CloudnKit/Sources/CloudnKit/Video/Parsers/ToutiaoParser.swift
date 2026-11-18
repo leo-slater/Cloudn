@@ -97,7 +97,7 @@ struct ToutiaoParser: VideoParser {
         let error = payload["ResponseMetadata"]["Error"]
         if !error.isNull {
             let message = error.isObject ? error.string("Message", "message", "ErrorMessage") : error.string
-            throw VideoParseError(.unknown, "今日头条视频地址获取失败：\(message.isEmpty ? "未知错误" : message)")
+            throw VideoParseError(.unknown, LocalizedMessage("今日头条视频地址获取失败：%1$@", "\(message.isEmpty ? "未知错误" : message)"))
         }
         let variants = Self.playVariants(payload["Result"]["Data"]["PlayInfoList"].array)
         guard !variants.isEmpty else {

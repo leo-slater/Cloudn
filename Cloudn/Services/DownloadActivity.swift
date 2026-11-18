@@ -87,15 +87,15 @@ final class DownloadActivity {
         var note = ""
         var failedCount: Int? = nil
         if let main, case .torrent = main.request.kind, main.totalBytes <= 0 {
-            note = "正在获取种子信息"
+            note = L("正在获取种子信息")
         } else if active.isEmpty {
             // 没有进行中的任务时分清：真的全部完成，还是被暂停 / 失败
             let paused = items.filter { $0.status == .paused }.count
             let failed = items.filter { $0.status == .failed }.count
             if paused > 0 {
-                note = "\(paused) 个已暂停，回到应用继续"
+                note = L("%1$@ 个已暂停，回到应用继续", "\(paused)")
             } else if failed > 0 {
-                note = "\(failed) 个下载失败"
+                note = L("%1$@ 个下载失败", "\(failed)")
                 failedCount = failed
             }
         }
@@ -136,7 +136,7 @@ final class DownloadActivity {
         guard !active.isEmpty else { return }
         var next = state(items, active: active)
         let foregroundOnly = active.contains { !$0.backgrounded && !($0.request.kind == .file) }
-        next.note = foregroundOnly ? "部分任务回到应用后继续" : "后台下载中，打开应用查看进度"
+        next.note = foregroundOnly ? L("部分任务回到应用后继续") : L("后台下载中，打开应用查看进度")
         next.speed = 0
         lastState = next
         lastUpdate = Date()

@@ -440,71 +440,71 @@ extension AccountKind {
 
     var benefit: String {
         switch self {
-        case .quark: return "登录后可下载大文件（游客仅约 50MB 以内）"
-        case .uc: return "登录后视频可取原画直链，下载更稳定"
-        case .baidu: return "登录后可下载（借助临时转存取直链，取完即删）"
-        case .xunlei: return "登录后可下载（借助临时转存取直链，取完即删）"
-        case .pan123: return "登录后可下载分享文件"
-        case .pan115: return "登录后可下载大文件（游客仅限小文件）"
-        case .c139: return "登录后可下载分享文件"
-        case .guangya: return "登录后可下载受限分享（临时转存后取链），并支持转存"
-        case .ilanzou: return "登录后可转存分享到自己的网盘"
-        case .lanzou: return "登录后可管理自己的蓝奏云文件"
-        case .aliyun: return "登录后可下载分享、转存，并管理自己的阿里云盘"
-        case .onedrive: return "登录后可管理自己的 OneDrive，并打开只分享给你的链接"
-        case .gdrive: return "登录后可管理自己的 Google 云端硬盘，并把公开分享里的文件复制到自己的盘"
-        case .pikpak: return "登录后可下载分享、转存，管理自己的 PikPak，并离线下载磁链"
-        case .cloud189: return "登录后可下载分享、转存，并管理自己的天翼云盘"
-        case .dropbox: return "登录后可管理自己的 Dropbox"
-        case .webdav: return "连接坚果云、NAS 等 WebDAV 服务，像网盘一样浏览和下载"
-        case .bilibili: return "登录后可解析 1080P 及以上清晰度"
-        case .douyin: return "登录后可获取作者主页的全部作品（未登录通常只有第一页）"
-        case .xiaohongshu: return "小红书网页端要求登录后才能查看笔记"
-        case .pixiv: return "登录后可解析 R18 与受限作品"
-        case .zhihu: return "知乎接口要求登录后才能解析回答、文章与想法"
-        case .yuanbao: return "解析微信视频号需要登录腾讯元宝"
-        case .twitter: return "登录后可解析受限推文，避开游客限额"
-        case .instagram: return "登录后可解析受限帖子，减少限流"
-        case .threads: return "登录后可解析登录墙内的帖子"
-        case .tiktok: return "登录后可解析需登录或有年龄限制的作品"
-        case .reddit: return "登录后可解析 NSFW 与受限社区的帖子"
-        case .facebook: return "登录后可解析仅登录可见的视频与帖子"
+        case .quark: return L("登录后可下载大文件（游客仅约 50MB 以内）")
+        case .uc: return L("登录后视频可取原画直链，下载更稳定")
+        case .baidu: return L("登录后可下载（借助临时转存取直链，取完即删）")
+        case .xunlei: return L("登录后可下载（借助临时转存取直链，取完即删）")
+        case .pan123: return L("登录后可下载分享文件")
+        case .pan115: return L("登录后可下载大文件（游客仅限小文件）")
+        case .c139: return L("登录后可下载分享文件")
+        case .guangya: return L("登录后可下载受限分享（临时转存后取链），并支持转存")
+        case .ilanzou: return L("登录后可转存分享到自己的网盘")
+        case .lanzou: return L("登录后可管理自己的蓝奏云文件")
+        case .aliyun: return L("登录后可下载分享、转存，并管理自己的阿里云盘")
+        case .onedrive: return L("登录后可管理自己的 OneDrive，并打开只分享给你的链接")
+        case .gdrive: return L("登录后可管理自己的 Google 云端硬盘，并把公开分享里的文件复制到自己的盘")
+        case .pikpak: return L("登录后可下载分享、转存，管理自己的 PikPak，并离线下载磁链")
+        case .cloud189: return L("登录后可下载分享、转存，并管理自己的天翼云盘")
+        case .dropbox: return L("登录后可管理自己的 Dropbox")
+        case .webdav: return L("连接坚果云、NAS 等 WebDAV 服务，像网盘一样浏览和下载")
+        case .bilibili: return L("登录后可解析 1080P 及以上清晰度")
+        case .douyin: return L("登录后可获取作者主页的全部作品（未登录通常只有第一页）")
+        case .xiaohongshu: return L("小红书网页端要求登录后才能查看笔记")
+        case .pixiv: return L("登录后可解析 R18 与受限作品")
+        case .zhihu: return L("知乎接口要求登录后才能解析回答、文章与想法")
+        case .yuanbao: return L("解析微信视频号需要登录腾讯元宝")
+        case .twitter: return L("登录后可解析受限推文，避开游客限额")
+        case .instagram: return L("登录后可解析受限帖子，减少限流")
+        case .threads: return L("登录后可解析登录墙内的帖子")
+        case .tiktok: return L("登录后可解析需登录或有年龄限制的作品")
+        case .reddit: return L("登录后可解析 NSFW 与受限社区的帖子")
+        case .facebook: return L("登录后可解析仅登录可见的视频与帖子")
         }
     }
 
     /// 手动粘贴时的格式说明
     var manualHint: String {
         switch self {
-        case .quark, .uc: return "需包含 __pus 与 __puus"
-        case .baidu: return "需包含 BDUSS（建议同时包含 STOKEN）"
-        case .xunlei: return "粘贴网页 localStorage 中 credentials_\(XunleiCredential.webClientId) 的值（JSON），或 access_token"
-        case .pan123: return "粘贴网页 localStorage 中 authorToken 的值"
-        case .pan115: return "需包含 UID、CID、SEID"
-        case .c139: return "需包含 authorization，或 Os_SSo_Sid 与 RMKEY"
-        case .guangya: return "粘贴网页 localStorage 中的 access_token（建议改用账号密码 / 短信登录）"
-        case .ilanzou: return "粘贴 {\"appToken\":…,\"uuid\":…} 形式的凭据（建议改用账号密码登录）"
-        case .lanzou: return "需包含 ylogin 与 phpdisk_info"
-        case .aliyun: return "粘贴网页 localStorage 中 token 的值（JSON），或 refresh_token"
-        case .onedrive: return "请用「登录」按钮通过微软官方页面登录"
-        case .gdrive: return "请用「登录」按钮通过 Google 官方页面登录"
-        case .pikpak: return "粘贴 refresh_token（建议改用账号密码登录）"
-        case .cloud189: return "需包含 COOKIE_LOGIN_USER（建议改用账号密码登录）"
-        case .dropbox: return "粘贴访问令牌（access token），或用「登录」按钮授权"
-        case .webdav: return "填写服务器地址、用户名和密码"
-        case .bilibili: return "需包含 SESSDATA"
-        case .douyin: return "需包含 sessionid"
-        case .xiaohongshu: return "需包含 web_session（登录后的值）"
-        case .pixiv: return "在电脑浏览器登录 pixiv.net 后复制 Cookie，需包含 PHPSESSID"
-        case .zhihu: return "需包含 z_c0 与 d_c0"
-        case .yuanbao: return "需包含 hy_user 与 hy_token"
+        case .quark, .uc: return L("需包含 __pus 与 __puus")
+        case .baidu: return L("需包含 BDUSS（建议同时包含 STOKEN）")
+        case .xunlei: return L("粘贴网页 localStorage 中 credentials_%1$@ 的值（JSON），或 access_token", "\(XunleiCredential.webClientId)")
+        case .pan123: return L("粘贴网页 localStorage 中 authorToken 的值")
+        case .pan115: return L("需包含 UID、CID、SEID")
+        case .c139: return L("需包含 authorization，或 Os_SSo_Sid 与 RMKEY")
+        case .guangya: return L("粘贴网页 localStorage 中的 access_token（建议改用账号密码 / 短信登录）")
+        case .ilanzou: return L("粘贴 {\"appToken\":…,\"uuid\":…} 形式的凭据（建议改用账号密码登录）")
+        case .lanzou: return L("需包含 ylogin 与 phpdisk_info")
+        case .aliyun: return L("粘贴网页 localStorage 中 token 的值（JSON），或 refresh_token")
+        case .onedrive: return L("请用「登录」按钮通过微软官方页面登录")
+        case .gdrive: return L("请用「登录」按钮通过 Google 官方页面登录")
+        case .pikpak: return L("粘贴 refresh_token（建议改用账号密码登录）")
+        case .cloud189: return L("需包含 COOKIE_LOGIN_USER（建议改用账号密码登录）")
+        case .dropbox: return L("粘贴访问令牌（access token），或用「登录」按钮授权")
+        case .webdav: return L("填写服务器地址、用户名和密码")
+        case .bilibili: return L("需包含 SESSDATA")
+        case .douyin: return L("需包含 sessionid")
+        case .xiaohongshu: return L("需包含 web_session（登录后的值）")
+        case .pixiv: return L("在电脑浏览器登录 pixiv.net 后复制 Cookie，需包含 PHPSESSID")
+        case .zhihu: return L("需包含 z_c0 与 d_c0")
+        case .yuanbao: return L("需包含 hy_user 与 hy_token")
         case .twitter, .instagram, .threads, .tiktok, .reddit, .facebook: return OverseasAccount.manualHint(self)
         }
     }
 
     var manualPlaceholder: String {
         switch self {
-        case .xunlei, .pan123, .guangya, .ilanzou, .aliyun, .pikpak, .dropbox: return "在电脑浏览器登录后，从开发者工具复制登录凭据"
-        default: return "在电脑浏览器登录后复制请求头里的 Cookie"
+        case .xunlei, .pan123, .guangya, .ilanzou, .aliyun, .pikpak, .dropbox: return L("在电脑浏览器登录后，从开发者工具复制登录凭据")
+        default: return L("在电脑浏览器登录后复制请求头里的 Cookie")
         }
     }
 

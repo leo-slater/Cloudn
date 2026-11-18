@@ -269,10 +269,34 @@ public struct VideoParseError: Error, LocalizedError, Sendable {
     /// 建议改用网页嗅探打开的地址（如短链展开后的终址）；nil 表示用原链接
     public let sniffURL: String?
 
+    private let localizedDetail: LocalizedMessage?
+
     public init(_ kind: VideoParseErrorKind, _ detail: String, sniffURL: String? = nil) {
+        self.init(kind, detail, localizedDetail: nil, sniffURL: sniffURL)
+    }
+
+    init(_ kind: VideoParseErrorKind, _ detail: LocalizedMessage, sniffURL: String? = nil) {
+        self.init(kind, detail.original, localizedDetail: detail, sniffURL: sniffURL)
+    }
+
+    private init(_ kind: VideoParseErrorKind, _ detail: String, localizedDetail: LocalizedMessage?, sniffURL: String?) {
         self.kind = kind
         self.detail = detail
+        self.localizedDetail = localizedDetail
         self.sniffURL = sniffURL
+    }
+
+    func withSniffURL(_ sniffURL: String) -> Self {
+        Self(kind, detail, localizedDetail: localizedDetail, sniffURL: sniffURL)
+    }
+
+    var displayMessage: String {
+        switch kind {
+        case .blocked, .notFound, .network:
+            return CloudnLocalization.text(errorDescription ?? "")
+        case .unsupported, .unknown:
+            return localizedDetail?.localized ?? CloudnLocalization.text(errorDescription ?? "")
+        }
     }
 
     /// 面向用户的一句话（细节留在 detail）

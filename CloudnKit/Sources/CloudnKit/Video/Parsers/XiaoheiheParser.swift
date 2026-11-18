@@ -119,7 +119,7 @@ struct XiaoheiheParser: VideoParser {
         case "failed":
             throw VideoParseError(.notFound, msg.isEmpty ? "小黑盒帖子不存在或已删除" : "小黑盒：\(msg)")
         default:
-            throw VideoParseError(.unknown, "小黑盒接口返回异常状态：\(status.isEmpty ? "未知" : status)")
+            throw VideoParseError(.unknown, LocalizedMessage("小黑盒接口返回异常状态：%1$@", "\(status.isEmpty ? "未知" : status)"))
         }
     }
 

@@ -11,7 +11,7 @@ enum QuickActions {
 
     /// 系统最多显示 4 个：固定「粘贴并解析」，其余优先放收藏，收藏不够再放「下载列表」
     static func items(bookmarks: [Bookmark]) -> [UIApplicationShortcutItem] {
-        var items = [UIApplicationShortcutItem(type: paste, localizedTitle: "粘贴并解析", localizedSubtitle: nil,
+        var items = [UIApplicationShortcutItem(type: paste, localizedTitle: L("粘贴并解析"), localizedSubtitle: nil,
                                                icon: UIApplicationShortcutIcon(systemImageName: "doc.on.clipboard"))]
         for b in bookmarks.prefix(3) {
             items.append(UIApplicationShortcutItem(type: bookmark, localizedTitle: b.title.isEmpty ? b.source : b.title,
@@ -20,7 +20,7 @@ enum QuickActions {
                                                    userInfo: ["text": b.text as NSString]))
         }
         if items.count < 4 {
-            items.append(UIApplicationShortcutItem(type: downloads, localizedTitle: "下载列表", localizedSubtitle: nil,
+            items.append(UIApplicationShortcutItem(type: downloads, localizedTitle: L("下载列表"), localizedSubtitle: nil,
                                                    icon: UIApplicationShortcutIcon(systemImageName: "arrow.down.circle")))
         }
         return items
@@ -40,7 +40,7 @@ enum QuickActions {
                 let text = UIPasteboard.general.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 if text.isEmpty {
                     model.selectedTab = .resolve
-                    model.show("剪贴板里没有内容")
+                    model.show(L("剪贴板里没有内容"))
                 } else {
                     model.pendingInput = text
                     model.selectedTab = .resolve

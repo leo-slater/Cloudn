@@ -23,18 +23,18 @@ struct AuthExportView: View {
             Form {
                 Group {
                     Section {
-                        SecureField("口令", text: $passphrase)
+                        SecureField(L("口令"), text: $passphrase)
                             .submitLabel(.next)
-                        SecureField("再输一次", text: $confirm)
+                        SecureField(L("再输一次"), text: $confirm)
                             .submitLabel(.done)
                             .onSubmit { if canGenerate && file == nil { generate() } }
                     } footer: {
-                        Text("将导出 \(app.accounts.accounts.count + app.accounts.extras.values.reduce(0) { $0 + $1.count }) 个账号的登录凭据。导入时需要同一口令，请牢记。")
+                        Text(L("将导出 %1$@ 个账号的登录凭据。导入时需要同一口令，请牢记。", "\(app.accounts.accounts.count + app.accounts.extras.values.reduce(0) { $0 + $1.count })"))
                     }
                     if let error { Section { Label(error, glyph: .warning).foregroundStyle(Color.clayInk) } }
                     if let file {
                         Section {
-                            ShareLink(item: file) { Label("分享 / 保存到「文件」", glyph: .share) }
+                            ShareLink(item: file) { Label(L("分享 / 保存到「文件」"), glyph: .share) }
                         } footer: {
                             Text(file.lastPathComponent)
                         }
@@ -42,7 +42,7 @@ struct AuthExportView: View {
                         Section {
                             Button { generate() } label: {
                                 HStack(spacing: 8) {
-                                    Text(generating ? "正在生成…" : "生成备份文件")
+                                    Text(generating ? L("正在生成…") : L("生成备份文件"))
                                     if generating { Spinner(size: 16) }
                                 }
                             }
@@ -50,11 +50,11 @@ struct AuthExportView: View {
                         } footer: {
                             // 说清楚为什么按钮不能点
                             if !confirm.isEmpty && passphrase != confirm {
-                                Text("两次输入的口令不一致").foregroundStyle(Color.clayInk)
+                                Text(L("两次输入的口令不一致")).foregroundStyle(Color.clayInk)
                             } else if !passphrase.isEmpty && passphrase.count < 6 {
-                                Text("口令至少 6 位").foregroundStyle(Color.clayInk)
+                                Text(L("口令至少 6 位")).foregroundStyle(Color.clayInk)
                             } else {
-                                Text("口令至少 6 位")
+                                Text(L("口令至少 6 位"))
                             }
                         }
                     }
@@ -62,9 +62,9 @@ struct AuthExportView: View {
                 .listRowBackground(Color.surface)
             }
             .paperList()
-            .navigationTitle("导出登录凭据")
+            .navigationTitle(L("导出登录凭据"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(L("关闭")) { dismiss() } } }
         }
         // 改了任一口令，之前生成的文件就不再对应当前口令：作废并删掉，要重新生成
         .onChange(of: passphrase) { discardFile() }
@@ -91,7 +91,7 @@ struct AuthExportView: View {
                 file = url
                 error = nil
             } catch {
-                self.error = error.localizedDescription
+                self.error = displayError(error)
             }
         }
     }
@@ -117,17 +117,17 @@ struct AuthImportView: View {
             Form {
                 Group {
                     Section {
-                        SecureField("备份时设置的口令", text: $passphrase)
+                        SecureField(L("备份时设置的口令"), text: $passphrase)
                             .submitLabel(.go)
                             .onSubmit { if !passphrase.isEmpty && !working { Task { await restore() } } }
                     } footer: {
-                        Text("导入后会覆盖本机同平台的已登录账号。")
+                        Text(L("导入后会覆盖本机同平台的已登录账号。"))
                     }
                     if let error { Section { Label(error, glyph: .warning).foregroundStyle(Color.clayInk) } }
                     Section {
                         Button { Task { await restore() } } label: {
                             HStack(spacing: 8) {
-                                Text(working ? "正在导入…" : "导入")
+                                Text(working ? L("正在导入…") : L("导入"))
                                 if working { Spinner(size: 16) }
                             }
                         }
@@ -137,9 +137,9 @@ struct AuthImportView: View {
                 .listRowBackground(Color.surface)
             }
             .paperList()
-            .navigationTitle("导入登录凭据")
+            .navigationTitle(L("导入登录凭据"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } } }
         }
     }
 
@@ -151,10 +151,10 @@ struct AuthImportView: View {
             let fileData = self.data, secret = self.passphrase
             let restored = try await Task.detached { try AuthBackup.decrypt(fileData, passphrase: secret) }.value
             await app.accounts.restore(restored.accounts, extras: restored.extras)
-            app.show("已导入 \(restored.count) 个账号")
+            app.show(L("已导入 %1$@ 个账号", "\(restored.count)"))
             dismiss()
         } catch {
-            self.error = error.localizedDescription
+            self.error = displayError(error)
         }
     }
 }

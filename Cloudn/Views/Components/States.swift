@@ -57,6 +57,6 @@ struct Spinner: View {
                 .rotationEffect(.degrees(t.truncatingRemainder(dividingBy: 0.9) / 0.9 * 360))
         }
         .frame(width: size, height: size)
-        .accessibilityLabel("加载中")
+        .accessibilityLabel(L("加载中"))
     }
 }

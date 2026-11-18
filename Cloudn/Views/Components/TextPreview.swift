@@ -28,7 +28,7 @@ struct TextPreviewView: View {
                     // 大段文本交给 UITextView：只排版看得见的部分，几 MB 也不卡
                     VStack(alignment: .leading, spacing: 0) {
                         if truncated {
-                            Label("文件较大，只显示前 2MB", glyph: .warning)
+                            Label(L("文件较大，只显示前 2MB"), glyph: .warning)
                                 .font(.footnote)
                                 .foregroundStyle(Color.ink3)
                                 .padding(.horizontal, 16)
@@ -38,7 +38,7 @@ struct TextPreviewView: View {
                     }
                 } else if let error {
                     ScrollView {
-                        EmptyStateCard(icon: .warning, title: "无法打开", detail: error, actionTitle: "重试") {
+                        EmptyStateCard(icon: .warning, title: L("无法打开"), detail: error, actionTitle: L("重试")) {
                             self.error = nil
                             Task { await load() }
                         }
@@ -47,7 +47,7 @@ struct TextPreviewView: View {
                 } else {
                     VStack(spacing: 12) {
                         Spinner(size: 26)
-                        Text("正在读取…").font(.footnote).foregroundStyle(Color.ink2)
+                        Text(L("正在读取…")).font(.footnote).foregroundStyle(Color.ink2)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -56,11 +56,11 @@ struct TextPreviewView: View {
             .navigationTitle(item.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("关闭") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("关闭")) { dismiss() } }
                 if let text {
                     ToolbarItem(placement: .primaryAction) {
                         Button { Clipboard.copy(text); copied += 1 } label: { Image(icon: .paste) }
-                            .accessibilityLabel("复制全文")
+                            .accessibilityLabel(L("复制全文"))
                             .sensoryFeedback(.success, trigger: copied)
                     }
                 }
@@ -72,13 +72,13 @@ struct TextPreviewView: View {
     private func load() async {
         do {
             let r = try await HTTPClient.fetchPrefix(item.url, headers: item.headers.map { ($0.key, $0.value) }, limit: Self.limit)
-            guard (200..<300).contains(r.status) else { throw CloudnError("读取失败（HTTP \(r.status)）") }
+            guard (200..<300).contains(r.status) else { throw CloudnError(L("读取失败（HTTP %1$@）", "\(r.status)")) }
             truncated = r.partial
             // 编码识别要把整段数据试解几遍，放到后台
             let data = Data(r.data)
             text = await Task.detached(priority: .userInitiated) { Self.decode(data) }.value
         } catch {
-            self.error = error.localizedDescription
+            self.error = displayError(error)
         }
     }
 

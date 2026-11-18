@@ -71,7 +71,7 @@ public enum DiskSpace {
     /// 需要的空间超过剩余空间时返回错误说明；任一方未知（≤ 0 / nil）时不拦
     public static func shortage(needed: Int64, available: Int64?) -> String? {
         guard needed > 0, let available, available >= 0, needed > available else { return nil }
-        return "存储空间不足：需要约 \(ByteFormat.string(needed))，剩余 \(ByteFormat.string(available))"
+        return CloudnLocalization.text("存储空间不足：需要约 %1$@，剩余 %2$@", "\(ByteFormat.string(needed))", "\(ByteFormat.string(available))")
     }
 
     /// 不够时抛出 TransferError

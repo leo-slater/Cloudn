@@ -57,9 +57,9 @@ extension KuaishouParser {
         if CollectionProgress.isStopRequested && posts.hasMore {
             notice = ProfileCollectionJS.stoppedNotice(posts.entries.count)
         } else if posts.entries.count >= ProfileCollectionJS.maxItems {
-            notice = "作品较多，只列出了前 \(posts.entries.count) 个"
+            notice = CloudnLocalization.text("作品较多，只列出了前 %1$@ 个", "\(posts.entries.count)")
         } else if posts.hasMore {
-            notice = "只加载到前 \(posts.entries.count) 个作品（快手要求验证或加载超时），可稍后重试"
+            notice = CloudnLocalization.text("只加载到前 %1$@ 个作品（快手要求验证或加载超时），可稍后重试", "\(posts.entries.count)")
         }
         return VideoParseResult(platform: platform, title: title, author: posts.author, cover: posts.entries.first?.cover ?? "",
                                 url: pageURL, notice: notice, entries: posts.entries)

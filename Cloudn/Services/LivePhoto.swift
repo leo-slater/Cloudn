@@ -73,7 +73,7 @@ enum LivePhoto {
 
     static func save(image: URL, video: URL) async throws {
         let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
-        guard status == .authorized || status == .limited else { throw LiveError("没有相册权限，请在系统设置中允许") }
+        guard status == .authorized || status == .limited else { throw LiveError(L("没有相册权限，请在系统设置中允许")) }
         let identifier = UUID().uuidString
         let work = FileManager.default.temporaryDirectory.appendingPathComponent("live-\(identifier)", isDirectory: true)
         try FileManager.default.createDirectory(at: work, withIntermediateDirectories: true)
@@ -95,7 +95,7 @@ enum LivePhoto {
     static func writeImage(_ source: URL, to output: URL, identifier: String) throws {
         guard let src = CGImageSourceCreateWithURL(source as CFURL, nil), CGImageSourceGetCount(src) > 0,
               let dest = CGImageDestinationCreateWithURL(output as CFURL, UTType.jpeg.identifier as CFString, 1, nil) else {
-            throw LiveError("实况照片的图片无法读取")
+            throw LiveError(L("实况照片的图片无法读取"))
         }
         var properties = (CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any]) ?? [:]
         var maker = (properties[kCGImagePropertyMakerAppleDictionary] as? [String: Any]) ?? [:]
@@ -103,13 +103,13 @@ enum LivePhoto {
         properties[kCGImagePropertyMakerAppleDictionary] = maker
         properties[kCGImageDestinationLossyCompressionQuality] = 0.95
         CGImageDestinationAddImageFromSource(dest, src, 0, properties as CFDictionary)
-        guard CGImageDestinationFinalize(dest) else { throw LiveError("实况照片的图片写入失败") }
+        guard CGImageDestinationFinalize(dest) else { throw LiveError(L("实况照片的图片写入失败")) }
     }
 
     /// 原样复制音视频（不重编码）成 MOV，写入内容标识与 still-image-time 元数据
     static func writeVideo(_ source: URL, to output: URL, identifier: String) async throws {
         let asset = AVURLAsset(url: source)
-        guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first else { throw LiveError("实况照片的视频无法读取") }
+        guard let videoTrack = try await asset.loadTracks(withMediaType: .video).first else { throw LiveError(L("实况照片的视频无法读取")) }
         let reader = try AVAssetReader(asset: asset)
         let writer = try AVAssetWriter(outputURL: output, fileType: .mov)
 
@@ -126,7 +126,7 @@ enum LivePhoto {
                                          sourceFormatHint: try await videoTrack.load(.formatDescriptions).first)
         videoIn.transform = try await videoTrack.load(.preferredTransform)
         videoIn.expectsMediaDataInRealTime = false
-        guard reader.canAdd(videoOut), writer.canAdd(videoIn) else { throw LiveError("实况照片的视频格式不支持") }
+        guard reader.canAdd(videoOut), writer.canAdd(videoIn) else { throw LiveError(L("实况照片的视频格式不支持")) }
         reader.add(videoOut)
         writer.add(videoIn)
         pairs.append((videoOut, videoIn))
@@ -153,11 +153,11 @@ enum LivePhoto {
                                                                     metadataSpecifications: [spec] as CFArray, formatDescriptionOut: &description)
         let metadataIn = AVAssetWriterInput(mediaType: .metadata, outputSettings: nil, sourceFormatHint: description)
         let adaptor = AVAssetWriterInputMetadataAdaptor(assetWriterInput: metadataIn)
-        guard writer.canAdd(metadataIn) else { throw LiveError("实况照片的视频写入失败") }
+        guard writer.canAdd(metadataIn) else { throw LiveError(L("实况照片的视频写入失败")) }
         writer.add(metadataIn)
 
         guard reader.startReading(), writer.startWriting() else {
-            throw LiveError("实况照片的视频处理失败：\(writer.error?.localizedDescription ?? reader.error?.localizedDescription ?? "未知错误")")
+            throw LiveError(L("实况照片的视频处理失败：%1$@", "\(writer.error?.localizedDescription ?? reader.error?.localizedDescription ?? L("未知错误"))"))
         }
         writer.startSession(atSourceTime: .zero)
 
@@ -199,7 +199,7 @@ enum LivePhoto {
         }
         reader.cancelReading()
         if writer.status != .completed {
-            throw LiveError("实况照片的视频写入失败：\(writer.error?.localizedDescription ?? "未知错误")")
+            throw LiveError(L("实况照片的视频写入失败：%1$@", "\(writer.error?.localizedDescription ?? L("未知错误"))"))
         }
     }
 
@@ -230,9 +230,9 @@ extension MediaTools {
     static func saveToPhotosSmart(_ url: URL) async throws -> String {
         if let pair = LivePhoto.pair(for: url) {
             try await LivePhoto.save(image: pair.image, video: pair.video)
-            return "已保存为实况照片"
+            return L("已保存为实况照片")
         }
         try await saveToPhotos(url)
-        return "已保存到相册"
+        return L("已保存到相册")
     }
 }

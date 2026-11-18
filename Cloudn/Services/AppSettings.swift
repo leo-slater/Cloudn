@@ -265,8 +265,8 @@ extension AppSettings {
 extension AppSettings {
     /// 预设主题色：每个都有深色模式下提亮的一份，避免深底上看不见
     static let accentPresets: [(name: String, hex: String, dark: String)] = [
-        ("陶土", "", ""), ("墨蓝", "3D5A80", "8FB3D9"), ("苔绿", "4F6F52", "8DB596"),
-        ("赭石", "A0682A", "D9A066"), ("葡萄", "6E4E7E", "B596C4"), ("墨黑", "2B2A27", "E6E1D6")
+        (L("陶土"), "", ""), (L("墨蓝"), "3D5A80", "8FB3D9"), (L("苔绿"), "4F6F52", "8DB596"),
+        (L("赭石"), "A0682A", "D9A066"), (L("葡萄"), "6E4E7E", "B596C4"), (L("墨黑"), "2B2A27", "E6E1D6")
     ]
 
     /// 当前强调色（浅色 / 深色各一份）；未自定义时是资源里的陶土色
@@ -357,8 +357,8 @@ enum PlatformIconStyle: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .line: return "线性"
-        case .solid: return "实心"
+        case .line: return L("线性")
+        case .solid: return L("实心")
         }
     }
 }
@@ -370,9 +370,9 @@ enum Appearance: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .system: return "跟随系统"
-        case .light: return "浅色"
-        case .dark: return "深色"
+        case .system: return L("跟随系统")
+        case .light: return L("浅色")
+        case .dark: return L("深色")
         }
     }
 

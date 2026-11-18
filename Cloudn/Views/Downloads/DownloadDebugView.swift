@@ -24,24 +24,24 @@ struct DownloadDebugView: View {
                 if let item {
                     content(item)
                 } else {
-                    EmptyStateCard(icon: .warning, title: "任务已删除")
+                    EmptyStateCard(icon: .warning, title: L("任务已删除"))
                         .padding(16)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(Color.paper)
                 }
             }
-            .navigationTitle("调试信息")
+            .navigationTitle(L("调试信息"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { dismiss() }
+                    Button(L("关闭")) { dismiss() }
                 }
                 if let item {
                     ToolbarItem(placement: .primaryAction) {
-                        Button("复制") {
+                        Button(L("复制")) {
                             // 走 Clipboard：解析页不会把复制出去的地址当成新链接再提示
                             Clipboard.copy(Self.snapshot(item, sha256: sha256, log: logLines))
-                            app.show("已复制调试信息")
+                            app.show(L("已复制调试信息"))
                         }
                     }
                 }
@@ -72,10 +72,10 @@ struct DownloadDebugView: View {
                                 .foregroundStyle(chunk.isDone ? Color.ink3 : Color.ink)
                         }
                         if item.chunks.count > 64 {
-                            Text("…另有 \(item.chunks.count - 64) 个分片，复制后可看到全部").font(.footnote).foregroundStyle(Color.ink3)
+                            Text(L("…另有 %1$@ 个分片，复制后可看到全部", "\(item.chunks.count - 64)")).font(.footnote).foregroundStyle(Color.ink3)
                         }
                     } header: {
-                        Text("分片（\(item.chunks.filter(\.isDone).count)/\(item.chunks.count) 完成）")
+                        Text(L("分片（%1$@/%2$@ 完成）", "\(item.chunks.filter(\.isDone).count)", "\(item.chunks.count)"))
                     }
                 }
                 if item.status == .completed, let url = hashTarget {
@@ -87,7 +87,7 @@ struct DownloadDebugView: View {
                                 Task { await computeHash(url) }
                             } label: {
                                 HStack {
-                                    Text(hashing ? "正在计算…" : "计算 SHA-256")
+                                    Text(hashing ? L("正在计算…") : L("计算 SHA-256"))
                                     Spacer()
                                     if hashing { Spinner(size: 18) }
                                 }
@@ -95,21 +95,21 @@ struct DownloadDebugView: View {
                             .disabled(hashing)
                         }
                     } header: {
-                        Text("文件校验")
+                        Text(L("文件校验"))
                     } footer: {
-                        Text("与发布方给出的校验值比对，确认文件完整、未被篡改。")
+                        Text(L("与发布方给出的校验值比对，确认文件完整、未被篡改。"))
                     }
                 }
                 Section {
                     if logLines.isEmpty {
-                        Text("诊断日志里没有这个任务的记录").font(.footnote).foregroundStyle(Color.ink3)
+                        Text(L("诊断日志里没有这个任务的记录")).font(.footnote).foregroundStyle(Color.ink3)
                     } else {
                         Text(logLines.joined(separator: "\n"))
                             .font(.monoSmall)
                             .textSelection(.enabled)
                     }
                 } header: {
-                    Text("相关日志")
+                    Text(L("相关日志"))
                 }
             }
             .listRowBackground(Color.surface)
@@ -136,7 +136,7 @@ struct DownloadDebugView: View {
                 hasher.update(data: data)
             }
             return hasher.finalize().map { String(format: "%02x", $0) }.joined()
-        }.value ?? "读取文件失败"
+        }.value ?? L("读取文件失败")
     }
 
     // MARK: - 内容
@@ -150,47 +150,47 @@ struct DownloadDebugView: View {
         let r = item.request
         let date = Date.FormatStyle(date: .numeric, time: .standard)
         var basic: [(String, String)] = [
-            ("文件名", r.fileName),
-            ("任务 ID", item.id.uuidString),
-            ("状态", statusText(item)),
-            ("来源 / 类型", "\(r.source) · \(kindText(r.kind))"),
-            ("创建时间", item.createdAt.formatted(date))
+            (L("文件名"), r.fileName),
+            (L("任务 ID"), item.id.uuidString),
+            (L("状态"), statusText(item)),
+            (L("来源 / 类型"), "\(r.source) · \(kindText(r.kind))"),
+            (L("创建时间"), item.createdAt.formatted(date))
         ]
-        if !r.folder.isEmpty { basic.append(("子目录", r.folder)) }
-        if let group = r.group { basic.append(("分组", group.title)) }
+        if !r.folder.isEmpty { basic.append((L("子目录"), r.folder)) }
+        if let group = r.group { basic.append((L("分组"), group.title)) }
         if let finished = item.finishedAt {
             let seconds = max(1, finished.timeIntervalSince(item.createdAt))
-            basic.append(("完成时间", finished.formatted(date)))
-            basic.append(("用时 / 平均速度", "\(Duration.seconds(seconds).formatted(.time(pattern: .hourMinuteSecond))) · \(ByteFormat.speed(Double(item.receivedBytes) / seconds))"))
+            basic.append((L("完成时间"), finished.formatted(date)))
+            basic.append((L("用时 / 平均速度"), "\(Duration.seconds(seconds).formatted(.time(pattern: .hourMinuteSecond))) · \(ByteFormat.speed(Double(item.receivedBytes) / seconds))"))
         }
 
         var progress: [(String, String)] = [
-            ("大小", item.totalBytes > 0 ? "\(ByteFormat.string(item.totalBytes))（\(item.totalBytes) 字节）" : "未知"),
-            ("已下载", "\(ByteFormat.string(item.receivedBytes))（\(item.receivedBytes) 字节）")
+            (L("大小"), item.totalBytes > 0 ? L("%1$@（%2$@ 字节）", "\(ByteFormat.string(item.totalBytes))", "\(item.totalBytes)") : L("未知")),
+            (L("已下载"), L("%1$@（%2$@ 字节）", "\(ByteFormat.string(item.receivedBytes))", "\(item.receivedBytes)"))
         ]
-        if item.status == .running { progress.append(("当前速度", ByteFormat.speed(item.speed))) }
-        if item.segmentsTotal > 0 { progress.append(("分段", "\(item.segmentsDone)/\(item.segmentsTotal)（阶段 \(item.phase)）")) }
-        if item.backgrounded { progress.append(("后台", "已交给系统后台下载")) }
-        if case .torrent = r.kind { progress.append(("节点", "已连接 \(item.peers) · 已知 \(item.knownPeers)")) }
-        if let note = item.note, !note.isEmpty { progress.append(("说明", note)) }
-        if let error = item.errorMessage, !error.isEmpty { progress.append(("失败原因", error)) }
+        if item.status == .running { progress.append((L("当前速度"), ByteFormat.speed(item.speed))) }
+        if item.segmentsTotal > 0 { progress.append((L("分段"), L("%1$@/%2$@（阶段 %3$@）", "\(item.segmentsDone)", "\(item.segmentsTotal)", "\(item.phase)"))) }
+        if item.backgrounded { progress.append((L("后台"), L("已交给系统后台下载"))) }
+        if case .torrent = r.kind { progress.append((L("节点"), L("已连接 %1$@ · 已知 %2$@", "\(item.peers)", "\(item.knownPeers)"))) }
+        if let note = item.note, !note.isEmpty { progress.append((L("说明"), note)) }
+        if let error = item.errorMessage, !error.isEmpty { progress.append((L("失败原因"), error)) }
 
-        var request: [(String, String)] = [("下载地址", r.url)]
-        if case .dash(let audio) = r.kind { request.append(("音轨地址", audio)) }
-        for (i, m) in (r.mirrors ?? []).enumerated() { request.append(("备用源 \(i + 1)", m.url)) }
+        var request: [(String, String)] = [(L("下载地址"), r.url)]
+        if case .dash(let audio) = r.kind { request.append((L("音轨地址"), audio)) }
+        for (i, m) in (r.mirrors ?? []).enumerated() { request.append((L("备用源 %1$@", "\(i + 1)"), m.url)) }
         if !r.headers.isEmpty {
             let lines = r.headers.sorted { $0.key.lowercased() < $1.key.lowercased() }.map { "\($0.key): \(maskHeader($0.key, $0.value))" }
-            request.append(("请求头", lines.joined(separator: "\n")))
+            request.append((L("请求头"), lines.joined(separator: "\n")))
         }
-        request.append(("直链过期时", r.canRefresh ? "可重新取链" : "不能重新取链（需重新解析）"))
-        if let cleanup = r.cleanup { request.append(("下载后清理", "\(cleanup.platform) 临时转存文件")) }
+        request.append((L("直链过期时"), r.canRefresh ? L("可重新取链") : L("不能重新取链（需重新解析）")))
+        if let cleanup = r.cleanup { request.append((L("下载后清理"), L("%1$@ 临时转存文件", "\(cleanup.platform)"))) }
 
         var output: [(String, String)] = []
-        if let path = item.outputPath { output.append(("保存位置", path)) }
-        if let exported = item.exportedTo { output.append(("已移到", exported)) }
+        if let path = item.outputPath { output.append((L("保存位置"), path)) }
+        if let exported = item.exportedTo { output.append((L("已移到"), exported)) }
 
-        return [InfoSection(title: "任务", rows: basic), InfoSection(title: "进度", rows: progress),
-                InfoSection(title: "请求", rows: request), InfoSection(title: "文件", rows: output)].filter { !$0.rows.isEmpty }
+        return [InfoSection(title: L("任务"), rows: basic), InfoSection(title: L("进度"), rows: progress),
+                InfoSection(title: L("请求"), rows: request), InfoSection(title: L("文件"), rows: output)].filter { !$0.rows.isEmpty }
     }
 
     static func chunkLine(_ i: Int, _ c: DownloadChunk) -> String {
@@ -205,26 +205,26 @@ struct DownloadDebugView: View {
         let k = key.lowercased()
         let sensitive = ["cookie", "authorization", "token", "x-csrf", "sign"].contains { k.contains($0) }
         guard sensitive, value.count > 8 else { return value }
-        return "\(value.prefix(6))…（共 \(value.count) 字符）"
+        return L("%1$@…（共 %2$@ 字符）", "\(value.prefix(6))", "\(value.count)")
     }
 
     static func statusText(_ item: DownloadItem) -> String {
         switch item.status {
-        case .queued: return "排队中"
-        case .running: return "下载中"
-        case .paused: return "已暂停"
-        case .merging: return "合并中"
-        case .completed: return "已完成"
-        case .failed: return "失败"
+        case .queued: return L("排队中")
+        case .running: return L("下载中")
+        case .paused: return L("已暂停")
+        case .merging: return L("合并中")
+        case .completed: return L("已完成")
+        case .failed: return L("失败")
         }
     }
 
     static func kindText(_ kind: DownloadKind) -> String {
         switch kind {
-        case .file: return "普通文件"
+        case .file: return L("普通文件")
         case .hls: return "m3u8（HLS）"
-        case .dash: return "音视频分轨（DASH）"
-        case .torrent(let files): return files.map { "BT（选了 \($0.count) 个文件）" } ?? "BT（全部文件）"
+        case .dash: return L("音视频分轨（DASH）")
+        case .torrent(let files): return files.map { L("BT（选了 %1$@ 个文件）", "\($0.count)") } ?? L("BT（全部文件）")
         }
     }
 
@@ -240,18 +240,18 @@ struct DownloadDebugView: View {
 
     /// 整份文本（复制用）：直链查询串里的签名去掉，免得贴出去就能被人直接下载
     static func snapshot(_ item: DownloadItem, sha256: String?, log: [String]) -> String {
-        var out = ["Cloudn \(AppModel.currentVersion) 下载调试信息"]
+        var out = [L("Cloudn %1$@ 下载调试信息", "\(AppModel.currentVersion)")]
         for section in sections(item) {
             out.append("\n[\(section.title)]")
             for (k, v) in section.rows { out.append("\(k)：\(stripQuery(v))") }
         }
         if !item.chunks.isEmpty {
-            out.append("\n[分片]")
+            out.append(L("\n[分片]"))
             out += item.chunks.enumerated().map { chunkLine($0.offset, $0.element) }
         }
         if let sha256 { out.append("\nSHA-256：\(sha256)") }
         if !log.isEmpty {
-            out.append("\n[相关日志]")
+            out.append(L("\n[相关日志]"))
             out += log
         }
         return out.joined(separator: "\n")

@@ -56,7 +56,7 @@ struct ImgurParser: VideoParser {
         case 404: throw VideoParseError(.notFound, "Imgur 内容不存在或已删除（HTTP 404）")
         case 403: throw VideoParseError(.blocked, "Imgur 拒绝了请求（HTTP 403），所在地区可能无法访问 Imgur")
         case 429: throw VideoParseError(.blocked, "Imgur 请求过于频繁（HTTP 429），请稍后重试")
-        default: throw VideoParseError(.unknown, "Imgur 接口请求失败（HTTP \(r.status)）")
+        default: throw VideoParseError(.unknown, LocalizedMessage("Imgur 接口请求失败（HTTP %1$@）", "\(r.status)"))
         }
         guard let json = r.json, json.isObject else { throw VideoParseError(.unknown, "Imgur 接口返回的不是合法 JSON") }
         return json

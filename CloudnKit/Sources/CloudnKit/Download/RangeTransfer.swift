@@ -451,7 +451,7 @@ struct RangeTransfer {
     static func statusMessage(_ status: Int) -> String {
         switch status {
         case 403: return "HTTP 403：直链已失效或被拒绝，请重新解析后下载"
-        case 404, 410: return "HTTP \(status)：文件不存在或直链已过期"
+        case 404, 410: return CloudnLocalization.text("HTTP %1$@：文件不存在或直链已过期", "\(status)")
         case 412: return "HTTP 412：直链校验失败，请重新解析后下载"
         case 416: return "HTTP 416：请求范围无效"
         case 429: return "HTTP 429：请求太频繁，服务器限流"

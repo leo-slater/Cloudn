@@ -17,7 +17,7 @@ struct WebDAVLoginView: View {
 
     /// 常见服务的地址，点一下填入
     private let presets: [(String, String)] = [
-        ("坚果云", "https://dav.jianguoyun.com/dav/"),
+        (L("坚果云"), "https://dav.jianguoyun.com/dav/"),
         ("OpenList / Alist", "http://192.168.1.2:5244/dav/"),
     ]
 
@@ -30,7 +30,7 @@ struct WebDAVLoginView: View {
             Form {
                 Group {
                     Section {
-                        TextField("服务器地址，如 https://dav.example.com/dav/", text: $url)
+                        TextField(L("服务器地址，如 https://dav.example.com/dav/"), text: $url)
                             .keyboardType(.URL)
                             .textContentType(.URL)
                             .textInputAutocapitalization(.never)
@@ -38,22 +38,22 @@ struct WebDAVLoginView: View {
                             .focused($field, equals: .url)
                             .submitLabel(.next)
                             .onSubmit { field = .username }
-                        TextField("用户名", text: $username)
+                        TextField(L("用户名"), text: $username)
                             .textContentType(.username)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .focused($field, equals: .username)
                             .submitLabel(.next)
                             .onSubmit { field = .password }
-                        SecureField("密码 / 应用密码", text: $password)
+                        SecureField(L("密码 / 应用密码"), text: $password)
                             .textContentType(.password)
                             .focused($field, equals: .password)
                             .submitLabel(.go)
                             .onSubmit { if canSubmit { submit() } }
                     } footer: {
-                        Text("坚果云需在网页版「账户信息 › 安全选项」里生成应用密码。地址、用户名和密码只保存在本机钥匙串。")
+                        Text(L("坚果云需在网页版「账户信息 › 安全选项」里生成应用密码。地址、用户名和密码只保存在本机钥匙串。"))
                     }
-                    Section("常用地址") {
+                    Section(L("常用地址")) {
                         ForEach(presets, id: \.1) { name, address in
                             Button {
                                 url = address
@@ -73,13 +73,13 @@ struct WebDAVLoginView: View {
                 .listRowBackground(Color.surface)
             }
             .paperList()
-            .navigationTitle("连接 WebDAV")
+            .navigationTitle(L("连接 WebDAV"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     if working { Spinner() } else {
-                        Button("连接") { submit() }.disabled(!canSubmit)
+                        Button(L("连接")) { submit() }.disabled(!canSubmit)
                     }
                 }
             }
@@ -97,10 +97,10 @@ struct WebDAVLoginView: View {
         Task {
             defer { working = false }
             if let name = await app.accounts.login(.webdav, cookie: credential) {
-                app.show("已连接：\(name)")
+                app.show(L("已连接：%1$@", "\(name)"))
                 dismiss()
             } else {
-                error = "连接失败：请检查地址、用户名和密码"
+                error = L("连接失败：请检查地址、用户名和密码")
             }
         }
     }

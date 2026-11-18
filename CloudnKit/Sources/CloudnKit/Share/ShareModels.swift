@@ -189,11 +189,24 @@ public enum AccountKind: String, Codable, CaseIterable, Sendable, Identifiable {
 public struct CloudnError: Error, LocalizedError, Sendable, Equatable {
     public let message: String
     public let code: Int
+    private let localizedMessage: LocalizedMessage?
 
     public init(_ message: String, code: Int = 0) {
         self.message = message
         self.code = code
+        self.localizedMessage = nil
+    }
+
+    init(_ message: LocalizedMessage, code: Int = 0) {
+        self.message = message.original
+        self.code = code
+        self.localizedMessage = message
     }
 
     public var errorDescription: String? { message }
+    var displayMessage: String { localizedMessage?.localized ?? CloudnLocalization.text(message) }
+
+    public static func == (lhs: CloudnError, rhs: CloudnError) -> Bool {
+        lhs.code == rhs.code && lhs.message == rhs.message
+    }
 }

@@ -170,9 +170,9 @@ public final class GoogleDriveResolver: ShareResolver, @unchecked Sendable {
             return CloudnError("这个文件下载人数过多，Google 暂时限制了下载，请稍后再试")
         }
         if let m = Rx(#"<p class="uc-error-subcaption">(.*?)</p>"#).first(in: html) {
-            return CloudnError("Google 云端硬盘：\(Self.stripTags(m))")
+            return CloudnError(LocalizedMessage("Google 云端硬盘：%1$@", "\(Self.stripTags(m))"))
         }
-        return CloudnError("Google 云端硬盘没有返回文件（HTTP \(r.status)），请确认链接已公开")
+        return CloudnError(LocalizedMessage("Google 云端硬盘没有返回文件（HTTP %1$@），请确认链接已公开", "\(r.status)"))
     }
 
     static func fileName(fromDisposition disposition: String) -> String? {
@@ -199,7 +199,7 @@ public final class GoogleDriveResolver: ShareResolver, @unchecked Sendable {
         if !key.isEmpty { url += "?resourcekey=\(key)" }
         let r = try await client.send(HTTPRequest(url: url, headers: [("User-Agent", Self.ua)]))
         if r.url.contains("accounts.google.com") { throw CloudnError("这个 Google 文档未公开分享（需设为「知道链接的任何人」可查看）") }
-        guard r.isSuccess else { throw CloudnError("Google 文档无法打开（HTTP \(r.status)）") }
+        guard r.isSuccess else { throw CloudnError(LocalizedMessage("Google 文档无法打开（HTTP %1$@）", "\(r.status)")) }
         var title = Rx(#"<meta property="og:title" content="([^"]*)""#).first(in: r.text).map(Self.decodeEntities) ?? ""
         if title.isEmpty {
             title = Rx(#"<title>([^<]*)</title>"#).first(in: r.text).map(Self.decodeEntities)?
@@ -264,7 +264,7 @@ public final class GoogleDriveResolver: ShareResolver, @unchecked Sendable {
             throw CloudnError("这个 Google 云端硬盘文件夹未公开分享（需设为「知道链接的任何人」可查看）")
         }
         if r.status == 404 { throw CloudnError("Google 云端硬盘文件夹不存在或已被删除") }
-        guard r.isSuccess else { throw CloudnError("Google 云端硬盘文件夹打开失败（HTTP \(r.status)）") }
+        guard r.isSuccess else { throw CloudnError(LocalizedMessage("Google 云端硬盘文件夹打开失败（HTTP %1$@）", "\(r.status)")) }
         return Self.parseFolderPage(r.text)
     }
 

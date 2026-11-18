@@ -39,8 +39,8 @@ struct PasswordLoginView: View {
             Form {
                 if provider?.supportsSMS == true {
                     Section {
-                        Picker("登录方式", selection: $mode) {
-                            ForEach(Mode.allCases) { Text($0.rawValue).tag($0) }
+                        Picker(L("登录方式"), selection: $mode) {
+                            ForEach(Mode.allCases) { Text(L($0.rawValue)).tag($0) }
                         }
                         .pickerStyle(.segmented)
                         .listRowBackground(Color.clear)
@@ -51,33 +51,33 @@ struct PasswordLoginView: View {
                     switch mode {
                     case .password:
                         Section {
-                            TextField(provider?.accountHint ?? "账号", text: $account)
+                            TextField(provider?.accountHint ?? L("账号"), text: $account)
                                 .textContentType(.username)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
                                 .focused($field, equals: .account)
                                 .submitLabel(.next)
                                 .onSubmit { field = .password }
-                            SecureField("密码", text: $password)
+                            SecureField(L("密码"), text: $password)
                                 .textContentType(.password)
                                 .focused($field, equals: .password)
                                 .submitLabel(.go)
                                 .onSubmit { if !account.isEmpty && !password.isEmpty { submit() } }
                         } footer: {
-                            Text("密码只用于本次登录，不会保存。")
+                            Text(L("密码只用于本次登录，不会保存。"))
                         }
                     case .sms:
                         Section {
-                            TextField("手机号", text: $phone)
+                            TextField(L("手机号"), text: $phone)
                                 .keyboardType(.phonePad)
                                 .textContentType(.telephoneNumber)
                                 .focused($field, equals: .phone)
                             HStack {
-                                TextField("验证码", text: $code)
+                                TextField(L("验证码"), text: $code)
                                     .keyboardType(.numberPad)
                                     .textContentType(.oneTimeCode)
                                     .focused($field, equals: .code)
-                                Button(countdown > 0 ? "\(countdown) 秒" : (challenge == nil ? "获取验证码" : "重新获取")) { sendCode() }
+                                Button(countdown > 0 ? L("%1$@ 秒", "\(countdown)") : (challenge == nil ? L("获取验证码") : L("重新获取"))) { sendCode() }
                                     .disabled(phone.isEmpty || countdown > 0 || working)
                                     .buttonStyle(.borderless)
                             }
@@ -97,16 +97,16 @@ struct PasswordLoginView: View {
                 // 数字键盘没有回车键：给一个「完成」收起键盘
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
-                    Button("完成") { field = nil }
+                    Button(L("完成")) { field = nil }
                 }
             }
-            .navigationTitle("登录\(kind.displayName)")
+            .navigationTitle(L("登录%1$@", "\(L(kind.displayName))"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     if working { Spinner() } else {
-                        Button("登录") { submit() }
+                        Button(L("登录")) { submit() }
                             .disabled(mode == .password ? (account.isEmpty || password.isEmpty) : (challenge == nil || code.isEmpty))
                     }
                 }
@@ -117,7 +117,7 @@ struct PasswordLoginView: View {
                         // 设备已通过验证：自动重新登录
                         submit()
                     } else {
-                        error = "未完成安全验证；也可以改用短信验证码登录"
+                        error = L("未完成安全验证；也可以改用短信验证码登录")
                     }
                 }
             }
@@ -144,7 +144,7 @@ struct PasswordLoginView: View {
                 challenge = try await provider.sendSMS(phone: phone)
                 countdown = 60
             } catch {
-                self.error = error.localizedDescription
+                self.error = displayError(error)
             }
         }
     }
@@ -165,10 +165,10 @@ struct PasswordLoginView: View {
                     credential = try await provider.loginSMS(challenge, code: code)
                 }
                 if let name = await app.accounts.login(kind, cookie: credential) {
-                    app.show("已登录：\(name)")
+                    app.show(L("已登录：%1$@", "\(name)"))
                     dismiss()
                 } else {
-                    error = "登录成功，但凭据校验未通过，请稍后重试"
+                    error = L("登录成功，但凭据校验未通过，请稍后重试")
                 }
             } catch let challenge as LoginVerificationRequired {
                 verification = VerificationItem(challenge: challenge)
@@ -180,7 +180,7 @@ struct PasswordLoginView: View {
                     Task { @MainActor in sendCode() }
                     return
                 }
-                self.error = error.localizedDescription
+                self.error = displayError(error)
             }
         }
     }

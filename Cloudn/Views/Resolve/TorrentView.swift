@@ -35,7 +35,7 @@ struct TorrentView: View {
     private var selectedSize: Int64 { files.reduce(0) { selected.contains($1.id) ? $0 + $1.length : $0 } }
     private var title: String {
         if let info { return info.name }
-        return target.magnet.displayName.isEmpty ? "磁力链接" : target.magnet.displayName
+        return target.magnet.displayName.isEmpty ? L("磁力链接") : target.magnet.displayName
     }
 
     var body: some View {
@@ -46,7 +46,7 @@ struct TorrentView: View {
                 if let info {
                     fileSection(info)
                 } else if let errorMessage {
-                    EmptyStateCard(icon: .warning, title: "没有拿到种子信息", detail: errorMessage, actionTitle: "重试") {
+                    EmptyStateCard(icon: .warning, title: L("没有拿到种子信息"), detail: errorMessage, actionTitle: L("重试")) {
                         app.torrents.start(target.magnet)
                     }
                 } else {
@@ -69,15 +69,15 @@ struct TorrentView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    Button { Clipboard.copy(target.magnet.uri); app.show("已复制磁力链接") } label: {
-                        Label { Text("复制磁力链接") } icon: { Image(icon: .link) }
+                    Button { Clipboard.copy(target.magnet.uri); app.show(L("已复制磁力链接")) } label: {
+                        Label { Text(L("复制磁力链接")) } icon: { Image(icon: .link) }
                     }
                     // 走 Clipboard：解析页不会把刚复制的特征码当成「剪贴板里有一个链接」再提示
-                    Button { Clipboard.copy(target.magnet.hexHash); app.show("已复制特征码") } label: {
-                        Label { Text("复制特征码") } icon: { Image(icon: .tag) }
+                    Button { Clipboard.copy(target.magnet.hexHash); app.show(L("已复制特征码")) } label: {
+                        Label { Text(L("复制特征码")) } icon: { Image(icon: .tag) }
                     }
                 } label: { Image(icon: .more).foregroundStyle(Color.ink) }
-                .accessibilityLabel("更多")
+                .accessibilityLabel(L("更多"))
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -95,14 +95,14 @@ struct TorrentView: View {
         .sensoryFeedback(.selection, trigger: selected)
         .onAppear {
             // 一打开就记进「最近」：还没拿到种子信息就退出，也能从解析页找回来
-            if info == nil { app.bookmarks.record(title: title, text: target.magnet.uri, source: "磁力链接") }
+            if info == nil { app.bookmarks.record(title: title, text: target.magnet.uri, source: L("磁力链接")) }
             app.torrents.start(target.magnet)
             if let info, selected.isEmpty { selected = Set(info.visibleFiles.map(\.id)) }
         }
         .onChange(of: info?.hexHash) { _, _ in
             guard let info else { return }
             selected = Set(info.visibleFiles.map(\.id))
-            app.bookmarks.record(title: info.name, text: target.magnet.uri, source: "磁力链接")
+            app.bookmarks.record(title: info.name, text: target.magnet.uri, source: L("磁力链接"))
         }
     }
 
@@ -112,12 +112,12 @@ struct TorrentView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 6) {
                 PlatformGlyph(mark: .magnet, size: 15)
-                Text("磁力链接")
+                Text(L("磁力链接"))
                 if let info {
                     Text("·")
                     Text(ByteFormat.string(info.totalLength))
                     Text("·")
-                    Text("\(info.visibleFiles.count) 个文件")
+                    Text(L("%1$@ 个文件", "\(info.visibleFiles.count)"))
                 }
             }
             .font(.footnote)
@@ -151,8 +151,8 @@ struct TorrentView: View {
                     .frame(width: 36, height: 36)
                     .background(Color.claySoft, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("离线到网盘").font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
-                    Text("由" + app.offlineDrives.prefix(3).map(\.displayName).joined(separator: "、") + "下载，不占手机流量")
+                    Text(L("离线到网盘")).font(.subheadline.weight(.semibold)).foregroundStyle(Color.ink)
+                    Text(L("由") + app.offlineDrives.prefix(3).map { L($0.displayName) }.joined(separator: "、") + L("下载，不占手机流量"))
                         .font(.caption).foregroundStyle(Color.ink3).lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -169,21 +169,21 @@ struct TorrentView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 Spinner(size: 18)
-                Text("正在从节点获取种子信息").font(.subheadline.weight(.medium)).foregroundStyle(Color.ink)
+                Text(L("正在从节点获取种子信息")).font(.subheadline.weight(.medium)).foregroundStyle(Color.ink)
             }
-            Text(peers.known == 0 ? "正在通过 DHT 与 Tracker 寻找节点…" : "已连接 \(peers.connected) 个节点 · 已发现 \(peers.known) 个")
+            Text(peers.known == 0 ? L("正在通过 DHT 与 Tracker 寻找节点…") : L("已连接 %1$@ 个节点 · 已发现 %2$@ 个", "\(peers.connected)", "\(peers.known)"))
                 .font(.footnote.monospacedDigit())
                 .foregroundStyle(Color.ink2)
                 .contentTransition(.numericText())
             if !note.isEmpty {
                 Text(note).font(.caption.monospacedDigit()).foregroundStyle(Color.ink3)
             }
-            Text("热门资源通常几秒就绪，冷门的可能要几分钟。离开此页会继续查找，可从解析页「最近」回来。")
+            Text(L("热门资源通常几秒就绪，冷门的可能要几分钟。离开此页会继续查找，可从解析页「最近」回来。"))
                 .font(.caption)
                 .foregroundStyle(Color.ink3)
                 .fixedSize(horizontal: false, vertical: true)
             Button(action: downloadWithoutWaiting) {
-                Label("直接全部下载", glyph: .download).frame(maxWidth: .infinity)
+                Label(L("直接全部下载"), glyph: .download).frame(maxWidth: .infinity)
             }
             .buttonStyle(PillButtonStyle(kind: .secondary, height: 40))
             .padding(.top, 4)
@@ -202,10 +202,10 @@ struct TorrentView: View {
         let multi = files.count > 1
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
-                SectionLabel(title: "文件 \(files.count) 个")
+                SectionLabel(title: L("文件 %1$@ 个", "\(files.count)"))
                 Spacer()
                 if multi {
-                    Button(selected.count == files.count ? "全不选" : "全选") {
+                    Button(selected.count == files.count ? L("全不选") : L("全选")) {
                         selected = selected.count == files.count ? [] : Set(files.map(\.id))
                     }
                     .font(.footnote.weight(.medium))
@@ -218,7 +218,7 @@ struct TorrentView: View {
                 }
             }
             .card()
-            Text("只下载不上传；切到后台约半分钟后暂停，回到前台自动继续。")
+            Text(L("只下载不上传；切到后台约半分钟后暂停，回到前台自动继续。"))
                 .font(.caption)
                 .foregroundStyle(Color.ink3)
                 .padding(.horizontal, 4)
@@ -257,7 +257,7 @@ struct TorrentView: View {
     private var bottomBar: some View {
         let count = selected.count
         let all = count == files.count
-        let label = count == 0 ? "选择要下载的文件" : (all ? "全部下载" : "下载所选 · \(count) 个") + " · " + ByteFormat.string(selectedSize)
+        let label = count == 0 ? L("选择要下载的文件") : (all ? L("全部下载") : L("下载所选 · %1$@ 个", "\(count)")) + " · " + ByteFormat.string(selectedSize)
         return Button(action: download) {
             HStack(spacing: 6) {
                 Image(icon: .download)
@@ -275,14 +275,14 @@ struct TorrentView: View {
     /// 不等种子信息：直接建下载任务（下载任务自己去取，进度与节点数在下载页看）
     private func downloadWithoutWaiting() {
         guard !isQueued(target.magnet) else {
-            app.show("这个种子已在下载列表中")
+            app.show(L("这个种子已在下载列表中"))
             return
         }
         app.torrents.cancel(target.magnet)
         let dn = target.magnet.displayName.trimmingCharacters(in: .whitespaces)
-        let name = dn.isEmpty ? "磁力链接 " + String(target.magnet.hexHash.prefix(8)) : dn
+        let name = dn.isEmpty ? L("磁力链接 ") + String(target.magnet.hexHash.prefix(8)) : dn
         app.downloads.enqueue(DownloadRequest(url: target.magnet.uri, fileName: name, kind: .torrent(files: nil), source: "磁力链接"))
-        app.show("已加入下载，种子信息稍后获取")
+        app.show(L("已加入下载，种子信息稍后获取"))
     }
 
     private func isQueued(_ magnet: MagnetLink) -> Bool {
@@ -299,12 +299,12 @@ struct TorrentView: View {
         // 链接里带上种子名，任务在元数据缓存丢失时也有个像样的名字
         let magnet = MagnetLink(infoHash: target.magnet.infoHash, displayName: info.name, trackers: target.magnet.trackers)
         guard !isQueued(magnet) else {
-            app.show("这个种子已在下载列表中")
+            app.show(L("这个种子已在下载列表中"))
             return
         }
         app.downloads.enqueue(DownloadRequest(url: magnet.uri, fileName: info.name,
                                               kind: .torrent(files: all ? nil : selected.sorted()),
                                               expectedSize: selectedSize, source: "磁力链接"))
-        app.show("已加入下载")
+        app.show(L("已加入下载"))
     }
 }

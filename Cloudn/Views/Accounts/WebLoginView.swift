@@ -24,7 +24,7 @@ struct WebLoginView: View {
                         if store.loadError == nil && !store.committed {
                             VStack(spacing: 10) {
                                 Spinner()
-                                Text("正在打开 \(kind.loginURL.host ?? "登录页")…").font(.footnote).foregroundStyle(Color.ink3)
+                                Text(L("正在打开 %1$@…", "\(kind.loginURL.host ?? L("登录页"))")).font(.footnote).foregroundStyle(Color.ink3)
                             }
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(Color.surface)
@@ -33,19 +33,19 @@ struct WebLoginView: View {
                         if store.blank && store.loadError == nil {
                             VStack(spacing: 12) {
                                 IconView(.warning, size: 28).foregroundStyle(Color.clayInk)
-                                Text("登录页没有显示内容").font(.headline).foregroundStyle(Color.ink)
+                                Text(L("登录页没有显示内容")).font(.headline).foregroundStyle(Color.ink)
                                 Text(store.blankHint).font(.footnote).foregroundStyle(Color.ink2).multilineTextAlignment(.center)
-                                Button("重试") { store.reload(kind.loginURL) }
+                                Button(L("重试")) { store.reload(kind.loginURL) }
                                     .buttonStyle(PillButtonStyle(kind: .primary, height: 42))
                                 if !store.desktop && store.lastStatus != 429 && store.lastStatus != 403 {
-                                    Button("改用电脑版页面") { store.switchToDesktop(kind.loginURL) }
+                                    Button(L("改用电脑版页面")) { store.switchToDesktop(kind.loginURL) }
                                         .buttonStyle(PillButtonStyle(kind: .secondary, height: 42))
                                 }
-                                Button("复制排查信息") {
+                                Button(L("复制排查信息")) {
                                     Task {
                                         let info = await store.diagnostics()
                                         Clipboard.copy(info)
-                                        app.show("已复制排查信息，可以粘贴发给开发者")
+                                        app.show(L("已复制排查信息，可以粘贴发给开发者"))
                                     }
                                 }
                                 .font(.footnote.weight(.medium))
@@ -57,9 +57,9 @@ struct WebLoginView: View {
                         if let error = store.loadError {
                             VStack(spacing: 12) {
                                 IconView(.warning, size: 28).foregroundStyle(Color.clayInk)
-                                Text("登录页打开失败").font(.headline).foregroundStyle(Color.ink)
+                                Text(L("登录页打开失败")).font(.headline).foregroundStyle(Color.ink)
                                 Text(error).font(.footnote).foregroundStyle(Color.ink2).multilineTextAlignment(.center)
-                                Button("重试") { store.reload(kind.loginURL) }
+                                Button(L("重试")) { store.reload(kind.loginURL) }
                                     .buttonStyle(PillButtonStyle(kind: .primary, height: 42))
                             }
                             .padding(24)
@@ -81,13 +81,13 @@ struct WebLoginView: View {
                     .background(Color.surface)
                 }
             }
-            .navigationTitle("登录\(kind.displayName)")
+            .navigationTitle(L("登录%1$@", "\(L(kind.displayName))"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(L("取消")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     if verifying { Spinner() } else {
-                        Button("完成") { Task { await finish(manual: true) } }
+                        Button(L("完成")) { Task { await finish(manual: true) } }
                     }
                 }
             }
@@ -99,13 +99,13 @@ struct WebLoginView: View {
         }
         .task {
             hint = switch kind {
-            case .quark: "可用手机号验证码登录；若只显示二维码，可在页面中切换登录方式"
-            case .xunlei, .pan123: "登录后会自动识别；未识别时点「完成」"
-            case .aliyun: "切换到短信验证码或账号密码登录（二维码需另一台设备扫），登录后自动识别"
-            case .douyin: "点右上角「登录」，用手机号验证码登录，登录后自动识别"
-            case .pixiv: "请用 pixiv 账号密码登录；Google / Apple 账号登录在内嵌网页中无法使用"
-            case .tiktok: "选择「使用手机号 / 邮箱 / 用户名登录」；Google / Apple 账号登录在内嵌网页中无法使用"
-            case .twitter, .instagram, .threads, .reddit, .facebook: "请用账号密码登录；Google / Apple 账号登录在内嵌网页中无法使用"
+            case .quark: L("可用手机号验证码登录；若只显示二维码，可在页面中切换登录方式")
+            case .xunlei, .pan123: L("登录后会自动识别；未识别时点「完成」")
+            case .aliyun: L("切换到短信验证码或账号密码登录（二维码需另一台设备扫），登录后自动识别")
+            case .douyin: L("点右上角「登录」，用手机号验证码登录，登录后自动识别")
+            case .pixiv: L("请用 pixiv 账号密码登录；Google / Apple 账号登录在内嵌网页中无法使用")
+            case .tiktok: L("选择「使用手机号 / 邮箱 / 用户名登录」；Google / Apple 账号登录在内嵌网页中无法使用")
+            case .twitter, .instagram, .threads, .reddit, .facebook: L("请用账号密码登录；Google / Apple 账号登录在内嵌网页中无法使用")
             default: nil
             }
             // 轮询登录态：关键凭据出现即自动校验保存；同一份凭据校验失败过就不再重复请求
@@ -128,19 +128,19 @@ struct WebLoginView: View {
         let credential = await store.credential(for: kind)
         guard kind.looksLoggedIn(credential) else {
             if manual {
-                let msg = "还没有检测到登录状态，请先在页面中完成登录"
+                let msg = L("还没有检测到登录状态，请先在页面中完成登录")
                 hint = msg
                 app.show(msg, error: true)
             }
             return false
         }
         if let name = await app.accounts.login(kind, cookie: credential, webLogin: true) {
-            app.show("已登录：\(name)")
+            app.show(L("已登录：%1$@", "\(name)"))
             dismiss()
             return true
         }
         if manual {
-            let msg = "登录状态校验失败，请确认已在页面中完成登录后再点「完成」"
+            let msg = L("登录状态校验失败，请确认已在页面中完成登录后再点「完成」")
             hint = msg
             app.show(msg, error: true)
         }
@@ -204,23 +204,23 @@ final class WebLoginStore {
             let site = self.lastHost.replacingOccurrences(of: "www.", with: "")
             if self.lastStatus == 429 || self.lastStatus == 403 {
                 // Instagram 等对它认为可疑的 IP（机房、VPN 出口）直接回 429 / 403 和空页面：换网络环境才行，换页面版本没用
-                self.blankHint = "\(site) 拒绝了访问（HTTP \(self.lastStatus)）。通常是当前网络的出口 IP（VPN / 机房节点）被限制，与 App 无关。\n\n"
-                    + "请换个节点（最好是住宅 IP）或换个网络后重试，也可以稍后再试。"
+                self.blankHint = L("%1$@ 拒绝了访问（HTTP %2$@）。通常是当前网络的出口 IP（VPN / 机房节点）被限制，与 App 无关。\n\n", "\(site)", "\(self.lastStatus)")
+                    + L("请换个节点（最好是住宅 IP）或换个网络后重试，也可以稍后再试。")
                 self.blank = true
                 return
             }
             self.blankHint = self.overseas
-                ? "页面资源没有加载出来，常见于 VPN 没代理它的资源域名（如 cdninstagram.com、fbcdn.net）。\n\n可把 VPN 切到全局模式后重试，或改用电脑版页面。"
-                : "页面打开了，但内容没有加载出来，可以重试或改用电脑版页面。"
+                ? L("页面资源没有加载出来，常见于 VPN 没代理它的资源域名（如 cdninstagram.com、fbcdn.net）。\n\n可把 VPN 切到全局模式后重试，或改用电脑版页面。")
+                : L("页面打开了，但内容没有加载出来，可以重试或改用电脑版页面。")
             self.blank = true
         }
     }
 
     /// 排查信息（页面结构摘要、出错的脚本 / 资源、UA），同时写进诊断日志
     func diagnostics() async -> String {
-        guard let webView else { return "没有网页" }
-        let value = (try? await webView.evaluateJavaScript(LoginWebView.diagnosticsScript) as? String) ?? "读取失败"
-        let text = "Cloudn 网页登录排查\n系统 iOS \(UIDevice.current.systemVersion) · 电脑版页面 \(desktop ? "是" : "否")\n\(value)"
+        guard let webView else { return L("没有网页") }
+        let value = (try? await webView.evaluateJavaScript(LoginWebView.diagnosticsScript) as? String) ?? L("读取失败")
+        let text = L("Cloudn 网页登录排查\n系统 iOS %1$@ · 电脑版页面 %2$@\n%3$@", "\(UIDevice.current.systemVersion)", "\(desktop ? L("是") : L("否"))", "\(value)")
         Log.info("网页登录：排查信息 \(value)")
         return text
     }
@@ -239,8 +239,8 @@ final class WebLoginStore {
         Log.error("网页登录：打开 \(url.host ?? "") 超时（20 秒没有收到页面）")
         webView?.stopLoading()
         loadError = overseas
-            ? "连接 \(url.host ?? "登录页") 超时。\n\n海外平台需开启 VPN，或在「设置 › 网络代理」中填写代理"
-            : "网络连接超时，请检查网络后重试"
+            ? L("连接 %1$@ 超时。\n\n海外平台需开启 VPN，或在「设置 › 网络代理」中填写代理", "\(url.host ?? L("登录页"))")
+            : L("网络连接超时，请检查网络后重试")
     }
 
     func failed(_ error: Error) {
@@ -252,7 +252,7 @@ final class WebLoginStore {
         var message = e.localizedDescription
         if e.domain == NSURLErrorDomain, [NSURLErrorTimedOut, NSURLErrorCannotConnectToHost, NSURLErrorNetworkConnectionLost,
                                           NSURLErrorCannotFindHost, NSURLErrorSecureConnectionFailed].contains(e.code), overseas {
-            message += "\n\n海外平台需开启 VPN，或在「设置 › 网络代理」中填写代理"
+            message += L("\n\n海外平台需开启 VPN，或在「设置 › 网络代理」中填写代理")
         }
         loadError = message
     }

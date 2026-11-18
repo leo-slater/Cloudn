@@ -107,7 +107,7 @@ extension OneDriveResolver {
         case (_, "accessDenied"), (403, _): return CloudnError("OneDrive 拒绝了这个操作（没有权限）", code: 403)
         case (_, "notAllowed"): return CloudnError("OneDrive 不允许这个操作")
         default:
-            if r.status >= 500 { return CloudnError("OneDrive 暂时不可用（HTTP \(r.status)），请稍后重试") }
+            if r.status >= 500 { return CloudnError(LocalizedMessage("OneDrive 暂时不可用（HTTP %1$@），请稍后重试", "\(r.status)")) }
             return CloudnError("OneDrive：\(message.nilIfBlank ?? "请求失败（HTTP \(r.status)）")")
         }
     }

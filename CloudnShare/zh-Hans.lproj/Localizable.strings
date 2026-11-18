@@ -1,0 +1,11 @@
+/* Cloudn UI strings. For formatted text, keep the positional placeholders such as %1$@. */
+
+"完成" = "完成";
+"打开 Cloudn" = "打开 Cloudn";
+"正在打开 Cloudn…" = "正在打开 Cloudn…";
+"没有识别到链接" = "没有识别到链接";
+"没能自动跳转" = "没能自动跳转";
+"点「打开 Cloudn」继续；如果仍没有跳转，手动打开 Cloudn 即可粘贴解析。" = "点「打开 Cloudn」继续；如果仍没有跳转，手动打开 Cloudn 即可粘贴解析。";
+"这条分享里没有可解析的链接或口令。" = "这条分享里没有可解析的链接或口令。";
+"链接已在剪贴板里，手动打开 Cloudn 即可粘贴解析。" = "链接已在剪贴板里，手动打开 Cloudn 即可粘贴解析。";
+"链接已复制" = "链接已复制";

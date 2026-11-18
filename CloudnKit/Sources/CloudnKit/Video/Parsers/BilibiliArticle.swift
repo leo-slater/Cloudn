@@ -81,7 +81,7 @@ extension BilibiliParser {
         switch code {
         case -352: return VideoParseError(.blocked, "B站专栏接口触发风控（-352），请稍后重试")
         case -404, 404: return VideoParseError(.notFound, "B站专栏不存在或已删除")
-        default: return VideoParseError(.unknown, "B站专栏接口返回 code=\(code) \(message)")
+        default: return VideoParseError(.unknown, LocalizedMessage("B站专栏接口返回 code=%1$@ %2$@", "\(code)", "\(message)"))
         }
     }
 

@@ -324,7 +324,7 @@ public final class QuarkFamilyResolver: ShareResolver, @unchecked Sendable {
         let taskId = save["task_id"].string
         guard !taskId.isEmpty else { throw CloudnError("转存失败") }
         guard let savedFid = try await pollSaveTask(taskId, cookie: cookie, attempts: attempts) else {
-            throw CloudnError("转存仍在进行，请稍后到\(config.platform.displayName)里查看")
+            throw CloudnError(LocalizedMessage("转存仍在进行，请稍后到%1$@里查看", "\(config.platform.displayName)"))
         }
         return savedFid
     }
@@ -412,7 +412,7 @@ public final class QuarkFamilyResolver: ShareResolver, @unchecked Sendable {
     private func callData(_ req: HTTPRequest, cookie: String?) async throws -> JSON {
         let r = try await client.send(req)
         await absorbCookies(r, cookie: cookie)
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         guard json["status"].int == 200 else {
             let msg = json["message"].string
             throw CloudnError(msg.isEmpty ? "请求失败（HTTP \(r.status)）" : msg, code: json["code"].int)
@@ -422,7 +422,7 @@ public final class QuarkFamilyResolver: ShareResolver, @unchecked Sendable {
 
     private func parseLink(_ r: HTTPResponse, file: ShareFile, headers: [String: String],
                            message: (Int, String) -> String) throws -> DownloadLink {
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         let code = json["code"].int
         if json["status"].int != 200 && code != 0 {
             let m = json["message"].string
@@ -586,7 +586,7 @@ extension QuarkFamilyResolver: DriveManager {
         case 1: return 2
         case 7: return 3
         case 30: return 4
-        default: throw CloudnError("该网盘不支持「\(expiry.label)」的分享有效期")
+        default: throw CloudnError(LocalizedMessage("该网盘不支持「%1$@」的分享有效期", "\(expiry.label)"))
         }
     }
 
@@ -728,7 +728,7 @@ extension QuarkFamilyResolver: DriveUploader {
                                             body: .file(file, offset: part.offset, length: part.length)) { done in
                 progress(.uploading, Double(base + done) / Double(max(1, size)))
             }
-            guard r.isSuccess, let etag = r.header("ETag") else { throw CloudnError("上传分片失败（HTTP \(r.status)）") }
+            guard r.isSuccess, let etag = r.header("ETag") else { throw CloudnError(LocalizedMessage("上传分片失败（HTTP %1$@）", "\(r.status)")) }
             etags.append(etag)
             sent += part.length
         }
@@ -747,7 +747,7 @@ extension QuarkFamilyResolver: DriveUploader {
                                                                  ("Content-Type", "application/xml"), ("Referer", config.referer),
                                                                  ("x-oss-callback", callback), ("x-oss-date", t), ("x-oss-user-agent", Self.ossUA)]),
                                            body: .data(Data(xml.utf8)))
-        guard done.isSuccess else { throw CloudnError("合并分片失败（HTTP \(done.status)）") }
+        guard done.isSuccess else { throw CloudnError(LocalizedMessage("合并分片失败（HTTP %1$@）", "\(done.status)")) }
         _ = try await callRaw(.postJSON(url("/1/clouddrive/file/upload/finish"), ["obj_key": ticket.objectKey, "task_id": taskId],
                                         headers: headers), cookie: cookie)
         progress(.finishing, 1)
@@ -781,7 +781,7 @@ extension QuarkFamilyResolver: DriveUploader {
     private func callRaw(_ req: HTTPRequest, cookie: String) async throws -> JSON {
         let r = try await client.send(req)
         await absorbCookies(r, cookie: cookie)
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         guard json["status"].int == 200 else {
             let msg = json["message"].string
             throw CloudnError(msg.isEmpty ? "上传失败（HTTP \(r.status)）" : msg, code: json["code"].int)

@@ -135,7 +135,7 @@ public final class C139Resolver: ShareResolver, @unchecked Sendable {
         let r = try await client.send(HTTPRequest(url: url, method: "POST", headers: headers, body: Data(Self.encrypt(plain).utf8)))
         // 响应应为加密 base64；网关透传明文时兜底
         if let decrypted = Self.decrypt(r.text), let json = JSON(text: decrypted), json.isObject { return json }
-        guard let json = r.json, json.isObject else { throw CloudnError("139 网盘响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("139 网盘响应解析失败（HTTP %1$@）", "\(r.status)")) }
         return json
     }
 
@@ -228,7 +228,7 @@ extension C139Resolver: ShareSaver {
             let headers = Self.personalHeaders(authorization: authorization) + [("mcloud-sign", Self.signHeader(body.text))]
             let r = try await client.send(HTTPRequest(url: personalBase + "/hcy/file/list", method: "POST", headers: headers,
                                                       body: Data(body.text.utf8)))
-            guard let json = r.json, json.isObject else { throw CloudnError("139 网盘响应解析失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("139 网盘响应解析失败（HTTP %1$@）", "\(r.status)")) }
             let code = json["code"].string
             guard (!json.has("success") || json["success"].bool) && (code == "0000" || code == "0") else {
                 throw CloudnError(json["message"].string.nilIfBlank ?? "获取文件夹失败（\(code)）")
@@ -433,7 +433,7 @@ extension C139Resolver: DriveManager {
             if skey, let value = CookieUtil.value(of: "skey", in: cookie)?.nilIfBlank { headers.append(("mcloud-skey", value)) }
         }
         let r = try await client.send(HTTPRequest(url: url, method: "POST", headers: headers, body: Data(plain.utf8)))
-        guard let json = r.json, json.isObject else { throw CloudnError("139 网盘响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("139 网盘响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.checkPersonal(json, fallback: fallback)
         return json
     }
@@ -462,7 +462,7 @@ extension C139Resolver: DriveManager {
         let info = data["taskInfo"]
         if info["status"].string == "Succeed" || info["progress"].int >= 100 { return true }
         if let failed = data["batchFileResults"].array.first(where: { !$0["errCode"].string.isEmpty && $0["errCode"].string != "0000" }) {
-            throw CloudnError("139 网盘任务失败（\(failed["errCode"].string)）")
+            throw CloudnError(LocalizedMessage("139 网盘任务失败（%1$@）", "\(failed["errCode"].string)"))
         }
         return false
     }
@@ -562,7 +562,7 @@ extension C139Resolver: DriveUploader {
                                                   authorization: authorization, fallback: "获取上传地址失败")
                 urls.merge(Self.parseUploadURLs(more["data"]["partInfos"])) { $1 }
             }
-            guard let url = urls[n] else { throw CloudnError("139 网盘未返回第 \(n) 片的上传地址") }
+            guard let url = urls[n] else { throw CloudnError(LocalizedMessage("139 网盘未返回第 %1$@ 片的上传地址", "\(n)")) }
             let base = sent
             var attempt = 0
             while true {
@@ -574,7 +574,7 @@ extension C139Resolver: DriveUploader {
                 }
                 if r.isSuccess { break }
                 attempt += 1
-                guard attempt < 3 else { throw CloudnError("139 网盘分片上传失败（HTTP \(r.status)）") }
+                guard attempt < 3 else { throw CloudnError(LocalizedMessage("139 网盘分片上传失败（HTTP %1$@）", "\(r.status)")) }
             }
             sent += part.length
         }

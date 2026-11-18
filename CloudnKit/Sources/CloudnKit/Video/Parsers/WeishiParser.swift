@@ -31,10 +31,10 @@ struct WeishiParser: VideoParser {
     static func feed(_ payload: JSON) throws -> JSON {
         if payload["ret"].int != 0 {
             let msg = payload["msg"].string
-            throw VideoParseError(.unknown, "微视返回错误：\(msg.isEmpty ? "未知错误" : msg)")
+            throw VideoParseError(.unknown, LocalizedMessage("微视返回错误：%1$@", "\(msg.isEmpty ? "未知错误" : msg)"))
         }
         let errmsg = payload["data"]["errmsg"].string
-        if !errmsg.isEmpty { throw VideoParseError(.notFound, "微视：\(errmsg)") }
+        if !errmsg.isEmpty { throw VideoParseError(.notFound, LocalizedMessage("微视：%1$@", "\(errmsg)")) }
         let feed = payload["data"]["feeds"][0]
         guard feed.isObject else { throw VideoParseError(.notFound, "微视作品不存在或已删除") }
         return feed

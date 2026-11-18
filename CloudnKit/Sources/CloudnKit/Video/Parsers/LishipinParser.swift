@@ -27,7 +27,7 @@ struct LishipinParser: VideoParser {
             videoURL = Self.statusVideoURL(payload, id: id) ?? ""
             if videoURL.isEmpty {
                 let msg = payload["resultMsg"].string
-                throw VideoParseError(.notFound, "梨视频没有返回播放地址\(msg.isEmpty ? "（作品可能已下线）" : "：\(msg)")")
+                throw VideoParseError(.notFound, LocalizedMessage("梨视频没有返回播放地址%1$@", "\(msg.isEmpty ? "（作品可能已下线）" : "：\(msg)")"))
             }
             variants = [DomesticVariant(url: videoURL, label: "")]
         }

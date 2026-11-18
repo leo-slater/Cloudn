@@ -76,10 +76,10 @@ struct BangumiParser: VideoParser {
             case 404: throw VideoParseError(.notFound, "Bangumi 内容不存在或已删除")
             case 401, 403:
                 let reason = message.isEmpty ? "HTTP \(r.status)" : message
-                throw VideoParseError(.unknown, "该 Bangumi 内容需要登录才能查看（\(reason)），暂不支持")
+                throw VideoParseError(.unknown, LocalizedMessage("该 Bangumi 内容需要登录才能查看（%1$@），暂不支持", "\(reason)"))
             default:
                 let reason = message.isEmpty ? "HTTP \(r.status)" : message
-                throw VideoParseError(.unknown, "Bangumi 解析失败：\(reason)")
+                throw VideoParseError(.unknown, LocalizedMessage("Bangumi 解析失败：%1$@", "\(reason)"))
             }
         }
         guard json.isObject else { throw VideoParseError(.unknown, "Bangumi 接口返回的不是合法 JSON") }

@@ -26,7 +26,7 @@ extension Pan115Resolver: DriveOfflineDownloader {
                                        [("data", Pan115Crypto.encode(payload, key: key))],
                                        headers: headers(cookie: cookie, referer: Self.referer, ua: ua))
         let r = try await client.send(req)
-        guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+        guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
         try Self.checkOffline(json, fallback: "添加离线任务失败")
         guard let plain = Pan115Crypto.decode(json["data"].string, key: key), let decoded = JSON(text: plain) else {
             throw CloudnError("115 离线响应解析失败")
@@ -43,7 +43,7 @@ extension Pan115Resolver: DriveOfflineDownloader {
             let req = HTTPRequest(url: Self.lixianListURL + "&page=\(page)", method: "POST",
                                   headers: headers(cookie: cookie, referer: Self.referer, ua: ua))
             let r = try await client.send(req)
-            guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
             try Self.checkOffline(json, fallback: "获取离线任务失败")
             all += Self.parseOfflineTasks(json)
             if page >= json["page_count"].int { break }
@@ -59,7 +59,7 @@ extension Pan115Resolver: DriveOfflineDownloader {
         for hash in ids where !hash.isEmpty {
             let r = try await client.send(.postForm(Self.lixianDeleteURL, Self.offlineDeleteFields(hash: hash),
                                                     headers: headers(cookie: cookie, referer: Self.referer, ua: ua)))
-            guard let json = r.json, json.isObject else { throw CloudnError("响应解析失败（HTTP \(r.status)）") }
+            guard let json = r.json, json.isObject else { throw CloudnError(LocalizedMessage("响应解析失败（HTTP %1$@）", "\(r.status)")) }
             try Self.checkOffline(json, fallback: "删除离线任务失败")
         }
     }
