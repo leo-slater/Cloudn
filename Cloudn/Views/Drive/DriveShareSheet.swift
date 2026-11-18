@@ -45,7 +45,7 @@ struct DriveShareSheet: View {
                     } header: {
                         Text(file.name).textCase(nil).lineLimit(1)
                     } footer: {
-                        if !manager.shareOptionsNote.isEmpty { Text(manager.shareOptionsNote) }
+                        if !manager.shareOptionsNote.isEmpty { Text(L(manager.shareOptionsNote)) }
                     }
 
                     Section {
@@ -105,7 +105,7 @@ struct DriveShareSheet: View {
     private func row(_ share: DriveShareInfo) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(share.url).font(.footnote).foregroundStyle(Color.ink).lineLimit(1).truncationMode(.middle)
-            let details = [share.audience, share.role, share.expires.isEmpty ? L("永久") : L("%1$@ 到期", "\(share.expires)"),
+            let details = [L(share.audience), L(share.role), share.expires.isEmpty ? L("永久") : L("%1$@ 到期", "\(share.expires)"),
                            share.hasPassword ? L("有密码") : nil].compactMap { $0 }
             Text(details.joined(separator: " · ")).font(.caption).foregroundStyle(Color.ink3)
             if let folder = share.inheritedFrom {

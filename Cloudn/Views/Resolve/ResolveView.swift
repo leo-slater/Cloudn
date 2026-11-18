@@ -975,7 +975,7 @@ private struct HistoryRow: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.title).font(.body).lineLimit(typeSize.isAccessibilitySize ? 3 : 1).foregroundStyle(Color.ink)
-                    Text("\(item.source) · \(item.createdAt.formatted(.relative(presentation: .named)))")
+                    Text("\(L(item.source)) · \(item.createdAt.formatted(.relative(presentation: .named)))")
                         .font(.caption).foregroundStyle(Color.ink2).lineLimit(typeSize.isAccessibilitySize ? 2 : 1)
                 }
                 Spacer(minLength: 0)

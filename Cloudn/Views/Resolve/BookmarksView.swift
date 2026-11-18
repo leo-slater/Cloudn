@@ -28,7 +28,7 @@ struct BookmarksView: View {
                                 }
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(b.title).foregroundStyle(Color.ink).lineLimit(2)
-                                    Text("\(b.source) · \(b.createdAt.formatted(date: .numeric, time: .omitted))")
+                                    Text("\(L(b.source)) · \(b.createdAt.formatted(date: .numeric, time: .omitted))")
                                         .font(.caption).foregroundStyle(Color.ink3)
                                 }
                             }

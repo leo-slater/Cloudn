@@ -220,7 +220,7 @@ struct DriveFolderView: View {
                 if options.count > 1 {
                     Menu {
                         ForEach(options) { expiry in
-                            Button(expiry.label) { share(item, expiry: expiry) }
+                            Button(L(expiry.label)) { share(item, expiry: expiry) }
                         }
                     } label: { Label(L("创建分享并复制"), glyph: .link) }
                 } else {
